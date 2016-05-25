@@ -213,7 +213,7 @@ module.exports = function(RED) {
           this.authorized = true;
           this.setStatus();
 
-          if((this.eventType != "msg.eventType" && this.childpath != "msg.childpath") || this.msg!= null)
+          if((this.eventType != "msg.eventType" && this.childpath != "msg.childpath") || this.msg != null)
             this.registerListeners();
 
         }.bind(this)
@@ -254,7 +254,7 @@ module.exports = function(RED) {
 
         this.on('input', function(msg) {
           var eventType
-          if(eventType == "msg.eventType"){
+          if(this.eventType == "msg.eventType"){
             if("eventType" in msg){
               eventType = msg.eventType
             } else {
