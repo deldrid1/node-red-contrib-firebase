@@ -22,7 +22,7 @@
 
     <!-- Custom login with new token generated from master-->
     <div class="form-row login-row login-row-customGenerated login-row-jwt hidden">
-        <label for="node-config-input-secret"><i class="fa fa-key"></i> Secret</label>
+        <label for="node-config-input-secret"><i class="fa fa-key"></i> Path to Private Key File</label>
         <input class="input-append-left" type="password" id="node-config-input-secret" placeholder="firebase secret"> <!-- //TODO: Add a show button like on the forge? -->
     </div>
 
@@ -345,4 +345,15 @@
             exportable: false
         });
     })();
+</script>
+
+<script type="text/x-red" data-help-name="firebase config">
+
+<p> Path to Private Key: </p>
+
+<p> A private key needs to be generated in order to use the Access Token verification.
+
+<p>To retreive the Private Key file, go the the desired project in the firebase console. Locate the settings icon wheel on the left, next to "Overview". Next click the Service Accounts Tab. Finally, click on "Generate New Private Key". Store the downloaded file in the a desired location, and provide the path of the file.
+Example:  </p> 
+
 </script>

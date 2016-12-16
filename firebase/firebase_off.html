@@ -1,4 +1,4 @@
-<script type="text/x-red" data-template-name="firebase.once">
+<script type="text/x-red" data-template-name="firebase.off">
 
     <div class="form-row">
         <label for="node-input-firebaseconfig"><i class="fa fa-database"></i> Firebase</label>
@@ -12,8 +12,8 @@
 
     <div class="form-row">
       <label for="eventType-select"><i class="fa fa-terminal"></i> Event Type</label>
-      .once("
-      <select id="eventType-select" style="width:35%">
+      .on("
+      <select id="eventType-select" style="width: 31%">
           <option value="value">value</option>
           <option value="child_added">child_added</option>
           <option value="child_changed">child_changed</option>
@@ -26,32 +26,6 @@
       <input type="hidden" id="node-input-eventType">
     </div>
 
-    <div class="form-row">
-        <label for="node-input-repeatifnull" style="width: 210px"><i class="fa fa-refresh"></i> Repeat request if value is null?</label>
-        <input type="checkbox" id="node-input-repeatifnull" style="display: inline-block; width: auto; vertical-align: top;">
-    </div>
-
-    <div id="eventType-select-info-container" class="form-tips hidden" style="margin-bottom: 10px;">
-      <p id="eventType-select-info" class="text-center" style="margin: 0;"><strong>Additional parameters not supported with shallow queries.</strong></p>
-    </div>
-
-    <div id="query-parameters-name-container" class="form-row">
-      <label for="node-input-add-query"><i class="fa fa-filter"></i> Queries</label>
-      <a href="#" class="btn btn-mini" id="node-input-add-query" style="margin-top: 4px;"><i class="fa fa-plus"></i> query</a>
-      <div id="node-input-query-illegal-combination-container" class="form-tips hidden" style="margin-top: 10px;">
-        <p id="node-input-query-illegal-combination" class="text-center" style="margin: 0;"><strong>Illegal combination of queries.</strong></p>
-      </div>
-    </div>
-
-    <!-- Query Dialog Box -->
-    <div id="node-input-query-container-overall" class="form-row node-input-query-container-row" style="display:none">
-      <!-- <ol id="node-input-query-container" style=" list-style-type:none; margin: 0;"></ol> -->
-
-        <div id="node-input-query-container-div" style="box-sizing: border-box; border-radius: 5px; max-height: 200px; padding: 5px; border: 1px solid #ccc; overflow-y:scroll;">
-          <ol id="node-input-query-container" style=" list-style-type:none; margin: 0;"></ol>
-        </div>
-    </div>
-
     <!-- By convention, most nodes have a 'name' property. The following div -->
     <!-- provides the necessary field. Should always be the last option      -->
     <div class="form-row">
@@ -60,126 +34,48 @@
     </div>
 </script>
 
-<script type="text/x-red" data-help-name="firebase.once">
-  <!-- data-help-name identifies the node type this help is for             -->
-  <!-- This content appears in the Info sidebar when a node is selected     -->
-  <!-- The first <p> is used as the pop-up tool tip when hovering over a    -->
-  <!-- node in the palette.                                                 -->
-  <p>Generate messages for Firebase .once() events.</p>
-
-  <p>Supply a Firebase configuration and this node will watch for any changes at that location and generate messages.</p>
-
-  <p>This node outputs an object called <b>msg</b> containing <b>msg.href</b>, <b>msg.key</b>, and
-  <b>msg.payload</b>. Depending on the event type and data available <b>msg.priority</b>, <b>msg.pushIDTimestamp</b>
-  and <b>msg.previousChildName</b> may also be set:
-  <ul>
-    <li>
-      <strong>msg.payload</strong> - the data returned from Firebase
-      (The type of msg.payload depends on the data at that location)
-    </li><br />
-    <li>
-      <strong>msg.href</strong> - the url of the data
-    </li><br />
-    <li>
-      <strong>msg.key</strong> - the key of the Firebase data
-    </li><br />
-    <li>
-      <strong><em>msg.priority</em></strong> - <em>(optional)</em> the priority of the Firebase data
-    </li><br />
-    <li>
-       <strong><em>msg.pushIDTimestamp</em></strong> - <em>(optional)</em> the timestamp as decoded from the key of the event, which is assumed to be a Firebase Push ID (this will be available if "child_added", "child_changed", "child_moved", or "child_removed" is selected as the event)
-    </li><br />
-    <li>
-      <strong><em>msg.previousChildName</em></strong> - <em>(optional)</em> the key for the previous child of the Firebase data (this will be available, for ordering purposes, if "child_added", "child_changed", "child_moved", or "child_removed" is selected as the event)
-    </li>
-  </ul>
-
-  <p>This node can be backed by several different Firebase API methods:</p>
-  <!-- https://www.firebase.com/docs/web/guide/retrieving-data.html -->
-   <ul>
-     <li>
-       <strong>.once("value"):</strong>
-       The <em>value</em> event is used to read a static snapshot of the contents at a given path, as they existed at the time of the read event.
-       The flow is triggered once with the initial data (assuming the fire last known data at start box is checked) and again every time
-       the data changes. <em>msg.payload</em> is passed a snapshot containing all data at that location, including child data.
-     </li><br />
-     <li>
-       <strong>.once("child_added"):</strong>
-       The <em>child_added</em> event is typically used when retrieving a list of items in Firebase.
-       Unlike <em>value</em> events which returns the entire contents of the location, <em>child_added</em>
-       is triggered once for each existing child and then again every time a new child is added to the specified path.
-       <em>msg.payload</em> is passed a snapshot containing the new child's data. <!-- ' -->
-     </li><br />
-     <li>
-       <strong>.once("child_changed"):</strong>
-       The <em>child_changed</em> event is triggered any time a child node is modified.
-       This includes any modifications to descendants of the child node. It is typically used in conjunction with
-       <em>child_added</em> and <em>child_removed</em> to respond to changes to a list of items.
-       <em>msg.payload</em> contains the updated data for the child.
-     </li><br />
-     <li>
-       <strong>.once("child_removed"):</strong>
-       The <em>child_removed</em> event is triggered when an immediate child is removed.
-       It is typically used in conjunction with <em>child_added</em> and <em>child_changed</em>.
-       <em>msg.payload</em> contains the data for the removed child.
-     </li><br />
-     <li>
-       <strong>.once("child_moved"):</strong>
-       The <em>child_moved</em> event is used when working with ordered data.
-       This event type is used for advanced Firebase applications see
-       <a href="https://www.firebase.com/docs/web/guide/retrieving-data.html#section-ordered-data">https://www.firebase.com/docs/web/guide/retrieving-data.html#section-ordered-data</a>
-       for more information.
-     </li><br />
-     <li>
-       <strong>.once("shallow_query"):</strong>
-       The <em>shallow_query</em> only receives the node keys at the supplied Firebase path. Currently, it cannot be paired with other query parameters.
-       This event type is used for advanced Firebase applications designed to help work with large datasets without needing to download everything. See
-       <a href="https://www.firebase.com/docs/rest/api/#section-query-parameters">https://www.firebase.com/docs/rest/api/#section-query-parameters</a>
-       for more information.
-     </li><br />
-     <li>
-       <strong>.once([msg.eventType]):</strong>
-       The <em>[msg.eventType]</em> allows for the passage of any of the event types listed above.
-     </li>
-   </ul>
-
-   <p>By checking the repeat request if null, the node will attempt up to 100 times to poll the location for a non-null value.</p>
+<script type="text/x-red" data-help-name="firebase.off">
+   <!-- data-help-name identifies the node type this help is for             -->
+   <!-- This content appears in the Info sidebar when a node is selected     -->
+   <!-- The first <p> is used as the pop-up tool tip when hovering over a    -->
+   <!-- node in the palette.                                                 -->
+   <p>Disables a flow previously configured with Firebase.on().</p>
 
    <p>Optional: <strong>msg.childpath</strong> is the name of a message property that can be used to dynamically set the .child() on the Firebase URL.  This requires that the <em>childpath</em> property is set to <em>msg.childpath</em> in the node's edit dialog box.</p>
 
- </script>
+
+</script>
 
 <script type="text/javascript">
-    RED.nodes.registerType('firebase.once',{
+    RED.nodes.registerType('firebase.off',{
         category: 'firebase',      // the palette category
         defaults: {             // defines the editable properties of the node
             name: {value:''},   //  along with default values.
             firebaseconfig:  {type:'firebase config',required:true},
             childpath: {value: '', required: false},
-            repeatifnull: {value: false, required: true},
             eventType: {value: "value", required: true},
-            queries: {value:[], required: true},
         },
         color: '#ffb37a',
         inputs:1,               // set the number of inputs - only 0 or 1
-        outputs:1,              // set the number of outputs - 0 to n
+        outputs:0,              // set the number of outputs - 0 to n
         // set the icon (held in icons dir below where you save the node)
         icon: 'firebase.png',     // saved in  icons/myicon.png
+        align: 'right',
 
-        paletteLabel: "firebase.once()",
+        paletteLabel: "firebase.off()",
 
         label: function() {     // sets the default label contents
-           var config = RED.nodes.node(this.firebaseconfig); //server side uses RED.nodes.getNode... go figure...
+            var config = RED.nodes.node(this.firebaseconfig); //server side uses RED.nodes.getNode... go figure...
 
-           // make sure the path starts with /
-           var childpath = (this.childpath.indexOf("/") == 0) ? this.childpath : "/" + this.childpath;
-           //make sure the path does not end with /
-           childpath = childpath.substr(-1) == "/" ? childpath.slice(0,-1) : childpath
+            // make sure the path starts with /
+            var childpath = (this.childpath.indexOf("/") == 0) ? this.childpath : "/" + this.childpath;
+            //make sure the path does not end with /
+            childpath = childpath.substr(-1) == "/" ? childpath.slice(0,-1) : childpath
 
-           //TODO: should we try to use the config nodes path and append to childpath or is that too long?
-           return this.name ||
-                  (config ? "https://"+config.firebaseurl+".firebaseio.com"+(childpath||"") + ".once(\""+this.eventType+"\")" : childpath + ".once(\""+this.eventType+"\")") ||
-                  "firebase.once(\""+this.eventType+"\")";
+            //TODO: should we try to use the config nodes path and append to childpath or is that too long?
+            return this.name ||
+                   (config ? "https://"+config.firebaseurl+".firebaseio.com"+(childpath||"") + ".on(\""+this.eventType+"\")" : childpath + ".on(\""+this.eventType+"\")" ) ||
+                   "firebase.off(\""+this.eventType+"\")";
         },
         labelStyle: function() { // sets the class to apply to the label
             return this.name?'node_label_italic':'';
@@ -285,21 +181,6 @@
           }
 
           var operators = [
-                // {v:"eq",t:"=="},
-                // {v:"neq",t:"!="},
-                // {v:"lt",t:"<"},
-                // {v:"lte",t:"<="},
-                // {v:"gt",t:">"},
-                // {v:"gte",t:">="},
-                // {v:"btwn",t:"is between"},
-                // {v:"cont",t:"contains"},
-                // {v:"regex",t:"matches regex"},
-                // {v:"true",t:"is true"},
-                // {v:"false",t:"is false"},
-                // {v:"null",t:"is null"},
-                // {v:"nnull",t:"is not null"},
-                // {v:"else",t:"otherwise"},
-
                 "orderByChild",
                 "orderByKey",
                 "orderByValue",
@@ -309,18 +190,6 @@
                 "equalTo",
                 "limitToFirst",
                 "limitToLast",
-
-                // {v:"orderByChild", t:"orderByChild"},
-                // {v:"orderByKey", t:"orderByKey"},
-                // {v:"orderByValue", t:"orderByValue"},
-                // {v:"orderByPriority", t:"orderByPriority"},
-                // {v:"startAt", t:"startAt"},
-                // {v:"endAt", t:"endAt"},
-                // {v:"equalTo", t:"equalTo"},
-                // {v:"limitToFirst", t:"limitToFirst"},
-                // {v:"limitToLast", t:"limitToLast"},
-                //{v:"limit", t:"limit"}  //deprecated
-
             ];
 
             var illegalCombinationShown = false;
@@ -337,12 +206,14 @@
                   $('#query-parameters-name-container').fadeIn(300)
                   var queries = $('#node-input-query-container').children();
                   if (queries.length > 0) $('#node-input-query-container-overall').fadeIn(300)
+                  var selectsValid = checkSelectsValid();
+                  var inputsNotEmpty = checkInputsNotEmpty();
 
-                  //Check to see if ok button should be enabled
-                  if (checkInputsNotEmpty() && checkSelectsValid()) $('#node-dialog-ok').prop('disabled', false);
+                  if (selectsValid && inputsNotEmpty) $('#node-dialog-ok').prop('disabled', false);
                   else {
                     var selectsLegal = checkSelectsNotIllegal();
                     if (!selectsLegal) $('#node-input-query-illegal-combination-container').fadeIn(300);
+                    //if (node-input-query-illegal-combination-container
                   }
                 });
               }
@@ -354,15 +225,12 @@
             function checkForIllegalComnbinationOfQueries(select, operator){
               //Look for illegal combinations of queries
               var illegalCombinations = [];
-              //console.log(operator)
-              if(operatorOptions[operator] && operatorOptions[operator].cannotBeCombinedWith){
-                for (var i in operatorOptions[operator].cannotBeCombinedWith){
-                  $('#node-input-query-container select').not(select).each(function(idx){
-                    if ($(this).val() == operatorOptions[operator].cannotBeCombinedWith[i]){
-                      illegalCombinations.push($(this).val());
-                    }
-                  });
-                }
+              for (i in operatorOptions[operator].cannotBeCombinedWith){
+                $('#node-input-query-container select').not(select).each(function(idx){
+                  if ($(this).val() == operatorOptions[operator].cannotBeCombinedWith[i]){
+                    illegalCombinations.push($(this).val());
+                  }
+                });
               }
               return illegalCombinations;
             }
@@ -395,10 +263,6 @@
               }
             }
 
-            function checkSelectsValid(){
-              return checkSelectsNotIllegal() && checkSelectsNotEmpty();
-            }
-
             function checkSelectsNotEmpty(){
               var valid = true;
               $('#node-input-query-container select').each(function(idx){
@@ -414,6 +278,10 @@
               return ($('#node-input-query-illegal-combination-container > p').length > 1 ? false : true)
             }
 
+            function checkSelectsValid(){
+              return checkSelectsNotIllegal() && checkSelectsNotEmpty();
+            }
+
             function addInputToUI($input){
               if ($input.not(':visible')){
                 //console.log("input not visible");
@@ -426,8 +294,7 @@
 
                 //Set up handler
                 $input.off('input');
-                $input.on('input', function(e){
-                  e.preventDefault();
+                $input.on('input', function(){
                   if ($(this).val().length == 0){
                     $(this).addClass('input-error');
                     $('#node-dialog-ok').prop('disabled', true);
@@ -438,7 +305,7 @@
                     else $('#node-dialog-ok').prop('disabled', true);
                   }
                 });
-                $input.parent().fadeIn(300);
+                $input.fadeIn(300);
               } else {
                 //console.log("input visible")
               }
@@ -446,7 +313,7 @@
 
             function removeInputFromUI($input){
               $input.off('input'); //remove listener
-              $input.parent().hide()  // hide the input and the typedInput div
+              $input.hide();
               //Check all other inputs and see whether or not they have text
               if (checkInputsNotEmpty() && checkSelectsValid()) $('#node-dialog-ok').prop('disabled', false);
               else $('#node-dialog-ok').prop('disabled', true);
@@ -464,7 +331,6 @@
             }
 
             function generatequery(query){
-
               var $queryContainer = $('<li/>',{style:"background: #fff; margin:0; padding:8px 0px; border-bottom: 1px solid #ccc;"});;
               var $table = $('<table/>').appendTo($queryContainer);
               var $tbody = $('<tbody/>').appendTo($table);
@@ -478,7 +344,7 @@
                 var $option = $('<option/>').val(operators[d]).text(operators[d]);
                 $select.append($option);
 
-                //Check whether operator is used AND whether it's valid
+                //Check whether operator is used
                 var used = false;
                 $('#node-input-query-container select').each(function(idx){
                   if ($(this).val() == operator) used = true;
@@ -491,26 +357,21 @@
                   if (illegalCombinations.length == 0) firstUnusedOperator = operator;
                 }
               }
-              var $tdInput = $('<td/>', {style:"width:200px;"}).appendTo($tbody);
+              var $tdInput = $('<td/>', {style:"width:150px;"}).appendTo($tbody);
               var $input = $('<input/>', {style:"width:100%;"}).addClass('node-input-query-value input-block-level').appendTo($tdInput);
-              $input.typedInput({
-                  default: 'str',
-                  typeField: $("#node-input-payloadType"),
-                  types:['flow','global','msg', 'str']
-              });
-              //$input.typedInput('type',query.q);
-
-
               var $tdDeleteBtn = $('<td/>').appendTo($tbody);
               var $deleteBtn = $('<a/>').addClass('btn btn-mini').append($('<i/>').addClass('fa fa-remove')).appendTo($tdDeleteBtn);
 
               //Set current operator for this query
               if (firstUnusedOperator) $select.val(firstUnusedOperator);
-              else $select.prop('selectedIndex', -1); //I still have this here, but it doesn't actually work -- the element must be added to the UI first before this works (stupid...), so it is done below after it is appended to the table
+              else {
+                $select.prop('selectedIndex', -1); //I still have this here, but it doesn't actually work -- the element must be added to the UI first before this works (stupid...), so it is done below after it is appended to the table
+                $('#node-dialog-ok').prop('disabled', true);
+              }
               var currentOperator = $select.val();
 
               //Check if input is allowed
-              if (currentOperator && operatorOptions[currentOperator] && operatorOptions[currentOperator].inputAllowed) addInputToUI($input);
+              if (operatorOptions[currentOperator].inputAllowed) addInputToUI($input);
               else removeInputFromUI($input);
 
               //Look for illegal combinations of queries
@@ -519,15 +380,12 @@
               //else removeIllegalCombinationFromUI(currentOperator)
 
               //Loop through all other queries and remove currentOperator from their list of availables
-              if (firstUnusedOperator){
-                $('#node-input-query-container select').not($select).each(function(idx){
-                  $(this).find('option[value="'+currentOperator+'"]').hide();
-                });
-              }
+              $('#node-input-query-container select').not($select).each(function(idx){
+                $(this).find('option[value="'+currentOperator+'"]').hide();
+              });
 
               //Select change handler
-              $select.on('change', function(e){
-                e.preventDefault();
+              $select.on('change', function(){
                 var newSelectVal = $(this).val();
 
                 //Check for new illegal combinations
@@ -599,9 +457,7 @@
               if ($('#node-input-query-container-overall').not(':visible')) $('#node-input-query-container-overall').show();
             }
 
-            $("#node-input-add-query").click(function(e) {
-              console.log(e)
-              e.preventDefault();
+            $("#node-input-add-query").click(function() {
               var queries = $('#node-input-query-container').children();
               if (queries.length < operators.length) generatequery();
               //generatequery($("#node-input-query-container").children().length+1,{t:"",v:"",v2:""});
@@ -652,6 +508,8 @@
                 $( "#dialog" ).off("dialogresize",switchDialogResize);
             });
 
+            $('#eventType-select').change()
+
         },
 
         oneditsave: function() {
@@ -665,14 +523,16 @@
           if ($('#eventType-select').val() != "shallow_query"){
             var queries = $("#node-input-query-container").children();
             queries.each(function(idx){
-              var r = {
-                name:    $(this).find('select').val(),
-                value:   $(this).find('input').is(':visible') ? $(this).find("input").typedInput('value') : "",
-                valType: $(this).find('input').is(':visible') ? $(this).find("input").typedInput('type') : "",
-              }
-
+              var r = {name: $(this).find('select').val()}
+              r.value = $(this).find('input').is(':visible') ? $(this).find('input').val() : "";
               node.queries.push(r);
             });
+          }
+
+          if($('#eventType-select').val() == "shallow_query" || $('#eventType-select').val() == "msg.eventType" || $('#node-input-childpath').val() == "msg.childpath"){
+            this.inputs = 1;
+          } else {
+            this.inputs = 0;
           }
         }
     });

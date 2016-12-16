@@ -67,15 +67,20 @@ module.exports = function(RED) {
             //Tstart with original message object so we retain all of those properties...
             var msg = this.activeRequests.shift();
 
-            msg.href = snapshot.ref().toString();
-            msg.key = snapshot.key();
-            msg.payload = snapshot.val();
+            msg.href = snapshot.ref.toString();
+            //console.log("HERE:");
+            //console.log(msg.href);
+            //msg.key = snapshot.key; //broken
+            //console.log(snapshot);
+            msg.payload = snapshot.val(); //
+
             if(snapshot.getPriority())
               msg.priority = snapshot.getPriority();
             if(prevChildName)
               msg.previousChildName = prevChildName;
-            if(this.eventType.search("child") != -1 || msg.key.length == 20 && getPushIdTimestamp(msg.key))  //We probably have a pushID that we can decode
-              msg.pushIDTimestamp = getPushIdTimestamp(msg.key)
+            //if(this.eventType.search("child") != -1 || msg.key.length == 20 && getPushIdTimestamp(msg.key))  //We probably have a pushID that we can decode
+            
+            //  msg.pushIDTimestamp = getPushIdTimestamp(msg.key)
 
             if(this.repeatifnull && msg.payload == null && msg.attemptNumber++ < 100 ){ // Repeat sending the request.  //TODO: we could use a configurable timer in seconds or a configurable number of attempts
               this.registerListeners(msg)

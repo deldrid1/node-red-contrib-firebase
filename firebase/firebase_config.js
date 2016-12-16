@@ -1,15 +1,32 @@
 //All references to a Firebase share the same authentication status,
 //so if you call new Firebase() twice and call any authentication method
 //on one of them, they will both be authenticated.
+
+
 module.exports = function (RED) {
     'use strict';
-    var Firebase = require('firebase');
+    var Firebase = require('firebase'); //for new version
+    var auth = require('firebase/auth');
+    var admin = require('firebase-admin');
+    //var serviceAccount = require("./modules/testing-19109-firebase-adminsdk-n0bx5-096122e57c.json");
+    var serviceAccount = require("../testing-19109-firebase-adminsdk-n0bx5-096122e57c.json");
+//C:\Users\c9924310\AppData\Roaming\npm\node_modules\node-red-contrib-firebase\firebase
+//    ../../../../../../../
+
+    //var auth = firebase.auth();
+    //require('firebase/database');
+    //var appl = require('./firebase.js');
+
+    
+
+    //var Firebase = require('firebase');
     var FirebaseTokenGenerator = require("firebase-token-generator");
     var events = require("events");
     var path = require("path");
     var https = require("follow-redirects").https;
     var urllib = require("url");
     // var async = require("async")
+
 
     function generateUID(){
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) { //Generates a random RequestID
@@ -18,24 +35,26 @@ module.exports = function (RED) {
       });
     }
 
+//****261 commented out for now
+
     // Firebase Full Authentication Error Listing - https://www.firebase.com/docs/web/guide/user-auth.html#section-full-error
-    // AUTHENTICATION_DISABLED	The requested authentication provider is disabled for this Firebase.
-    // EMAIL_TAKEN	The new user account cannot be created because the specified email address is already in use.
-    // INVALID_ARGUMENTS	The specified credentials are malformed or incomplete. Please refer to the error message, error details, and Firebase documentation for the required arguments for authenticating with this provider.
-    // INVALID_CONFIGURATION	The requested authentication provider is misconfigured, and the request cannot complete. Please confirm that the provider's client ID and secret are correct in your Firebase Dashboard and the app is properly set up on the provider's website.
-    // INVALID_CREDENTIALS	The specified authentication credentials are invalid. This may occur when credentials are malformed or expired.
-    // INVALID_EMAIL	The specified email is not a valid email.
-    // INVALID_ORIGIN	A security error occurred while processing the authentication request. The web origin for the request is not in your list of approved request origins. To approve this origin, visit the Login & Auth tab in your Firebase dashboard.
-    // INVALID_PASSWORD	The specified user account password is incorrect.
-    // INVALID_PROVIDER	The requested authentication provider does not exist. Please consult the Firebase authentication documentation for a list of supported providers.
-    // INVALID_TOKEN	The specified authentication token is invalid. This can occur when the token is malformed, expired, or the Firebase secret that was used to generate it has been revoked.
-    // INVALID_USER	The specified user account does not exist.
-    // NETWORK_ERROR	An error occurred while attempting to contact the authentication server.
-    // PROVIDER_ERROR	A third-party provider error occurred. Please refer to the error message and error details for more information.
-    // TRANSPORT_UNAVAILABLE	The requested login method is not available in the user's browser environment. Popups are not available in Chrome for iOS, iOS Preview Panes, or local, file:// URLs. Redirects are not available in PhoneGap / Cordova, or local, file:// URLs.
-    // UNKNOWN_ERROR	An unknown error occurred. Please refer to the error message and error details for more information.
-    // USER_CANCELLED	The current authentication request was cancelled by the user.
-    // USER_DENIED	The user did not authorize the application. This error can occur when the user has cancelled an OAuth authentication request.
+    // AUTHENTICATION_DISABLED  The requested authentication provider is disabled for this Firebase.
+    // EMAIL_TAKEN  The new user account cannot be created because the specified email address is already in use.
+    // INVALID_ARGUMENTS  The specified credentials are malformed or incomplete. Please refer to the error message, error details, and Firebase documentation for the required arguments for authenticating with this provider.
+    // INVALID_CONFIGURATION  The requested authentication provider is misconfigured, and the request cannot complete. Please confirm that the provider's client ID and secret are correct in your Firebase Dashboard and the app is properly set up on the provider's website.
+    // INVALID_CREDENTIALS  The specified authentication credentials are invalid. This may occur when credentials are malformed or expired.
+    // INVALID_EMAIL  The specified email is not a valid email.
+    // INVALID_ORIGIN A security error occurred while processing the authentication request. The web origin for the request is not in your list of approved request origins. To approve this origin, visit the Login & Auth tab in your Firebase dashboard.
+    // INVALID_PASSWORD The specified user account password is incorrect.
+    // INVALID_PROVIDER The requested authentication provider does not exist. Please consult the Firebase authentication documentation for a list of supported providers.
+    // INVALID_TOKEN  The specified authentication token is invalid. This can occur when the token is malformed, expired, or the Firebase secret that was used to generate it has been revoked.
+    // INVALID_USER The specified user account does not exist.
+    // NETWORK_ERROR  An error occurred while attempting to contact the authentication server.
+    // PROVIDER_ERROR A third-party provider error occurred. Please refer to the error message and error details for more information.
+    // TRANSPORT_UNAVAILABLE  The requested login method is not available in the user's browser environment. Popups are not available in Chrome for iOS, iOS Preview Panes, or local, file:// URLs. Redirects are not available in PhoneGap / Cordova, or local, file:// URLs.
+    // UNKNOWN_ERROR  An unknown error occurred. Please refer to the error message and error details for more information.
+    // USER_CANCELLED The current authentication request was cancelled by the user.
+    // USER_DENIED  The user did not authorize the application. This error can occur when the user has cancelled an OAuth authentication request.
 
     //TODO: Where is the full Firebase Error listing for .set(), etc.?
 
@@ -54,6 +73,8 @@ module.exports = function (RED) {
       return {
         get: function(firebaseurl, configNodeID){
           if(!connections[configNodeID]){ //Lazily create a new Firebase Reference if it does not exist
+            console.log(connections)
+            console.log(configNodeID)
 
             connections[configNodeID] = function(){
 
@@ -71,13 +92,26 @@ module.exports = function (RED) {
 
                 _emitter.emit(a,b)
               }
-
-
+            
+            
               var obj = {
                 Firebase: Firebase,  //Needed for Firebase.ServerValue.TIMESTAMP...
 
                 firebaseurl: firebaseurl,  //TODO: Some of this data is duplicated...
-                fbRef: new Firebase(firebaseurl, configNodeID), //Including a second argument is a hack which allows us to have multiple auths connected to the same Firebase - see https://github.com/deldrid1/node-red-contrib-firebase/issues/3
+                
+                //fbRef: new Firebase(firebaseurl, configNodeID), //Including a second argument is a hack which allows us to have multiple auths connected to the same Firebase - see https://github.com/deldrid1/node-red-contrib-firebase/issues/3
+                
+                fbAdmin: admin.initializeApp({
+                  credential: admin.credential.cert(serviceAccount), //can do other way also https://firebase.google.com/docs/admin/setup
+                  databaseURL: "https://testing-19109.firebaseio.com"
+                },configNodeID),
+
+               fbApp:Firebase.initializeApp({apiKey: "KEY GOES HERE",databaseURL: firebaseurl},configNodeID),
+ //AIzaSyCHBdyAaefJ23BdmblX5XvuDlIbPSTdWYU
+ //AIzaSyCHBdyAaefJ23BdmblX5XvuDlIbPSTdWYU
+                fbRef: null,
+                fbRefAdmin:null,
+              
                 authData: null, //TODO: Some of this data is duplicated...
                 loginType: null,
                 secret: null,
@@ -92,34 +126,64 @@ module.exports = function (RED) {
 
                 authorize: function(loginType, secret, passORuid, jwtClaims){
                   //console.log("Attempting to authorize with loginType="+loginType+" with secret="+secret+" and pass/uid="+passORuid)
-
+                  
                   if(this.loginType && this.authData){
                     this.authData = null
                     this.fbRef.offAuth(this.onAuth, this);
                     this.fbRef.unauth();
+
                     _emit("unauthorized");
                   }
-
+                  
                   this.loginType = loginType
                   this.secret = secret
                   this.passORuid = passORuid
 
+                  
+
+
                   switch (loginType) {
                       case 'none':
+                      
                           process.nextTick(function(){
                             _emit("authorized", null)
                           }.bind(this));
                           break;
                       case 'jwt':
-                          this.fbRef.authWithCustomToken(secret, this.onLoginAuth.bind(this))
-                          this.fbRef.onAuth(this.onAuth, this);
+                       /* this.fbApp.auth().signInWithCustomToken(secret)
+                         .catch(function(error){
+                                console.log("Error creating custom token:", error);
+                              });      
+*/
+                            
+
+                          //this.fbRef.authWithCustomToken(secret, this.onLoginAuth.bind(this))
+                          //this.fbRef.onAuth(this.onAuth, this);
                           break;
                       case 'anonymous':
+                          this.fbApp.auth().signInAnonymously()
+                          .catch(function(error) {
+                          console.log("error here")
+                          var errorCode = error.code;
+                          var errorMessage = error.message;
+                        });
+
+                           this.fbApp.auth().onAuthStateChanged(function(user) {
+                          if(user){
+                            //var isAnonymous = user.isAnonymous;
+                            console.log("signed in anonymous");
+                            _emit("authorized",user);
+
+                          }
+                        });                        
+                         break;
+                          /*old
                           this.fbRef.authAnonymously(this.onLoginAuth.bind(this));
                           this.fbRef.onAuth(this.onAuth, this);
+                          */
                           break;
                       case 'customGenerated':
-                            var tokenGenerator = new FirebaseTokenGenerator(secret);
+                        /*    var tokenGenerator = new FirebaseTokenGenerator(secret);
                             // expires (Number) - A timestamp (as number of seconds since the epoch) denoting the time after which this token should no longer be valid.
                             // notBefore (Number) - A timestamp (as number of seconds since the epoch) denoting the time before which this token should be rejected by the server.
                             // admin (Boolean) - Set to true if you want to disable all security rules for this client. This will provide the client with read and write access to your entire Firebase.
@@ -129,40 +193,103 @@ module.exports = function (RED) {
                               tokenArgs[jwtClaims[i].key] = jwtClaims[i].value
 
                             var token = tokenGenerator.createToken(tokenArgs);
+                        */
+                            //was this.fbRef authwithcustomtoken(token, this.onLoginAuth.bind(this))
+                            this.fbAdmin.auth().createCustomToken(passORuid)
 
-                            this.fbRef.authWithCustomToken(token, this.onLoginAuth.bind(this))
-                            this.fbRef.onAuth(this.onAuth, this);
+                              .then(function(customToken)
+                              {
+                                console.log("in custom",customToken);
+                                  this.fbApp.auth().signInWithCustomToken(customToken)
+                                   .catch(function(error) {
+                                    console.log("error in token")
+                                    var errorCode = error.code;
+                                    var errorMessage = error.message;
+                                    console.log(error);
+
+
+                          }); 
+
+                              }.bind(this))
+                              .catch(function(error){
+                                console.log("Error creating custom token:", error);
+                              });
+
+                                
+                        //instead of this.fbRef.onAuth(this.onAuth, this);
+                        this.fbApp.auth().onAuthStateChanged(function(user) {
+                          if(user){
+                            console.log("signed in with custom token");
+                            _emit("authorized",user);
+                          }
+                        }); 
+                            //this.fbRef.onAuth(this.onAuth, this);
                             break;
 
                       case 'email':
+                       //new way:
+                        console.log(connections)
+                        console.log(secret);
+                        
+                       
+                        this.fbApp.auth().signInWithEmailAndPassword(secret, passORuid)
+                        .catch(function(error) {
+                          console.log("error here")
+                          var errorCode = error.code;
+                          var errorMessage = error.message;
+                          if (errorCode === 'auth/wrong-password') {
+                            //alert('ERROR: Invalid loginType in firebase " + this.firebaseurl + " config - " + this.loginType');
+                            } else {
+                             // alert(errorMessage);
+                            }
+                            console.log(error);
+                          })     
+                        //instead of this.fbRef.onAuth(this.onAuth, this);
+                        //this.fbApp.onAuth(this.on)
+
+                        this.fbApp.auth().onAuthStateChanged(function(user) {
+                          if(user){
+                            console.log("signed in");
+                            _emit("authorized",user);
+                          }
+                        });                        
+                         break;
+
+                     /* old way
                           this.fbRef.authWithPassword({
+
                               email: secret,
                               password: passORuid
                             }, this.onLoginAuth.bind(this))
 
                           this.fbRef.onAuth(this.onAuth, this);
-                          break;
-                      // default:
-                      //   console.log("ERROR: Invalid loginType in firebase " + this.firebaseurl + " config - " + this.loginType)
-                      //   this.status({fill:"red", shape:"ring", text:"invalid loginType"})
-                      //   break;
-                  }
+                        
+                         break;
+                         */
+                         default:
+                           console.log("ERROR: Invalid loginType in firebase " + this.firebaseurl + " config - " + this.loginType)
+                           this.status({fill:"red", shape:"ring", text:"invalid loginType"})
+                           break;
+                           
+                  }//logintype end 
                 },
-
 
                 //Note, connected and disconnected can happen without our auth status changing...
                 onConnectionStatusChange: function(snap){
+                  
                   //var obj = connections[snap.ref().parent().parent().toString()]  //Not the most elegant, but it works
                   if (snap.val() === true) {
                     if(this.lastEvent != "authorized")//TODO: BUG: there is some kind of sequencing bug that can cause connected to be set to true after we have already emitted that authorized is true.  This is patch for that issue but we really should ge tht execution order correct...
+                    
                       _emit("connected")
                   } else {
+                     
                     _emit("disconnected")
                   }
                 },
 
                 //However, it looks like with our current setup auth will get re-emitted after we reconnect.
-                onAuth: function(authData){
+ /*               onAuth: function(authData){
                   if(authData){
                     _emit("authorized", authData)
                   } else {
@@ -181,7 +308,7 @@ module.exports = function (RED) {
 
                   this.authData = authData
                 },
-
+*/
                 onLoginAuth: function(error, authData) {
                   if (error) {
                     // switch (error.code) {
@@ -203,6 +330,7 @@ module.exports = function (RED) {
                 },
 
                 close: function(){
+
                   _emit("closed")
                   _emitter.removeAllListeners();  //Makes sure everybody stopped listening to us... //TODO: This may prevent nodes from receiving the "closed" event...
 
@@ -215,16 +343,19 @@ module.exports = function (RED) {
                     this.fbRef.unauth();
                   }
                 }
-              }
+              }//end of obj
 
+              //create db reference
 
+              obj.fbRef = obj.fbApp.database().ref();
+              obj.fbRefAdmin = obj.fbAdmin.database().ref();
 
               //Set "this" in our private functions
               _emit = _emit.bind(obj);
               _emitter.setMaxListeners(0);  //Suppress Memory Leak warnings, 0 means unlimited listeners
               process.nextTick(function(){
                 _emitter.emit("initializing");  //_emit would suppress this because of the default value...
-                obj.fbRef.child(".info/connected").on("value", obj.onConnectionStatusChange, obj);
+               obj.fbRef.child(".info/connected").on("value", obj.onConnectionStatusChange, obj);
               }.bind(obj))
 
               return obj;
@@ -232,7 +363,10 @@ module.exports = function (RED) {
           }
 
           connections[configNodeID].nodeCount++;
-
+          //console.log("botttttom");
+          //console.log(configNodeID);
+          //console.log(connections);
+          //console.log(Firebase.apps.length);
           return connections[configNodeID]
         },
 
@@ -248,6 +382,7 @@ module.exports = function (RED) {
             //TODO: BUG: there is not way to do close/kill a connection with the current Firebase Library.  It is a low priority for them but is scheduled for release middle of 2015...    http://stackoverflow.com/questions/27641764/how-to-destroy-firebase-ref-in-node
           }
         }
+       
       }
     }();
 
@@ -275,6 +410,7 @@ module.exports = function (RED) {
 
         this.fbConnection.on("connected", function(){
           // this.log("connected to " + this.firebaseurl)
+
           switch (this.loginType) {
               case 'none':
               case 'anonymous':
@@ -284,6 +420,7 @@ module.exports = function (RED) {
                 this.fbConnection.authorize(this.loginType, this.secret);
                 break;
               case 'email':
+
                 this.fbConnection.authorize(this.loginType, this.email, this.password);
                 break;
               case 'customGenerated':
@@ -330,12 +467,13 @@ module.exports = function (RED) {
         // });
 
         //this.send({payload: "hi"})  //Also meaningless for Config Nodes
-
+/*sas TODO: write close function to kill refs
         this.on('close', function() {
             this.status({fill: "gray", shape: "dot", text:"connection closed"})
             // We need to unbind our callback, or we'll get duplicate messages when we redeploy
             connectionPool.close(this.id)
         });
+        */
     }
 
     RED.nodes.registerType('firebase config', FirebaseConfig, {

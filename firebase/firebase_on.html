@@ -638,6 +638,7 @@
             });
           }
 
+          //TODO: BUG: Figure out how to set the initial value on page load... onpaletteadd doesn't give us our actual node, just the template for it so we have to figure out something else clever (perhaps a node-input-inputs would work - it looks like this is how the function node does dynamic outputs?)
           if($('#eventType-select').val() == "shallow_query" || $('#eventType-select').val() == "msg.eventType" || $('#node-input-childpath').val() == "msg.childpath"){
             this.inputs = 1;
           } else {
