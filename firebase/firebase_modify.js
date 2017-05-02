@@ -182,7 +182,7 @@ module.exports = function(RED) {
               break;
             case "push":
               var pushRef = this.config.fbConnection.fbRef.child(childpath)[method]();
-              msg.pushID = pushRef.key();
+              msg.pushID = pushRef.key;
               this.fbRequests.push(msg)
               pushRef.set(msg.payload, this.fbOnComplete.bind(this)); //TODO: Why doesn't the Firebase API support passing a context to these calls?
               break;

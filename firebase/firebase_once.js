@@ -70,7 +70,7 @@ module.exports = function(RED) {
             msg.href = snapshot.ref.toString();
             //console.log("HERE:");
             //console.log(msg.href);
-            //msg.key = snapshot.key; //broken
+            msg.key = snapshot.key; //broken
             //console.log(snapshot);
             msg.payload = snapshot.val(); //
 

@@ -1,6 +1,10 @@
 module.exports = function(RED) {
     'use strict';
 
+    var startAtvar;
+    var equalTovar;
+    var bool;
+
     var getPushIdTimestamp = (function getPushIdTimestamp() {
       var PUSH_CHARS = '-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz';
 
@@ -18,6 +22,8 @@ module.exports = function(RED) {
       }
     })();
 
+var startAtvar;
+var bool;
     function FirebaseOn(n) {
         RED.nodes.createNode(this,n);
 
@@ -61,11 +67,18 @@ module.exports = function(RED) {
             // if(!snapshot.exists()){
             //   //The code below will simply send a payload of nul if there is no data
             // }
+            
+
 
             var msg = {};
-            msg.href = snapshot.ref().toString();
-            msg.key = snapshot.key();
+            msg.href = snapshot.ref.toString();
+            msg.key = snapshot.key;
+
+            console.log(msg.key)
+            //make global startatval
+
             msg.payload = snapshot.val();
+            //console.log("MMMM :",msg.key);
             if(snapshot.getPriority())
               msg.priority = snapshot.getPriority();
             if(prevChildName)
@@ -73,8 +86,19 @@ module.exports = function(RED) {
             if(this.eventType.search("child") != -1 && getPushIdTimestamp(msg.key))  //We probably have a pushID that we can decode
               msg.pushIDTimestamp = getPushIdTimestamp(msg.key)
 
-
-            this.send(msg);
+            
+             console.log(bool)
+             console.log(msg.key)
+            if(bool == true){
+                if(msg.key >  startAtvar){// ){"-KgFgNWmpTohyWpi3pp5"){
+               //if(msg.key == "-KPJXqkAamtNrCKxFc_C"){
+                bool = false;
+                this.send(msg);
+              }
+            }
+            else{
+              this.send(msg);
+            }
             setTimeout(this.setStatus, 500)  //Reset back to the Firebase status after 0.5 seconds
         }.bind(this);
 
@@ -85,6 +109,8 @@ module.exports = function(RED) {
         }.bind(this);
 
         this.registerListeners = function(msg){
+          
+          
           //this.log("Registering Listener for " + this.config.firebaseurl + (this.childpath || ""))
 
           if(this.ready == true)
@@ -95,6 +121,8 @@ module.exports = function(RED) {
 
           //Create the firebase reference to the path
           var ref
+
+          
           if(this.childpath){
             ref = this.config.fbConnection.fbRef.child(this.childpath  == "msg.childpath" ? this.msg.childpath : this.childpath)  //Decide if we are using our input msg object or the string we were configured with
           } else {
@@ -105,6 +133,8 @@ module.exports = function(RED) {
           for (var i=0; i<this.queries.length; i+=1) {
               var query = this.queries[i];
               var val
+              //var equalTovar
+              startAtvar ="yo"
 
               switch(query.name){
                 case "orderByKey":
@@ -115,14 +145,35 @@ module.exports = function(RED) {
 
                 case "orderByChild":
                 case "startAt":
+                    if (query.value == "msg.startAt") {
+                      val = this.msg.startAt; 
+                      bool = true
+                      startAtvar = val
+                      break;
+                      
+                      startAtvar = val
+                      console.log("startatvar", val)
+                    }
                 case "endAt":
                 case "equalTo":
+                    if (query.value == "msg.equalTo") {
+                      val = this.msg.equalTo; 
+                      bool = true;
+                      startAtvar = val
+                      console.log("equalTo", val)
+                     // ref = ref[query.name](val);
+                  
+                      //ref = ref[query.name](val)
+                      //ref = ref.equalTo("hi") //.on("child_added")
+
+                      break;
+                     }  
                 case "limitToFirst":
                 case "limitToLast":
                   //try to convert to native type for bools, ints, etc.
                   try{ val = JSON.parse(query.value.toLowerCase() || query.value) }
                   catch(e){ val = query.value}
-
+                  
                   ref = ref[query.name](val) //TODO: no error checking...
                   break;
 
@@ -131,10 +182,17 @@ module.exports = function(RED) {
                   break;
               }
           }
-
+          if(this.eventType =="msg.eventType"){
+            console.log("inside")
+            console.log("event ", this.msg.eventType)
+        } 
+        
+          //ref.startAt("hi");
           ref.on(this.eventType == "msg.eventType" ? this.msg.eventType : this.eventType, this.onFBValue, this.onFBError, this);
-
-
+          //ref.orderbyKey().equalTo("hi").on
+          //ref.on("child_added", function(snapshot) {
+        
+        
         }.bind(this);
 
         this.destroyListeners = function(){

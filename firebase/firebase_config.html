@@ -1,10 +1,16 @@
 <script type="text/x-red" data-template-name="firebase config" >
 
+     
     <div class="form-row">
         <label for="node-config-input-firebaseurl"><i class="fa fa-cloud"></i> Firebase</label>
         https://
         <input class="input-append-left" type="text" id="node-config-input-firebaseurl" placeholder="your-firebase" style="width: 28%">
         .firebaseio.com/
+    </div>
+
+    <div class="form-row">
+        <label for="node-config-input-api"><i class="fa fa-cloud"></i> API Key</label>
+        <input class="input-append-left" type="password" id="node-config-input-api" placeholder="Web API key">
     </div>
 
     <!-- Select type -->
@@ -21,9 +27,9 @@
     </div>
 
     <!-- Custom login with new token generated from master-->
-    <div class="form-row login-row login-row-customGenerated login-row-jwt hidden">
-        <label for="node-config-input-secret"><i class="fa fa-key"></i> Path to Private Key File</label>
-        <input class="input-append-left" type="password" id="node-config-input-secret" placeholder="firebase secret"> <!-- //TODO: Add a show button like on the forge? -->
+    <div class="form-row login-row login-row-jwt hidden">
+        <label for="node-config-input-secret"><i class="fa fa-key"></i> JWT</label>
+        <input class="input-append-left" type="password" id="node-config-input-secret" placeholder="Jason Web Token"> <!-- //TODO: Add a show button like on the forge? -->
     </div>
 
     <!-- Custom login -->
@@ -32,14 +38,36 @@
         <input class="input-append-left" type="text" id="node-config-input-uid" placeholder="token">
     </div>
 
+  
+
+
+<!--here
+  <div class="form-row login-row login-row-customGenerated hidden">
+        <label for="node-config-input-privatekey"><i class="fa fa-user">
+        </i>Path to Private Key </label>
+
+         <input class ="input-append-left" type ="text" id= node-config-input-privatekey placeholder="C://file.json"> 
+
+</div>
+ 
+-->
+
+    <div class="form-row login-row login-row-customGenerated hidden">
+        <label for="node-config-input-privatekey"><i class="fa fa-user"></i> Private Key File </label>
+        <input class="input-append-left"  type="file" id="node-config-input-privatekey" data-storage="false" >
+        <output hidden="" class="input-append-left" type = "text "  id= "node-config-input-list"></output>
+    </div>
+
 
     <div id="jwt-claims-container" class="form-row login-row login-row-customGenerated hidden">
       <label for="node-input-add-jwt-claim"><i class="fa fa-asterisk"></i> JWT Claims</label>
       <a href="#" class="btn btn-mini" id="node-input-add-jwt-claim" style="margin-top: 4px;"><i class="fa fa-plus"></i> add additional claims</a>
     </div>
 
-    <!-- //TODO: this node would be formatted nicer if #node-inpu-query-container-div was hidden until a query was added (or already present)... -->
+    <!--//TODO: this node would be formatted nicer if #node-inpu-query-container-div was hidden until a query was added (or already present)... -->
     <!-- Query Dialog Box -->
+
+    <!-- -->
     <div id="node-input-jwt-claims-overall" class="form-row node-input-jwt-claims-overall-row hidden">
       <!-- <ol id="node-input-jwt-claims" style=" list-style-type:none; margin: 0;"></ol> -->
 
@@ -49,27 +77,97 @@
     </div>
 
 
+
+
+
     <!-- Email login -->
     <div class="form-row login-row login-row-email hidden" id="login-row-email">
         <label for="node-config-input-email"><i class="fa fa-envelope"></i> Email</label>
         <input class="input-append-left" type="email" id="node-config-input-email" placeholder="your@email.com">
     </div>
+
     <div class="form-row login-row login-row-email hidden" id="login-row-email-password">
         <label for="node-config-input-password"><i class="fa fa-lock"></i> Password</label>
         <input class="input-append-left" type="password" id="node-config-input-password" placeholder="password">
     </div>
 
-    <!--   <div id="alertRow" />  -->
 
-    <!-- Tips -->
-    <!-- <div class="form-tips">
-      <p>Enter your Firebase credentials above</p>
-    </div> -->
+
+
+
+<!--
+<input type="button" id="loadFileXml" value="loadXml" onclick="document.getElementById('file').click();" />
+<input type="file" style="display:none;" id="file" name="file"/>
+-->
+
+<script type="text/javascript">
+
+ function handleFileSelect(evt) {
+
+      
+        var files = evt.target.files; // FileList object
+
+        // Loop through the FileList
+        for (var i = 0, f; f = files[i]; i++) {
+
+          var reader = new FileReader();
+
+          // Closure to capture the file information.
+          reader.onload = (function(theFile) {
+            return function(e) {
+
+              //var test;
+             // global.test = "hi";
+
+               var results = e.target.result;
+
+         
+               var obj = JSON.parse(results);
+             
+               project_id = obj.project_id;
+               client_email = obj.client_email;
+                 
+              // private_key  = obj.private_key;
+
+               //make it a hidden element 
+              // Print the contents of the file
+             var span = document.createElement('span');                    
+             span.innerHTML = ['<p id= "data">',e.target.result,'</p>'].join('');
+             document.getElementById('node-config-input-list').insertBefore(span, null);
+            };
+          })(f);
+
+          // Read in the file
+          //reader.readAsDataText(f,UTF-8);
+        //reader.readAsDataURL(f);
+          reader.readAsText(f);
+        }
+    
+      }
+
+      var element = document.getElementById('node-config-input-privatekey')
+      if(element != null){
+        
+         document.getElementById('node-config-input-privatekey').addEventListener('change', handleFileSelect, false);
+      } 
 
 </script>
 
+
+
+</script>
+
+
+
 <script type="text/javascript">
+      
     (function () {
+
+      var project_id;
+      var client_email; 
+      var private_key;
+
+
 
         RED.nodes.registerType('firebase config', {
             category: 'config',
@@ -78,7 +176,8 @@
 
             defaults: {
               firebaseurl: {value: "", required: true},
-              loginType: {value: "", required: true}
+              loginType: {value: "", required: true},
+              api: {value:"", required:true}
             },
 
             credentials: {
@@ -86,11 +185,15 @@
                 secret: {type: 'password'},
                 email: {type: 'text'},
                 password: {type: 'password'},
-                jwtClaims: {type: 'text'}
+                jwtClaims: {type: 'text'},
+                list: { type: 'text'}
+               // privatekey: {type: 'text'},
+               // project_id: {type : 'text'}
             },
 
 
             label: function () {
+
                 //return typeof this.appid ? 'Firebase ' + this.appid : 'Firebase ' + this.email;
                 var str = 'firebase config Node Error'
 
@@ -136,10 +239,13 @@
             },
 
             oneditprepare: function () {
-                // console.log("oneditprepare: firebase config") //Used for setting break points on the UI...
+
+                //console.log("in preprae",this.list);
+                //console.log("oneditprepare: firebase config") //Used for setting break points on the UI...
                 // console.log("oneditprepare: firebase config: this.firebaseurl == "+this.firebaseurl) //Used for setting break points on the UI...
                 // console.log("oneditprepare: firebase config: #node-input-firebaseconfig == ") //Used for setting break points on the UI...
-                // console.log($('#node-input-firebaseconfig'))
+        
+                //console.log($('#node-input-firebaseconfig'))
                 var $nodeConfigInputType = $('#node-config-input-loginType'),
                     $loginTypeSelect = $('#loginType-select');
                     firebaseConnections = null;
@@ -155,9 +261,12 @@
                     $nodeConfigInputType.val(id);
                 });
 
-                //TODO: Possible node-red bug? It looks like defaults don't get set automatically in config nodes?
-                $("#node-config-input-firebaseurl").val(this.firebaseurl)
 
+                //TODO: Possible node-red bug? It looks like defaults don't get set automatically in config nodes?
+                $("#node-config-input-firebaseurl").val(this.firebaseurl);
+                $("#node-config-input-api").val(this.api);
+               //? $("#list").val(this.list);
+                $("#node-config-input-list").val(this.list);
                 $('.login-row').hide();
                 if (this.loginType && this.loginType != "") {
                     $loginTypeSelect.val(this.loginType); //sets the drop down
@@ -327,6 +436,15 @@
               //Save Path [this is automagically taken care of by NR]
               //Save Event type [this is automagically taken care of by NR]
 
+              node.credentials.list = "";
+              var output = $("#node-config-input-list").val();
+              output = JSON.stringify(output);
+              node.credentials.list = output;
+              //console.log("List output: ", output);
+
+              //window.alert("hi"  );
+
+
               //Save jwtClaims
               node.credentials.jwtClaims = [];
               var jwtClaims = $("#node-input-jwt-claims-container").children();
@@ -349,11 +467,17 @@
 
 <script type="text/x-red" data-help-name="firebase config">
 
-<p> Path to Private Key: </p>
+<p><b>API Key: </b></p>
+
+<p> To locate your API Key, go to the desired firebase project in the firebase console. Locate the settings icon wheel on the left, next to "Overview". The API Key will be labeled as "Web API Key". </p>
+
+<p><b> Private Key File: </b></p>
 
 <p> A private key needs to be generated in order to use the Access Token verification.
 
-<p>To retreive the Private Key file, go the the desired project in the firebase console. Locate the settings icon wheel on the left, next to "Overview". Next click the Service Accounts Tab. Finally, click on "Generate New Private Key". Store the downloaded file in the a desired location, and provide the path of the file.
-Example:  </p> 
+<p>To retreive the Private Key file, go the the desired project in the firebase console. Locate the settings icon wheel on the left, next to "Overview". Next click the Service Accounts Tab. Finally, click on "Generate New Private Key". This will download a file onto your computer </p>
 
+<p> Click on choose file and locate the downloaded file. </p>
+<!--<p>Give the path to where the file is stored. (Example: If the file is stored in the C drive under a users downloaded folder give the path C://Users/username/Dowloads/filename.json) </p> 
+-->
 </script>
