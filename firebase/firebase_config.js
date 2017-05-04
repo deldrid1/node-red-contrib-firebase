@@ -116,7 +116,7 @@ module.exports = function (RED) {
 
                   this.list = list;
                   if(list == undefined){
-                    console.log("no input given")
+                    //console.log("no input given")
                     _emit("unauthorized");
                   }
                   if(list !=undefined){
@@ -155,7 +155,7 @@ module.exports = function (RED) {
                     this.authData = null
                     
                     this.fbApp.auth().signOut().then(function(){
-                      console.log("signed out successfully");
+                      //console.log("signed out successfully");
                     }, function(error){
                        console.log("error signing out");
                     });  
@@ -163,7 +163,7 @@ module.exports = function (RED) {
                     //instead of onAuth
                       this.fbApp.auth().onAuthStateChanged(function(user) {
                           if(user){
-                            console.log("still signed in")
+                            //console.log("still signed in")
 
                           }
                           else{
@@ -200,7 +200,7 @@ module.exports = function (RED) {
                       this.fbApp.auth().onAuthStateChanged(function(user) {
                           if(user){
                             //var isAnonymous = user.isAnonymous;
-                            console.log("signed in jwt");
+                           // console.log("signed in jwt");
                             _emit("authorized",user);
 
                           }
@@ -293,7 +293,7 @@ module.exports = function (RED) {
 
                       case 'email':
                        //new way:
-                        console.log(connections)
+                        //console.log(connections)
                         //console.log(secret);
                         
                        
@@ -319,7 +319,7 @@ module.exports = function (RED) {
                     
                         this.fbApp.auth().onAuthStateChanged(function(user) {
                           if(user){
-                            console.log("signed in");
+                            //console.log("signed in");
                             _emit("authorized",user);
                           }
                         });                        
@@ -400,7 +400,7 @@ module.exports = function (RED) {
                 },
 
                 close: function(){
-                  console.log("in close function 2")
+                  //console.log("in close function 2")
 
                   _emit("closed")
                   _emitter.removeAllListeners();  //Makes sure everybody stopped listening to us... //TODO: This may prevent nodes from receiving the "closed" event...
@@ -413,7 +413,7 @@ module.exports = function (RED) {
                
                    this.fbApp.delete()
                     .then(function() {
-                     console.log("App deleted successfully2");
+                     //console.log("App deleted successfully2");
                     });
                    
 
@@ -423,7 +423,7 @@ module.exports = function (RED) {
 
                     //this.fbRef.unauth();
                      this.fbApp.auth().signOut().then(function(){ 
-                      console.log("signed out successfully2");
+                      //console.log("signed out successfully2");
                     }, function(error){
                        console.log("error signing out2");
                     });
@@ -432,7 +432,7 @@ module.exports = function (RED) {
                     this.fbApp.auth().onAuthStateChanged(function(user) {
                           if(user){
                             //var isAnonymous = user.isAnonymous;
-                            console.log("User still logged in2" + user);
+                            //console.log("User still logged in2" + user);
                             
                           }
                           else{
@@ -478,7 +478,7 @@ module.exports = function (RED) {
         },
 
         close: function(configNodeID){
-          console.log("in close 3")
+          //console.log("in close 3")
           var obj = connections[configNodeID]
 
           obj.nodeCount--
@@ -601,7 +601,7 @@ module.exports = function (RED) {
         //this.send({payload: "hi"})  //Also meaningless for Config Nodes
 
         this.on('close', function() {
-          console.log("in close function")
+          //console.log("in close function")
             this.status({fill: "gray", shape: "dot", text:"connection closed"})
             // We need to unbind our callback, or we'll get duplicate messages when we redeploy
             //console.log(this.id + "thats the id")

@@ -45,6 +45,7 @@
     </div>
 
     <!-- //TODO: this node would be formatted nicer if #node-inpu-query-container-div was hidden until a query was added (or already present)... -->
+    
     <!-- Query Dialog Box -->
     <div id="node-input-query-container-overall" class="form-row node-input-query-container-row hidden">
       <!-- <ol id="node-input-query-container" style=" list-style-type:none; margin: 0;"></ol> -->
@@ -468,6 +469,13 @@
               }
               var $tdInput = $('<td/>', {style:"width:150px;"}).appendTo($tbody);
               var $input = $('<input/>', {style:"width:100%;"}).addClass('node-input-query-value input-block-level').appendTo($tdInput);
+
+              $input.typedInput({
+                  default: 'str',
+                  typeField: $("#node-input-payloadType"),
+                  types:['flow','global','msg', 'str']
+              });
+
               var $tdDeleteBtn = $('<td/>').appendTo($tbody);
               var $deleteBtn = $('<a/>').addClass('btn btn-mini').append($('<i/>').addClass('fa fa-remove')).appendTo($tdDeleteBtn);
 
@@ -632,12 +640,19 @@
           if ($('#eventType-select').val() != "shallow_query"){
             var queries = $("#node-input-query-container").children();
             queries.each(function(idx){
-              var r = {name: $(this).find('select').val()}
-              r.value = $(this).find('input').is(':visible') ? $(this).find('input').val() : "";
-              node.queries.push(r);
-            });
+              var r = {
+                name:    $(this).find('select').val(),
+                value:   $(this).find('input').is(':visible') ? $(this).find("input").typedInput('value') : "",
+                valType: $(this).find('input').is(':visible') ? $(this).find("input").typedInput('type') : "",
+              //name: $(this).find('select').val()}
+              //r.value = $(this).find('input').is(':visible') ? $(this).find('input').val() : "";
+              //node.queries.push(r);
+              //});
+            }
+            node.queries.push(r)
+            console.log(r);
+          });
           }
-
           //TODO: BUG: Figure out how to set the initial value on page load... onpaletteadd doesn't give us our actual node, just the template for it so we have to figure out something else clever (perhaps a node-input-inputs would work - it looks like this is how the function node does dynamic outputs?)
           if($('#eventType-select').val() == "shallow_query" || $('#eventType-select').val() == "msg.eventType" || $('#node-input-childpath').val() == "msg.childpath"){
             this.inputs = 1;
