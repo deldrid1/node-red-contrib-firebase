@@ -1,11 +1,8 @@
 {
   "name": "node-red-contrib-firebase",
-  "version": "1.1.1",
+  "version": "1.1.0",
   "description": "Node-Red module for interacting with Firebase",
-  "author": {
-    "name": "Austin Eldridge",
-    "email": "Austin.Eldridge@gmail.com"
-  },
+  "author": "Austin Eldridge <Austin.Eldridge@gmail.com>",
   "contributors": [
     {
       "name": "Austin Eldridge",
@@ -13,10 +10,9 @@
     }
   ],
   "dependencies": {
-    "firebase": "3.1",
+    "firebase": "2.4.1",
     "firebase-token-generator": "^2.0.0",
-    "follow-redirects": "0.0.7",
-    "firebase-admin": "4.0.3"
+    "follow-redirects": "0.0.7"
   },
   "keywords": [
     "node-red",
@@ -29,7 +25,8 @@
       "firebase_once": "firebase/firebase_once.js",
       "firebase_on": "firebase/firebase_on.js",
       "firebase_ondisconnect": "firebase/firebase_ondisconnect.js",
-      "firebase_auth": "firebase/firebase_auth.js"
+      "firebase_auth": "firebase/firebase_auth.js",
+      "firebase_createuser": "firebase/firebase_createuser.js"
     }
   },
   "scripts": {
@@ -37,38 +34,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/deldrid1/node-red-contrib-firebase.git"
+    "url": "https://github.com/deldrid1/node-red-contrib-firebase"
   },
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/deldrid1/node-red-contrib-firebase/issues"
   },
-  "homepage": "https://github.com/deldrid1/node-red-contrib-firebase",
-  "gitHead": "a2e26ca83df20eb3ff112358a34738baa78896b3",
-  "_id": "node-red-contrib-firebase@1.1.1",
-  "_shasum": "37953743f8929445914d0cbf97de904c17af7441",
-  "_from": "node-red-contrib-firebase@latest",
-  "_npmVersion": "2.15.1",
-  "_nodeVersion": "4.4.4",
-  "_npmUser": {
-    "name": "deldrid1",
-    "email": "austin.eldridge@gmail.com"
-  },
-  "dist": {
-    "shasum": "37953743f8929445914d0cbf97de904c17af7441",
-    "tarball": "https://registry.npmjs.org/node-red-contrib-firebase/-/node-red-contrib-firebase-1.1.1.tgz"
-  },
-  "maintainers": [
-    {
-      "name": "deldrid1",
-      "email": "austin.eldridge@gmail.com"
-    }
-  ],
-  "_npmOperationalInternal": {
-    "host": "packages-16-east.internal.npmjs.com",
-    "tmp": "tmp/node-red-contrib-firebase-1.1.1.tgz_1464210403726_0.6204622702207416"
-  },
-  "directories": {},
-  "_resolved": "https://registry.npmjs.org/node-red-contrib-firebase/-/node-red-contrib-firebase-1.1.1.tgz",
-  "readme": "ERROR: No README data found!"
+  "homepage": "https://github.com/deldrid1/node-red-contrib-firebase"
 }
