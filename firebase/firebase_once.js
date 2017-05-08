@@ -167,6 +167,7 @@ module.exports = function(RED) {
         this.fbOnce = function(eventType, msg){
           this.status({fill:"blue",shape:"dot",text:"requesting from firebase..."});
 
+
           //Create the firebase reference to the path
           var ref
           if(msg.childpath){
@@ -175,38 +176,128 @@ module.exports = function(RED) {
             ref = this.config.fbConnection.fbRef
           }
 
+          var bool = false;
+          //set a default for what the query should be ordered by if none is chosen
+          for (var i=0; i<this.queries.length; i+=1) {
 
-          //apply the queries
+            var q = this.queries[i].name;
+            if( q == "orderByKey" || q == "orderByValue" || q =="orderByPriority" || q == "orderByChild"){ 
+              bool = true;
+              }
+          }
+          if(bool == false){
+            q = "orderByKey"
+            ref= ref[q]();
+          }
+
           for (var i=0; i<this.queries.length; i+=1) {
               var query = this.queries[i];
-              var val
 
               switch(query.name){
-                case "orderByKey":
+                case "orderByKey":    
                 case "orderByValue":
                 case "orderByPriority":
-                  ref = ref[query.name]()  //No args //TODO: BUG: Update HTML to hide box for these 3...
-                  break;
-
+                  ref= ref[query.name]();
                 case "orderByChild":
                 case "startAt":
-                case "endAt":
-                case "equalTo":
-                case "limitToFirst":
-                case "limitToLast":
-                  //try to convert to native type for bools, ints, etc.
-                  try{ val = JSON.parse(query.value.toLowerCase() || query.value) }
-                  catch(e){ val = query.value}
+                  if(query.valType == "str"){
+                    ref = ref.startAt(query.value); 
+                  } 
+                  else if (query.valType == "msg") {
 
-                  ref = ref[query.name](val) //TODO: no error checking...
+                    var val = msg[query.value]; 
+                    ref = ref.startAt(val);
+                  }
+                  else if(query.valType == "flow"){
+                    var val =  this.context().flow.get(query.value);
+                    ref = ref.startAt(val);
+                    
+                  }
+                  else if(query.valType == "global"){
+                    var val =  this.context().global.get(query.value);
+                    ref = ref.startAt(val);
+                  }
                   break;
-
+                case "endAt":
+                  if(query.valType == "str"){
+                    ref = ref.endAt(query.value);
+                  } 
+                  else if (query.valType == "msg") {
+                    var val = msg[query.value]; 
+                    ref = ref.endAt(val);
+                  }
+                  else if(query.valType == "flow"){
+                    var val =  this.context().flow.get(query.value);
+                    ref = ref.endAt(val);
+                    
+                  }
+                  else if(query.valType == "global"){
+                    var val =  this.context().global.get(query.value);
+                    ref = ref.endAt(val);
+                  }
+                  break;
+                case "equalTo":
+                  if(query.valType == "str"){
+                    ref = ref.equalTo(query.value); 
+                  }       
+                  else if (query.valType == "msg") { 
+                    var val = msg[query.value]; 
+                    ref = ref.equalTo(val);
+                  }
+                  else if(query.valType == "flow"){
+                    var val =  this.context().flow.get(query.value);
+                    ref = ref.equalTo(val);
+                  }
+                  else if(query.valType == "global")
+                    {
+                    var val =  this.context().global.get(query.value);
+                    ref = ref.equalTo(val);
+                  }
+                    break;  
+                case "limitToFirst":
+                  if(query.valType == "str"){
+                    query.value = parseInt(query.value);
+                    ref = ref.limitToFirst(query.value); 
+                  }       
+                  else if (query.valType == "msg") { 
+                    var val = msg[query.value]; 
+                    val = parseInt(val);
+                    ref = ref.limitToFirst(val); //val 
+                  }
+                  else if(query.valType == "flow"){
+                    var val =  this.context().flow.get(query.value);
+                    ref = ref.limitToFirst(val);
+                    
+                  }
+                  else if(query.valType == "global"){
+                    var val =  this.context().global.get(query.value);
+                    ref = ref.limitToFirst(val);
+                  }
+                  break;
+                case "limitToLast":
+                  if(query.valType == "str"){
+                    query.value = parseInt(query.value);
+                    ref = ref.limitToLast(query.value); 
+                  }       
+                  else if (query.valType == "msg") { 
+                    var val = msg[query.value]; 
+                    val = parseInt(val);
+                    ref = ref.limitToLast(val); 
+                  }
+                  else if(query.valType == "flow"){
+                    var val =  this.context().flow.get(query.value);
+                    ref = ref.limitToLast(val);
+                    
+                  }
+                  else if(query.valType == "global"){
+                    var val =  this.context().global.get(query.value);
+                    ref = ref.limitToLast(val);
+                  }
+                  break;
                 default:
                   //TODO:
                   break;
               }
-
-
           }
 
           ref.once(eventType, this.onFBData, this.onFBError, this);

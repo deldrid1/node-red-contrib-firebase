@@ -80,20 +80,8 @@ var bool;
             if(this.eventType.search("child") != -1 && getPushIdTimestamp(msg.key))  //We probably have a pushID that we can decode
               msg.pushIDTimestamp = getPushIdTimestamp(msg.key)
 
-            
             this.send(msg);
-            /*
-            if(bool == true){
-                if(msg.key >  startAtvar){// ){"-KgFgNWmpTohyWpi3pp5"){
-               //if(msg.key == "-KPJXqkAamtNrCKxFc_C"){
-                bool = false;
-                this.send(msg);
-              }
-            }
-            else{
-              this.send(msg);
-            }
-            */
+
             setTimeout(this.setStatus, 500)  //Reset back to the Firebase status after 0.5 seconds
         }.bind(this);
 
@@ -124,9 +112,23 @@ var bool;
             ref = this.config.fbConnection.fbRef
           }
 
+          var bool = false;
+          //set a default for what the query should be ordered by if none is chosen
+          for (var i=0; i<this.queries.length; i+=1) {
+
+            var q = this.queries[i].name;
+            if( q == "orderByKey" || q == "orderByValue" || q =="orderByPriority" || q == "orderByChild"){ 
+              bool = true;
+              }
+          }
+          if(bool == false){
+            q = "orderByKey"
+            ref= ref[q]();
+          }
+
           for (var i=0; i<this.queries.length; i+=1) {
               var query = this.queries[i];
-              if(this.queries.length == 1){ ref= ref["orderByKey"]();} //setting a default orderBy
+
               switch(query.name){
                 case "orderByKey":    
                 case "orderByValue":
@@ -135,18 +137,37 @@ var bool;
                 case "orderByChild":
                 case "startAt":
                   if(query.valType == "str"){
-                    ref = ref.startAt(query.value); /
+                    ref = ref.startAt(query.value); 
                   } 
                   else if (query.valType == "msg") {
-                    var val = this.msg[query.value]; //gets value for this.msg.whatevs.. aka "hi"
+                    var val = this.msg[query.value]; 
+                    ref = ref.startAt(val);
+                  }
+                  else if(query.valType == "flow"){
+                    var val =  this.context().flow.get(query.value);
+                    ref = ref.startAt(val);
+                    
+                  }
+                  else if(query.valType == "global"){
+                    var val =  this.context().global.get(query.value);
                     ref = ref.startAt(val);
                   }
                   break;
                 case "endAt":
                   if(query.valType == "str"){
-                    ref = ref.endAt(query.value); 
+                    ref = ref.endAt(query.value);
+                  } 
                   else if (query.valType == "msg") {
                     var val = this.msg[query.value]; 
+                    ref = ref.endAt(val);
+                  }
+                  else if(query.valType == "flow"){
+                    var val =  this.context().flow.get(query.value);
+                    ref = ref.endAt(val);
+                    
+                  }
+                  else if(query.valType == "global"){
+                    var val =  this.context().global.get(query.value);
                     ref = ref.endAt(val);
                   }
                   break;
@@ -158,37 +179,54 @@ var bool;
                     var val = this.msg[query.value]; 
                     ref = ref.equalTo(val);
                   }
-                    /* sas TODO figure out how to set those like this.msg ... do this.flow
-                    else if (query.valType == "flow") { //elseif  == "flow" || "global" -- cahnge this.msg to this.query.valType
-                      var val = this.flow[query.value]; //gets value for this.msg.whatevs.. aka "hi"
-                      ref = ref.orderByKey().equalTo(val);
-                    }
-                    else if (query.valType == "global") { //elseif  == "flow" || "global" -- cahnge this.msg to this.query.valType
-                      var val = this.global[query.value]; //gets value for this.msg.whatevs.. aka "hi"
-                      ref = ref.orderByKey().equalTo(val);
-                    }
-                    */
+                  else if(query.valType == "flow"){
+                    var val =  this.context().flow.get(query.value);
+                    ref = ref.equalTo(val);
+                  }
+                  else if(query.valType == "global")
+                    {
+                    var val =  this.context().global.get(query.value);
+                    ref = ref.equalTo(val);
+                  }
                     break;  
                 case "limitToFirst":
                   if(query.valType == "str"){
                     query.value = parseInt(query.value);
-                    ref = ref.limitToFirst(query.value); //"30000c2a690bdc61" "m8Jp_M7LASc0"
+                    ref = ref.limitToFirst(query.value); 
                   }       
-                  else if (query.valType == "msg") { //elseif  == "flow" || "global" -- cahnge this.msg to this.query.valType
-                    var val = this.msg[query.value]; //gets value for this.msg.whatevs.. aka "hi"
+                  else if (query.valType == "msg") { 
+                    var val = this.msg[query.value]; 
                     val = parseInt(val);
                     ref = ref.limitToFirst(val); //val 
+                  }
+                  else if(query.valType == "flow"){
+                    var val =  this.context().flow.get(query.value);
+                    ref = ref.limitToFirst(val);
+                    
+                  }
+                  else if(query.valType == "global"){
+                    var val =  this.context().global.get(query.value);
+                    ref = ref.limitToFirst(val);
                   }
                   break;
                 case "limitToLast":
                   if(query.valType == "str"){
                     query.value = parseInt(query.value);
-                    ref = ref.limitToLast(query.value); //"30000c2a690bdc61" "m8Jp_M7LASc0"
+                    ref = ref.limitToLast(query.value); 
                   }       
-                  else if (query.valType == "msg") { //elseif  == "flow" || "global" -- cahnge this.msg to this.query.valType
-                    var val = this.msg[query.value]; //gets value for this.msg.whatevs.. aka "hi"
+                  else if (query.valType == "msg") { 
+                    var val = this.msg[query.value]; 
                     val = parseInt(val);
-                    ref = ref.limitToLast(val); //val 
+                    ref = ref.limitToLast(val); 
+                  }
+                  else if(query.valType == "flow"){
+                    var val =  this.context().flow.get(query.value);
+                    ref = ref.limitToLast(val);
+                    
+                  }
+                  else if(query.valType == "global"){
+                    var val =  this.context().global.get(query.value);
+                    ref = ref.limitToLast(val);
                   }
                   break;
                 default:
@@ -200,6 +238,7 @@ var bool;
             //console.log("inside")
             //console.log("event ", this.msg.eventType)
            } 
+  
           ref.on(this.eventType == "msg.eventType" ? this.msg.eventType : this.eventType, this.onFBValue, this.onFBError, this);
           //ref.orderbyKey().equalTo("hi").on
           //ref.on("child_added", function(snapshot) {
