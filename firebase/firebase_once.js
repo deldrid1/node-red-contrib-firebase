@@ -28,6 +28,8 @@ module.exports = function(RED) {
         this.eventType = n.eventType;
         this.queries = n.queries;
         this.repeatifnull = n.repeatifnull;
+        this.childtype = n.childtype;
+        this.childvalue = n.childvalue;
 
         this.activeRequests = [];
         this.ready = false;
@@ -114,13 +116,31 @@ module.exports = function(RED) {
             return;
           }
 
+          var childpath
           //Parse out msg.childpath
-          var childpath = this.childpath
+          if(this.childtype == "str"){
+            childpath = this.childpath
+          }
+          else if(this.childtype == "msg"){
+            var childvalue = this.childvalue;
+            childpath = msg[childvalue];
+          }
+          else if(this.childtype == "flow"){
+            var childvalue = this.childvalue;
+            childpath = this.context().flow.get(childvalue)
+          }
+          else if(this.childtype == "global"){
+            var childvalue = this.childvalue;
+            childpath = this.context().global.get(childvalue)
+          }
+/*
+/*
           if(childpath == "msg.childpath"){
             if("childpath" in msg){
               childpath = msg.childpath
             }
           }
+*/
           childpath = childpath || "/"
 
           msg.eventType = eventType;

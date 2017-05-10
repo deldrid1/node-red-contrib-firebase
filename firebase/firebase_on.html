@@ -7,7 +7,7 @@
 
     <div class="form-row">
         <label for="node-input-childpath"><i class="fa fa-sitemap"></i> Child Path</label>
-        <input class="input-append-left" type="text" id="node-input-childpath" placeholder="path-to/the/data">
+        <input class="input-append-left" type="text" id="node-input-childpath" placeholder="path-to/the/data"">
     </div>
 
     <div class="form-row">
@@ -164,7 +164,9 @@
             childpath: {value: '', required: false},
             atStart: {value: true, required: true},
             eventType: {value: "value", required: true},
-			queries: {value:[], required: true}
+			      queries: {value:[], required: true},
+            childtype: {value: '', required: false},
+            childvalue: {value: '', required: false}
         },
         color: '#ffb37a',
         inputs:0,               // set the number of inputs - only 0 or 1
@@ -201,6 +203,9 @@
           $("#eventType-select").val($("#node-input-eventType").val())
           $('#eventType-select').trigger('change');
 
+          $("#node-input-childpath").typedInput({default:this.propertyType||'str',types:['str','msg','flow','global']});
+
+/*sas
           //Set up autocomplete for Childpath field
           var defaultChildpathValues = [
             "msg.childpath",
@@ -210,7 +215,7 @@
             source: defaultChildpathValues,
             minLength: 0
           });
-
+*/
           //Most of this code is adapted from the switch node - https://raw.githubusercontent.com/node-red/node-red/master/nodes/core/logic/10-switch.html
           var operatorOptions = {
             "orderByChild":{
@@ -470,13 +475,6 @@
               var $tdInput = $('<td/>', {style:"width:150px;"}).appendTo($tbody);
               var $input = $('<input/>', {style:"width:100%;"}).addClass('node-input-query-value input-block-level').appendTo($tdInput);
 
-              $input.typedInput({
-                  default: 'str',
-                  typeField: $("#node-input-payloadType"),
-                  types:['flow','global','msg', 'str']
-              });
-
-              var $tdDeleteBtn = $('<td/>').appendTo($tbody);
               var $deleteBtn = $('<a/>').addClass('btn btn-mini').append($('<i/>').addClass('fa fa-remove')).appendTo($tdDeleteBtn);
 
               //Set current operator for this query
@@ -632,6 +630,9 @@
         oneditsave: function() {
           var node = this;
 
+          node.childtype = $("#node-input-childpath").typedInput('type');
+          node.childvalue = $("#node-input-childpath").typedInput('value');
+          
           //Save Path [this is automagically taken care of by NR]
           //Save Event type [this is automagically taken care of by NR]
 

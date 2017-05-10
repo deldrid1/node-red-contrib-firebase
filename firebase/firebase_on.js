@@ -32,6 +32,8 @@ var bool;
         this.atStart = n.atStart;
         this.eventType = n.eventType;
 		    this.queries = n.queries
+        this.childtype = n.childtype;
+        this.childvalue = n.childvalue;
 
         this.ready = false;
         this.ignoreFirst = this.atStart;
@@ -72,7 +74,7 @@ var bool;
             msg.key = snapshot.key;
 
             msg.payload = snapshot.val();
-            //console.log("MMMM :",msg.key);
+   
             if(snapshot.getPriority())
               msg.priority = snapshot.getPriority();
             if(prevChildName)
@@ -105,9 +107,29 @@ var bool;
           //Create the firebase reference to the path
           var ref
 
+          var childpath;
+          var childpath
+          //Parse out msg.childpath
+          if(this.childtype == "str"){
+            childpath = this.childpath
+          }
+          else if(this.childtype == "msg"){
+            var childvalue = this.childvalue;
+            childpath = this.msg[childvalue];
+          }
+          else if(this.childtype == "flow"){
+            var childvalue = this.childvalue;
+            childpath = this.context().flow.get(childvalue)
+          }
+          else if(this.childtype == "global"){
+            var childvalue = this.childvalue;
+            childpath = this.context().global.get(childvalue)
+          }
+
           
           if(this.childpath){
-            ref = this.config.fbConnection.fbRef.child(this.childpath  == "msg.childpath" ? this.msg.childpath : this.childpath)  //Decide if we are using our input msg object or the string we were configured with
+            //ref = this.config.fbConnection.fbRef.child(this.childpath  == "msg.childpath" ? this.msg.childpath : this.childpath)  //Decide if we are using our input msg object or the string we were configured with
+            ref = this.config.fbConnection.fbRef.child(childpath)  
           } else {
             ref = this.config.fbConnection.fbRef
           }
@@ -392,7 +414,7 @@ var bool;
           msg.childpath = childpath || "/";
 
           this.msg = msg;
-          console.log(msg.childpath)
+        
 
           //if we are authorized
           //if we have listerners

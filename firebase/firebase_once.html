@@ -7,8 +7,10 @@
 
     <div class="form-row">
         <label for="node-input-childpath"><i class="fa fa-sitemap"></i> Child Path</label>
-        <input class="input-append-left" type="text" id="node-input-childpath" placeholder="path-to/the/data">
+        <input class="input-append-left" type="text" id="node-input-childpath" placeholder="path-to/the/data"">
     </div>
+
+
 
     <div class="form-row">
       <label for="eventType-select"><i class="fa fa-terminal"></i> Event Type</label>
@@ -159,6 +161,8 @@
             repeatifnull: {value: false, required: true},
             eventType: {value: "value", required: true},
             queries: {value:[], required: true},
+            childtype: {value: '', required: false},
+            childvalue: {value: '', required: false}
         },
         color: '#ffb37a',
         inputs:1,               // set the number of inputs - only 0 or 1
@@ -196,15 +200,18 @@
           $('#eventType-select').trigger('change');
 
           //Set up autocomplete for Childpath field
-          var defaultChildpathValues = [
+          /*var defaultChildpathValues = [
             "msg.childpath",
           ];
+          */
 
+          $("#node-input-childpath").typedInput({default:this.propertyType||'str',types:['str','msg','flow','global']});
+/*
           $('#node-input-childpath').autocomplete({
             source: defaultChildpathValues,
             minLength: 0
           });
-
+*/
           //Most of this code is adapted from the switch node - https://raw.githubusercontent.com/node-red/node-red/master/nodes/core/logic/10-switch.html
           var operatorOptions = {
             "orderByChild":{
@@ -657,7 +664,13 @@
         },
 
         oneditsave: function() {
+
+       
           var node = this;
+
+          node.childtype = $("#node-input-childpath").typedInput('type');
+          node.childvalue = $("#node-input-childpath").typedInput('value');
+        
 
           //Save Path [this is automagically taken care of by NR]
           //Save Event type [this is automagically taken care of by NR]
