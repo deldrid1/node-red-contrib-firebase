@@ -9,8 +9,9 @@ module.exports = function(RED) {
       this.config = RED.nodes.getNode(n.firebaseconfig);
       this.completeInterval = null;
 
-      this.createUser = function(fbRef, email, password, results) {
-        fbRef.createUser({ email: email, password: password }, function(error, userData) {
+      this.createUser = function(fbAdmin, email, password, results) {
+        console.log("email inside", email)
+        fbAdmin.auth().createUserWithEmailAndPassword(email,password).then(function(error, userData) {
           if (error) {
             switch (error.code) {
               case "EMAIL_TAKEN":
@@ -48,7 +49,11 @@ module.exports = function(RED) {
         var results = [];
 
         for (var i = 0; i < users.length; i++) {
-          this.createUser(this.config.fbConnection.fbRef, users[i].email, users[i].password, results);
+          var user = users[i];
+          console.log(user);
+          var email = String(user.email)
+          console.log("usrrr ",email);
+          this.createUser(this.config.fbConnection.fbApp, String(user.email), String(user.password), results);
         }
 
         clearInterval(this.completeInterval);
