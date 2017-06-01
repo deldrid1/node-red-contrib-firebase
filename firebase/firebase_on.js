@@ -30,6 +30,7 @@ var bool;
 
         this.config = RED.nodes.getNode(n.firebaseconfig);
         this.childpath = n.childpath;
+        this.event = n.event;
         this.atStart = n.atStart;
         this.eventType = n.eventType;
 		    this.queries = n.queries
@@ -37,11 +38,13 @@ var bool;
         this.childvalue = n.childvalue;
         this.eventTypetype = n.eventTypetype;
         this.eventTypevalue = n.eventTypevalue;
+        this.querytype = n.querytype; 
 
         console.log(" childtype ",this.childtype);
         console.log(" childvalue ",this.childvalue);
         console.log(" here eventyypeype ",this.eventTypetype);
         console.log(" here eventyypeype ",this.eventTypevalue);
+       // console.log("childpath thisthing", this.childpath)
         this.ready = false;
         this.ignoreFirst = this.atStart;
         this.authorized = false;
@@ -58,7 +61,7 @@ var bool;
           "value": true,
           "child_added": true,
           "child_changed": true,
-          "chiled_removed": true,
+          "child_removed": true,
           "child_moved": true,
           "shallow_query": true
         }
@@ -115,7 +118,6 @@ var bool;
           var ref
 
           var childpath;
-          var childpath
           //Parse out msg.childpath
           if(this.childtype == "str"){
             childpath = this.childpath
@@ -131,6 +133,16 @@ var bool;
           else if(this.childtype == "global"){
             var childvalue = this.childvalue;
             childpath = this.context().global.get(childvalue)
+          }
+          else if(this.childtype == "jsonata"){
+            try{
+                var childvalue = this.childvalue;
+                childpath = jsonata(childvalue);
+                console.log("childpath is ", childpath);
+                }
+            catch(e){
+                      console.log("ERROR WITH JSONATA");
+                    }
           }
 
           
@@ -240,8 +252,10 @@ var bool;
                     }
                   }
                   else if(query.valType == "re"){ //gets input but need to test 
+                    
                     console.log(query.value);
-                    var fromRE = query.value.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+                    //var fromRE = query.value.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+                    /*
                     try {
                     fromRE = new RegExp(fromRE, "g");
                     } catch (e) {
@@ -249,6 +263,7 @@ var bool;
                     node.error(RED._("change.errors.invalid-from",{error:e.message}));
                     return;
                     }
+                    */
                   }
                   else if(query.valType == "date"){ //doesnt work 
                     console.log("in date")
@@ -314,16 +329,12 @@ var bool;
                   break;
               }
           }
-
-          //eventType typed input 
-          console.log("eventType",this.eventTypetype);
-          console.log("eventvalue",this.eventTypevalue);
           
           var event;
-          console.log("before " ,this.eventType); //not getting here
+          console.log("comeback here " ,this.eventType); //not getting here
 
           //BUG WITH VALUE NOT BEING STORED - maybe something with it being hidden and unhidden?
-
+/*
           if(this.eventType =="msg.eventType"){ //sas change name
             console.log("inside!")
             if(this.eventTypetype == "msg"){
@@ -340,7 +351,9 @@ var bool;
 
             }
            } 
-    
+  */    
+          //do the eventtypes written in also have to be from the valid event types?
+
           //change this.msg.eventType to event set
           ref.on(this.eventType == "msg.eventType" ? this.msg.eventType : this.eventType, this.onFBValue, this.onFBError, this);
           //ref.orderbyKey().equalTo("hi").on
@@ -466,14 +479,33 @@ var bool;
 
         this.on('input', function(msg) {
           var eventType
+        
           if(this.eventType == "msg.eventType"){
-            if("eventType" in msg){
-              eventType = msg.eventType
-            } else {
+
+            if(this.eventTypetype == "msg"){
+            
+              eventType = msg[this.eventTypevalue];
+
+            }
+            else if(this.eventTypetype =="flow"){
+             
+              eventType =  this.context().flow.get(this.eventTypevalue);
+
+            }
+            else if(this.eventTypetype =="global"){
+              eventType =  this.context().global.get(this.eventTypevalue);
+ 
+            }
+            else if(this.eventTypetype =="str"){
+              eventType =  this.eventTypevalue
+
+            }
+            else {
               this.error("Expected \"eventType\" property in msg object", msg)
               return;
-            }
-          } else {
+            } 
+          } 
+          else {
             eventType = this.eventType
           }
 
@@ -486,7 +518,7 @@ var bool;
           //Parse out msg.childpath
           if(this.childtype == "str"){
             childpath = this.childpath
-            console.log("childdpath is " ,childpath)
+            //console.log("childdpath is " ,childpath)
           }
           else if(this.childtype == "msg"){
             var childvalue = this.childvalue;

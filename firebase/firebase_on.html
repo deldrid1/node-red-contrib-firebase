@@ -176,13 +176,15 @@
             name: {value:''},   //  along with default values.
             firebaseconfig:  {type:'firebase config',required:true},
             childpath: {value: '', required: false},
+            event : {value: '',required: false},
             atStart: {value: true, required: true},
             eventType: {value: "value", required: true},
 			      queries: {value:[], required: true},
             childtype: {value: '', required: false},
             childvalue: {value: '', required: false},
             eventTypetype:{value: '', required: false},
-            eventTypevalue : {value: '', required: false}
+            eventTypevalue : {value: '', required: false},
+            querytype: {value:'',required: false}
         },
         color: '#ffb37a',
         inputs:0,               // set the number of inputs - only 0 or 1
@@ -222,7 +224,11 @@
           $('#eventType-select').trigger('change');
 
           $("#node-input-childpath").typedInput({default:node.childtype ,types:['str','msg','flow','global','jsonata']});
-          $("#node-input-event").typedInput({default:node.eventTypetype,types:['str','msg','flow','global']});
+          $("#node-input-event").typedInput({default: node.eventTypetype ,types:['str','msg','flow','global']});
+
+          addInputToUI($("#node-input-event"));
+
+          //$("#node-input-event").typedInput('width', '200px'); //changes width of the field not of the inputtype
                      
 /*sas
           //Set up autocomplete for Childpath field
@@ -341,6 +347,7 @@
 
               //$('#eventType-typedInput').show();
               $('#eventType-typedInput-container').show();
+              addInputToUI($("#node-input-event"));
              }
               else { //enable/show query paramters window and button
                  $('#eventType-typedInput-container').fadeOut(300),function(){
@@ -431,7 +438,7 @@
 
             function addInputToUI($input){
               if ($input.not(':visible')){
-                //console.log("input not visible");
+              
 
                 //Check if input already has text
                 if ($input.val() == null || $input.val().length == 0){
@@ -507,11 +514,15 @@
               var $tdInput = $('<td/>', {style:"width:150px;"}).appendTo($tbody);
               var $input = $('<input/>', {style:"width:100%;"}).addClass('node-input-query-value input-block-level').appendTo($tdInput);
 
+ 
                $input.typedInput({
-                  default: 'msg',//node.payloadtype,
+                  default: node.querytype,//node.payloadtype,
                  // typeField: $("#node-input-payloadType"),
-                  types:['flow','global','msg', 'str','jsonata','json','num','bool','re','date']
+                  types:['str','global','msg', 'flow','jsonata','json','num','bool','re','date']
               });
+
+
+               
 
               var $tdDeleteBtn = $('<td/>').appendTo($tbody);
               var $deleteBtn = $('<a/>').addClass('btn btn-mini').append($('<i/>').addClass('fa fa-remove')).appendTo($tdDeleteBtn);
@@ -681,12 +692,12 @@
           node.childtype = $("#node-input-childpath").typedInput('type');
           node.childvalue = $("#node-input-childpath").typedInput('value');
 
+
+
           node.eventTypetype = $("#node-input-event").typedInput('type');
           node.eventTypevalue = $("#node-input-event").typedInput('value');
 
-        //need to figure out how to get value for payloadtype (the query parameters)
           
-          $("#node-input-childpath").typedInput('type',node.childtype);
          
           
           //Save Path [this is automagically taken care of by NR]
@@ -707,7 +718,7 @@
               //});
             }
             node.queries.push(r)
-    
+            node.querytype = $(this).find('input').is(':visible') ? $(this).find("input").typedInput('type') : "";
           });
           }
           //TODO: BUG: Figure out how to set the initial value on page load... onpaletteadd doesn't give us our actual node, just the template for it so we have to figure out something else clever (perhaps a node-input-inputs would work - it looks like this is how the function node does dynamic outputs?)

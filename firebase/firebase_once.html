@@ -162,7 +162,8 @@
             eventType: {value: "value", required: true},
             queries: {value:[], required: true},
             childtype: {value: '', required: false},
-            childvalue: {value: '', required: false}
+            childvalue: {value: '', required: false},
+            querytype: {value:'',required: false}
         },
         color: '#ffb37a',
         inputs:1,               // set the number of inputs - only 0 or 1
@@ -505,7 +506,8 @@
               
               //heree
               $input.typedInput({
-                  default: 'str',
+                  default:  node.querytype,
+                  //default: 'str',
                   typeField: $("#node-input-payloadType"),
                   types:['flow','global','msg', 'str']
               });
@@ -689,6 +691,7 @@
               }
 
               node.queries.push(r);
+              node.querytype = $(this).find('input').is(':visible') ? $(this).find("input").typedInput('type') : "";
             });
           }
         }

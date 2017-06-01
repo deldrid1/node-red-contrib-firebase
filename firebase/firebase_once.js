@@ -118,6 +118,7 @@ module.exports = function(RED) {
 
           var childpath
           //Parse out msg.childpath
+          
           if(this.childtype == "str"){
             childpath = this.childpath
           }
