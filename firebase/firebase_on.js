@@ -1,6 +1,7 @@
 module.exports = function(RED) {
     'use strict';
 
+    var jsonata = require("jsonata");
     var startAtvar;
     var equalTovar;
     var bool;
@@ -34,7 +35,13 @@ var bool;
 		    this.queries = n.queries
         this.childtype = n.childtype;
         this.childvalue = n.childvalue;
+        this.eventTypetype = n.eventTypetype;
+        this.eventTypevalue = n.eventTypevalue;
 
+        console.log(" childtype ",this.childtype);
+        console.log(" childvalue ",this.childvalue);
+        console.log(" here eventyypeype ",this.eventTypetype);
+        console.log(" here eventyypeype ",this.eventTypevalue);
         this.ready = false;
         this.ignoreFirst = this.atStart;
         this.authorized = false;
@@ -150,6 +157,8 @@ var bool;
 
           for (var i=0; i<this.queries.length; i+=1) {
               var query = this.queries[i];
+ console.log("query type " , query.valType);
+  console.log("query val ", query.value);
 
               switch(query.name){
                 case "orderByKey":    
@@ -205,12 +214,61 @@ var bool;
                     var val =  this.context().flow.get(query.value);
                     ref = ref.equalTo(val);
                   }
-                  else if(query.valType == "global")
-                    {
+                  else if(query.valType == "global"){
                     var val =  this.context().global.get(query.value);
                     ref = ref.equalTo(val);
                   }
-                    break;  
+                  else if(query.valType == "num"){
+                    var val = parseInt(query.value);
+                    ref = ref.equalTo(val);
+                  }
+                  else if(query.valType == "bool"){ //its empty
+                    var val = query.value;
+                    console.log("in booll ",  query.value);
+                    //ref= ref.equalTo(val);
+                  }
+                  else if(query.valType == "json"){ //not valid json .. find valid json to test with
+                    console.log("in json " ,query.value);
+                    try {
+                    // check this is parsable JSON
+                      var val = JSON.parse(query.value);
+                      ref = ref.equalTo(val);
+                    } catch(e2) {
+                    var valid = false;
+                    console.log("not valid json");
+                    //this.error(RED._("change.errors.invalid-json"));
+                    }
+                  }
+                  else if(query.valType == "re"){ //gets input but need to test 
+                    console.log(query.value);
+                    var fromRE = query.value.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+                    try {
+                    fromRE = new RegExp(fromRE, "g");
+                    } catch (e) {
+                    valid = false;
+                    node.error(RED._("change.errors.invalid-from",{error:e.message}));
+                    return;
+                    }
+                  }
+                  else if(query.valType == "date"){ //doesnt work 
+                    console.log("in date")
+                    var val = Date.now();
+                    console.log(query.value);
+                    ref = ref.equalTo(val);
+                  }
+
+                  else if(query.valType == "jsonata"){ //test w/jsonata string
+                    try{
+                      var val = jsonata(query.value);
+                      ref = ref.equalTo(val);
+                    }
+                    catch(e){
+                      console.log("ERROR WITH JSONATA");
+                    }
+                    //value = query.value.evaluate({msg:msg}); //look into evaluate  https://github.com/node-red/node-red/blob/master/nodes/core/logic/15-change.js#L126
+                  }
+               
+                  break;  
                 case "limitToFirst":
                   if(query.valType == "str"){
                     query.value = parseInt(query.value);
@@ -256,11 +314,34 @@ var bool;
                   break;
               }
           }
-          if(this.eventType =="msg.eventType"){
-            //console.log("inside")
-            //console.log("event ", this.msg.eventType)
+
+          //eventType typed input 
+          console.log("eventType",this.eventTypetype);
+          console.log("eventvalue",this.eventTypevalue);
+          
+          var event;
+          console.log("before " ,this.eventType); //not getting here
+
+          //BUG WITH VALUE NOT BEING STORED - maybe something with it being hidden and unhidden?
+
+          if(this.eventType =="msg.eventType"){ //sas change name
+            console.log("inside!")
+            if(this.eventTypetype == "msg"){
+              event = this.msg[this.eventTypevalue];
+              console.log("event is ", event)
+            }
+            else if(this.eventTypetype =="flow"){
+
+            }
+            else if(this.eventTypetype =="global"){
+
+            }
+            else if(this.eventTypetype =="str"){
+
+            }
            } 
-  
+    
+          //change this.msg.eventType to event set
           ref.on(this.eventType == "msg.eventType" ? this.msg.eventType : this.eventType, this.onFBValue, this.onFBError, this);
           //ref.orderbyKey().equalTo("hi").on
           //ref.on("child_added", function(snapshot) {
@@ -401,8 +482,26 @@ var bool;
             return;
           }
 
+             var childpath
           //Parse out msg.childpath
-          var childpath
+          if(this.childtype == "str"){
+            childpath = this.childpath
+            console.log("childdpath is " ,childpath)
+          }
+          else if(this.childtype == "msg"){
+            var childvalue = this.childvalue;
+            childpath = msg[childvalue];
+          }
+          else if(this.childtype == "flow"){
+            var childvalue = this.childvalue;
+            childpath = this.context().flow.get(childvalue)
+          }
+          else if(this.childtype == "global"){
+            var childvalue = this.childvalue;
+            childpath = this.context().global.get(childvalue)
+          }
+
+          //Parse out msg.childpath
           if(this.childpath == "msg.childpath"){
             if("childpath" in msg){
               childpath = msg.childpath

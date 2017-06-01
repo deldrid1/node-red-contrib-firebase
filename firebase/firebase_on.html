@@ -5,12 +5,16 @@
         <input type="text" id="node-input-firebaseconfig">
     </div>
 
+
     <div class="form-row">
         <label for="node-input-childpath"><i class="fa fa-sitemap"></i> Child Path</label>
         <input class="input-append-left" type="text" id="node-input-childpath" placeholder="path-to/the/data"">
+
     </div>
 
     <div class="form-row">
+
+    <div id="container" >
       <label for="eventType-select"><i class="fa fa-terminal"></i> Event Type</label>
       .on("
       <select id="eventType-select" style="width: 31%">
@@ -22,9 +26,19 @@
           <option value="shallow_query">shallow_query</option>
           <option value="msg.eventType">[msg.eventType]</option>
       </select>
+
+     <div id = "eventType-typedInput-container" class="hidden">
+        <label for="node-input-event" ><i class="hidden"></i> </label>
+        <input class="input-append-left" type="text" id="node-input-event" style="width: 41%">
+        <a  class="btn btn-mini" id="node-input-back" style="margin-top: 4px;"><i class="fa fa-arrow-left"></i>Back</a>
+    </div>
+
+
       ")
       <input type="hidden" id="node-input-eventType">
+  </div>
     </div>
+   
 
     <div class="form-row" id="node-atStart">
         <label>&nbsp;</label>
@@ -166,7 +180,9 @@
             eventType: {value: "value", required: true},
 			      queries: {value:[], required: true},
             childtype: {value: '', required: false},
-            childvalue: {value: '', required: false}
+            childvalue: {value: '', required: false},
+            eventTypetype:{value: '', required: false},
+            eventTypevalue : {value: '', required: false}
         },
         color: '#ffb37a',
         inputs:0,               // set the number of inputs - only 0 or 1
@@ -195,6 +211,8 @@
 
         oneditprepare: function() { //TODO: there is all kinds of validation that needs to be done to ensure only proper combinations of things are allowed...
           //Update the eventType node-red property when the value is changed...
+       var node = this;
+
           $('#eventType-select').change(function () {
               $("#node-input-eventType").val($(this).find('option:selected').val())
           });
@@ -203,8 +221,9 @@
           $("#eventType-select").val($("#node-input-eventType").val())
           $('#eventType-select').trigger('change');
 
-          $("#node-input-childpath").typedInput({default:this.propertyType||'str',types:['str','msg','flow','global']});
-
+          $("#node-input-childpath").typedInput({default:node.childtype ,types:['str','msg','flow','global','jsonata']});
+          $("#node-input-event").typedInput({default:node.eventTypetype,types:['str','msg','flow','global']});
+                     
 /*sas
           //Set up autocomplete for Childpath field
           var defaultChildpathValues = [
@@ -220,7 +239,7 @@
           var operatorOptions = {
             "orderByChild":{
               inputAllowed: true,
-              inputRequired: true,
+              inputRequired: false,
               cannotBeCombinedWith: [
                 "orderByChild",
                 "orderByKey",
@@ -257,7 +276,7 @@
             },
             "startAt":{
               inputAllowed: true,
-              inputRequired: true,
+              inputRequired: false,
               cannotBeCombinedWith: [
                 "startAt",
                 "equalTo"
@@ -265,7 +284,7 @@
             },
             "endAt":{
               inputAllowed: true,
-              inputRequired: true,
+              inputRequired: false,
               cannotBeCombinedWith: [
                 "endAt",
                 "equalTo"
@@ -273,7 +292,7 @@
             },
             "equalTo":{
               inputAllowed: true,
-              inputRequired: true,
+              inputRequired: false,
               cannotBeCombinedWith: [
                 "startAt",
                 "endAt"
@@ -281,14 +300,14 @@
             },
             "limitToFirst":{
               inputAllowed: true,
-              inputRequired: true,
+              inputRequired: false,
               cannotBeCombinedWith: [
                 "limitToFirst"
               ]
             },
             "limitToLast":{
               inputAllowed: true,
-              inputRequired: true,
+              inputRequired: false,
               cannotBeCombinedWith: [
                 "limitToLast"
               ]
@@ -316,15 +335,28 @@
                   $('#eventType-select-info-container').show();
                 });
                 $('#node-dialog-ok').prop('disabled', false);
-              } else { //enable/show query paramters window and button
+              } 
+             else if($(this).val() == "msg.eventType"){
+              $('#eventType-select').fadeOut(300);
+
+              //$('#eventType-typedInput').show();
+              $('#eventType-typedInput-container').show();
+             }
+              else { //enable/show query paramters window and button
+                 $('#eventType-typedInput-container').fadeOut(300),function(){
+                   $('#eventType-select').fadeIn(300);
+                 }
+    
                 $('#eventType-select-info-container').fadeOut(300, function(){
                   $('#query-parameters-name-container').fadeIn(300)
                   var queries = $('#node-input-query-container').children();
                   if (queries.length > 0) $('#node-input-query-container-overall').fadeIn(300)
                   var selectsValid = checkSelectsValid();
-                  var inputsNotEmpty = checkInputsNotEmpty();
+                  //var inputsNotEmpty = checkInputsNotEmpty();
+                  //sas cant do that anymore because of timestamp ext dont have input
+                  //if (selectsValid && inputsNotEmpty) $('#node-dialog-ok').prop('disabled', false);
 
-                  if (selectsValid && inputsNotEmpty) $('#node-dialog-ok').prop('disabled', false);
+                  if (selectsValid) $('#node-dialog-ok').prop('disabled', false);
                   else {
                     var selectsLegal = checkSelectsNotIllegal();
                     if (!selectsLegal) $('#node-input-query-illegal-combination-container').fadeIn(300);
@@ -475,6 +507,13 @@
               var $tdInput = $('<td/>', {style:"width:150px;"}).appendTo($tbody);
               var $input = $('<input/>', {style:"width:100%;"}).addClass('node-input-query-value input-block-level').appendTo($tdInput);
 
+               $input.typedInput({
+                  default: 'msg',//node.payloadtype,
+                 // typeField: $("#node-input-payloadType"),
+                  types:['flow','global','msg', 'str','jsonata','json','num','bool','re','date']
+              });
+
+              var $tdDeleteBtn = $('<td/>').appendTo($tbody);
               var $deleteBtn = $('<a/>').addClass('btn btn-mini').append($('<i/>').addClass('fa fa-remove')).appendTo($tdDeleteBtn);
 
               //Set current operator for this query
@@ -557,7 +596,7 @@
               if (!firstUnusedOperator) $select.prop('selectedIndex', -1); //Have to do this after it had been added to the UI, stupid...
 
               if (query){
-                //console.log(query);
+                
                 if ($select.val() != query.name){
                   $select.val(query.name);
                   $select.trigger('change');
@@ -577,6 +616,14 @@
               if (queries.length < operators.length) generatequery();
               //generatequery($("#node-input-query-container").children().length+1,{t:"",v:"",v2:""});
               $("#node-input-query-container-div").scrollTop($("#node-input-query-container-div").get(0).scrollHeight);
+            });
+
+            //back button clicked
+            $("#node-input-back").click(function(){
+               $('#eventType-select').show();
+               $('#node-input-event').fadeOut(300);
+               $('#eventType-typedInput-container').fadeOut(300);
+               
             });
 
             if(this.queries){
@@ -625,6 +672,7 @@
 
             $('#eventType-select').change()
 
+
         },
 
         oneditsave: function() {
@@ -632,6 +680,14 @@
 
           node.childtype = $("#node-input-childpath").typedInput('type');
           node.childvalue = $("#node-input-childpath").typedInput('value');
+
+          node.eventTypetype = $("#node-input-event").typedInput('type');
+          node.eventTypevalue = $("#node-input-event").typedInput('value');
+
+        //need to figure out how to get value for payloadtype (the query parameters)
+          
+          $("#node-input-childpath").typedInput('type',node.childtype);
+         
           
           //Save Path [this is automagically taken care of by NR]
           //Save Event type [this is automagically taken care of by NR]
@@ -651,11 +707,11 @@
               //});
             }
             node.queries.push(r)
-            console.log(r);
+    
           });
           }
           //TODO: BUG: Figure out how to set the initial value on page load... onpaletteadd doesn't give us our actual node, just the template for it so we have to figure out something else clever (perhaps a node-input-inputs would work - it looks like this is how the function node does dynamic outputs?)
-          if($('#eventType-select').val() == "shallow_query" || $('#eventType-select').val() == "msg.eventType" || $('#node-input-childpath').val() == "msg.childpath"){
+          if($('#eventType-select').val() == "shallow_query" || $('#eventType-select').val() == "msg.eventType" || node.childtype == "msg" || node.childtype == "flow" || node.childtype == "global" ){
             this.inputs = 1;
           } else {
             this.inputs = 0;
