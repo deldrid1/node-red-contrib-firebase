@@ -59,10 +59,26 @@
     </div>
 
 
+   
     <div id="jwt-claims-container" class="form-row login-row login-row-customGenerated hidden">
       <label for="node-input-add-jwt-claim"><i class="fa fa-asterisk"></i> JWT Claims</label>
       <a href="#" class="btn btn-mini" id="node-input-add-jwt-claim" style="margin-top: 4px;"><i class="fa fa-plus"></i> add additional claims</a>
     </div>
+
+     <div class="form-row login-row login-row-customGenerated hidden" id="node-atStart">
+        <label for="node-config-input-addclaims"><i class="fa fa-user"></i> Additional Claims </label>
+        <!-- <input class="input-append-left"  type="checkbox" id="node-config-input-addclaim" value="admin"  > -->
+       
+          <label> Admin <input name="admin" id= "node-config-input-admin" type="checkbox" style="display: inline-block; width: auto; vertical-align: top;" > </label>
+          <label> Debug <input name="debug" id= "node-config-input-debug" type="checkbox" value="true" style="display: inline-block; width: auto; vertical-align: top;" >  </label>
+       
+        <div align="center">
+           <label for="expires">Expires</label> <input type="date" id="node-config-input-expires" style= "width:auto;" /> 
+        </div>
+        <div align="center">
+          <label for="notBefore">Not Before</label> <input type="date" id="node-config-input-notBefore" style= "width:auto;" /> 
+        </div>
+      </div>
 
     <!--//TODO: this node would be formatted nicer if #node-inpu-query-container-div was hidden until a query was added (or already present)... -->
     <!-- Query Dialog Box -->
@@ -177,7 +193,12 @@
             defaults: {
               firebaseurl: {value: "", required: true},
               loginType: {value: "", required: true},
-              api: {value:"", required:true}
+              api: {value:"", required:true},
+
+              admin: {value: false, required: false},
+              debug: {value: false, required: false},
+              expires: {value: "", required: false},
+              notBefore: {value: "", required: false}
             },
 
             credentials: {
@@ -440,11 +461,9 @@
               var output = $("#node-config-input-list").val();
               output = JSON.stringify(output);
               node.credentials.list = output;
-              //console.log("List output: ", output);
+              //console.log("List output: ", node.credentials.list);
 
-              //window.alert("hi"  );
-
-
+        
               //Save jwtClaims
               node.credentials.jwtClaims = [];
               var jwtClaims = $("#node-input-jwt-claims-container").children();

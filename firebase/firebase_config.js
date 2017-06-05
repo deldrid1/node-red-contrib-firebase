@@ -115,10 +115,7 @@ module.exports = function (RED) {
               makeadmin: function(list){
 
                   this.list = list;
-                  if(list == undefined){
-                    //console.log("no input given")
-                    _emit("unauthorized");
-                  }
+                  
                   if(list !=undefined){
                  // var project_id = list["project_id"];
                   var project_id = "bla"
@@ -147,10 +144,15 @@ module.exports = function (RED) {
                 on: function(a,b) { _emitter.on(a,b); },
                 once: function(a,b) { _emitter.once(a,b); },
 
-                authorize: function(loginType, secret, passORuid, jwtClaims,privatekey,list){
+                authorize: function(loginType, secret, passORuid, jwtClaims,privatekey,list,admin,debug,expires,notBefore){
                   //console.log("Attempting to authorize with loginType="+loginType+" with secret="+secret+" and pass/uid="+passORuid)
                   this.list = list;
-                  
+                  this.admin = admin;
+                  this.debug = debug;
+                  this.expires = expires;
+                  this.notBefore = notBefore;
+
+                
                   if(this.loginType && this.authData){
                     this.authData = null
                     
@@ -246,16 +248,31 @@ module.exports = function (RED) {
 
                              //need to use for addit claims
                             //var tokenArgs = {uid: passORuid, generator: "node-red"}
-                            var tokenArgs = { }
-                            for(var i = 0; i < jwtClaims.length; i++)
-                              tokenArgs[jwtClaims[i].key] = jwtClaims[i].value
+
+                            //convert to epoch
+                            this.expires.toString;
+                            var expires = new Date(this.expires).getTime()
+                            console.log("expires ", expires);
+                           // this.notBefore 
+
+                            var tokenArgs = {
+                              admin: true //this.admin
+                            // debug: true //this.debug
+                             //expires: 
+                             //notBefore:
+                            };
+                         
+                          //TODO sas 
+                         //   for(var i = 0; i < jwtClaims.length; i++)
+                         //     tokenArgs[jwtClaims[i].key] = jwtClaims[i].value
                             
                             //var token = tokenGenerator.createToken(tokenArgs);
                             //was this.fbRef authwithcustomtoken(token, this.onLoginAuth.bind(this))
-                           
+                        
+                        //datepicker -    
 
                         this.fbAdmin.auth().createCustomToken(passORuid, tokenArgs)
-
+              
                               .then(function(customToken)
                               {
                                 //console.log(customToken);
@@ -505,20 +522,35 @@ module.exports = function (RED) {
         this.firebaseurl = "https://" + n.firebaseurl + ".firebaseio.com";
         this.api = n.api;
         
-        this.list = this.credentials.list;
-       
-       
-        if (this.list != undefined){
-          var data;
-          data = JSON.parse(this.list);
-          this.list = data;
-       }
-
         this.loginType = n.loginType;
         this.uid = this.credentials.uid;  
         this.secret = this.credentials.secret;
         this.email = this.credentials.email;
         this.password = this.credentials.password;
+
+        this.list = this.credentials.list;
+       
+        
+        if(this.list == undefined && this.loginType == 'customGenerated'){
+          this.error("Private Key is required to create a token")
+          _emit("disconnected")
+        }
+        if(this.uid == undefined && this.loginType == 'customGenerated'){
+          this.error("unique ID is required");
+          _emit("disconnected");
+        }
+        if (this.list != undefined){ //if list is undefined and were in additional claims then throw error
+          var data;
+          data = JSON.parse(this.list);
+          this.list = data;
+       }
+
+        this.admin = n.admin;
+        this.debug = n.debug;
+        this.expires = n.expires;
+        this.notBefore = n.notBefore;
+
+        
 
         this.jwtClaims = JSON.parse(this.credentials.jwtClaims != undefined ? this.credentials.jwtClaims : "[]");
 
@@ -555,7 +587,7 @@ module.exports = function (RED) {
                 this.fbConnection.authorize(this.loginType, this.email, this.password);
                 break;
               case 'customGenerated':
-              this.fbConnection.authorize(this.loginType, this.secret, this.uid, this.jwtClaims,this.privatekey,this.list);
+              this.fbConnection.authorize(this.loginType, this.secret, this.uid, this.jwtClaims,this.privatekey,this.list,this.admin,this.debug,this.expires,this.notBefore);
                 break;
               case 'facebook': //TODO:
                 break;
@@ -613,13 +645,15 @@ module.exports = function (RED) {
 
     RED.nodes.registerType('firebase config', FirebaseConfig, {
       credentials: {
+         
+          
           loginType: {type: 'text'},
           uid: {type: 'text'},
           secret: {type: 'password'},
           email: {type: 'text'},
           password: {type: 'password'},
           jwtClaims: {type: 'text'},
-          privatekey: {type: 'text'},
+          //privatekey: {type: 'text'},
           list: {type: 'text'}
       }
     });

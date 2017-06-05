@@ -28,8 +28,11 @@ module.exports = function(RED) {
         this.eventType = n.eventType;
         this.queries = n.queries;
         this.repeatifnull = n.repeatifnull;
+        this.event = n.event;
         this.childtype = n.childtype;
         this.childvalue = n.childvalue;
+        this.eventTypetype = n.eventTypetype;
+        this.eventTypevalue = n.eventTypevalue;
 
         this.activeRequests = [];
         this.ready = false;

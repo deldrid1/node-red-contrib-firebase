@@ -40,11 +40,9 @@ var bool;
         this.eventTypevalue = n.eventTypevalue;
         this.querytype = n.querytype; 
 
-        console.log(" childtype ",this.childtype);
-        console.log(" childvalue ",this.childvalue);
-        console.log(" here eventyypeype ",this.eventTypetype);
-        console.log(" here eventyypeype ",this.eventTypevalue);
+  
        // console.log("childpath thisthing", this.childpath)
+        
         this.ready = false;
         this.ignoreFirst = this.atStart;
         this.authorized = false;
