@@ -33,6 +33,7 @@ module.exports = function(RED) {
         this.childvalue = n.childvalue;
         this.eventTypetype = n.eventTypetype;
         this.eventTypevalue = n.eventTypevalue;
+        
 
         this.activeRequests = [];
         this.ready = false;
@@ -56,7 +57,7 @@ module.exports = function(RED) {
           "value": true,
           "child_added": true,
           "child_changed": true,
-          "chiled_removed": true,
+          "child_removed": true,
           "child_moved": true,
           "shallow_query": true
         }
@@ -73,10 +74,9 @@ module.exports = function(RED) {
             var msg = this.activeRequests.shift();
 
             msg.href = snapshot.ref.toString();
-            //console.log("HERE:");
-            //console.log(msg.href);
+         
             msg.key = snapshot.key; //broken
-            //console.log(snapshot);
+
             msg.payload = snapshot.val(); //
 
             if(snapshot.getPriority())
@@ -103,50 +103,9 @@ module.exports = function(RED) {
         }.bind(this);
 
         this.registerListeners = function(msg){
+         
 
-          var eventType = this.eventType
-          if(eventType == "msg.eventType"){
-            if("eventType" in msg){
-              eventType = msg.eventType
-            } else {
-              this.error("Expected \"eventType\" property in msg object", msg)
-              return;
-            }
-          }
-
-          if(!(eventType in this.validEventTypes)){
-            this.error("Invalid msg.eventType property \"" + eventType + "\".  Expected one of the following: [\"" + Object.keys(this.validEventTypes).join("\", \"") + "\"].", msg)
-            return;
-          }
-
-          var childpath
-          //Parse out msg.childpath
-          
-          if(this.childtype == "str"){
-            childpath = this.childpath
-          }
-          else if(this.childtype == "msg"){
-            var childvalue = this.childvalue;
-            childpath = msg[childvalue];
-          }
-          else if(this.childtype == "flow"){
-            var childvalue = this.childvalue;
-            childpath = this.context().flow.get(childvalue)
-          }
-          else if(this.childtype == "global"){
-            var childvalue = this.childvalue;
-            childpath = this.context().global.get(childvalue)
-          }
-/*
-/*
-          if(childpath == "msg.childpath"){
-            if("childpath" in msg){
-              childpath = msg.childpath
-            }
-          }
-*/
-          childpath = childpath || "/"
-
+/* problem here
           msg.eventType = eventType;
           msg.childpath = childpath || "/";
 
@@ -160,8 +119,10 @@ module.exports = function(RED) {
           } else {
             this.fbOnce(eventType, msg);
           }
-
+*/
         }.bind(this);
+
+
 
         this.destroyListeners = function(reason){
           if(this.activeRequests.length > 0 && reason){  //ensure the close function doesn't trigger this
@@ -188,6 +149,7 @@ module.exports = function(RED) {
           }
         }.bind(this);
 
+//TODO doesnt go in here
         this.fbOnce = function(eventType, msg){
           this.status({fill:"blue",shape:"dot",text:"requesting from firebase..."});
 
@@ -323,9 +285,10 @@ module.exports = function(RED) {
                   break;
               }
           }
-
           ref.once(eventType, this.onFBData, this.onFBError, this);
+          //ref.on(this.eventType == "msg.eventType" ? this.msg.eventType : this.eventType, this.onFBValue, this.onFBError, this);
         }.bind(this)
+
 
         this.shallowQuery = function(msg){  //Could we use the REST Streaming API and do shallow queries in firebase.on()? Update - currently firebase doesn't support shallow and query args in the same request
           this.status({fill:"blue",shape:"dot",text:"shallow_query requesting..."});
@@ -469,6 +432,9 @@ module.exports = function(RED) {
           // this.log("authorized: " + JSON.stringify(authData))
           this.status({fill:"green", shape:"dot", text:"ready"})
           this.ready = true;
+          
+          if(this.eventType != "msg.eventType" && this.childpath != "msg.childpath"){ } //|| this.msg != undefined) //from on
+            //this.registerListeners();
         }.bind(this)
 
         this.fbUnauthorized = function(){
@@ -504,6 +470,80 @@ module.exports = function(RED) {
         this.setStatus()
 
         this.on('input', function(msg) {
+          
+
+
+          var childpath
+          //Parse out msg.childpath
+          
+          if(this.childtype == "str"){
+            childpath = this.childpath
+          }
+          else if(this.childtype == "msg"){
+            
+            var childvalue = this.childvalue;
+            childpath = msg[childvalue];
+          }
+          else if(this.childtype == "flow"){
+            var childvalue = this.childvalue;
+            childpath = this.context().flow.get(childvalue)
+          }
+          else if(this.childtype == "global"){
+            var childvalue = this.childvalue;
+            childpath = this.context().global.get(childvalue)
+          }
+/*
+/*
+          if(childpath == "msg.childpath"){
+            if("childpath" in msg){
+              childpath = msg.childpath
+            }
+          }
+*/
+
+
+          childpath = childpath || "/"
+
+            var eventType  
+
+          
+          if(this.eventType == "msg.eventType"){
+
+            if(this.eventTypetype == "msg"){
+
+             // msg[query.value]; 
+              eventType = this.eventTypevalue;
+              eventType = msg[eventType];
+            }
+            else if(this.eventTypetype =="flow"){
+             
+              eventType =  this.context().flow.get(this.eventTypevalue);
+
+            }
+            else if(this.eventTypetype =="global"){
+              eventType =  this.context().global.get(this.eventTypevalue);
+ 
+            }
+            else if(this.eventTypetype =="str"){
+              eventType =  this.eventTypevalue
+
+            }
+            else {
+              this.error("Expected \"eventType\" property in msg object", this.eventType)
+              this.error("Expected \"eventType\" property in msg object", msg)
+              this.error("Expected \"eventType\" property in msg object", msg)
+              return;
+            } 
+          } 
+          else {
+            eventType = this.eventType
+          }
+
+          if(!(eventType in this.validEventTypes)){
+            this.error("Invalid msg.eventType property \"" + eventType + "\".  Expected one of the following: [\"" + Object.keys(this.validEventTypes).join("\", \"") + "\"].", msg)
+            return;
+          }
+
             if(this.ready){
               this.registerListeners(msg);
             } else {

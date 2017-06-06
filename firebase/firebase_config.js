@@ -112,13 +112,13 @@ module.exports = function (RED) {
                 httpRequests: {},
 
                 
-              makeadmin: function(list){
+              makeadmin: function(list,firebaseurl){
 
                   this.list = list;
+                  this.firebaseurl = firebaseurl 
                   
                   if(list !=undefined){
-                 // var project_id = list["project_id"];
-                  var project_id = "bla"
+                  var project_id = list["project_id"];
                   var private_key = list["private_key"];
                   var client_email = list["client_email"];
                   
@@ -134,7 +134,7 @@ module.exports = function (RED) {
 
                   //credential: admin.credential.cert(serviceAccount), //can do other way also https://firebase.google.com/docs/admin/setup
                  }),
-                  databaseURL: "https://testing-19109.firebaseio.com"
+                  databaseURL: this.firebaseurl
                 },configNodeID + "admin");
 
                      obj.fbAdmin = fbAdmin;
@@ -144,14 +144,14 @@ module.exports = function (RED) {
                 on: function(a,b) { _emitter.on(a,b); },
                 once: function(a,b) { _emitter.once(a,b); },
 
-                authorize: function(loginType, secret, passORuid, jwtClaims,privatekey,list,admin,debug,expires,notBefore){
+                authorize: function(loginType, secret, passORuid, jwtClaims,privatekey,list,admin,debug,expires,notBefore,firebaseurl){
                   //console.log("Attempting to authorize with loginType="+loginType+" with secret="+secret+" and pass/uid="+passORuid)
                   this.list = list;
                   this.admin = admin;
                   this.debug = debug;
                   this.expires = expires;
                   this.notBefore = notBefore;
-
+                  this.firebaseurl = firebaseurl; 
                 
                   if(this.loginType && this.authData){
                     this.authData = null
@@ -237,45 +237,33 @@ module.exports = function (RED) {
                       case 'customGenerated':
                       
                         //call Admin function to make fbAdmin ref
-                        this.makeadmin(this.list);
+                        this.makeadmin(this.list,this.firebaseurl);
 
-                        /*    var tokenGenerator = new FirebaseTokenGenerator(secret);
-                            // expires (Number) - A timestamp (as number of seconds since the epoch) denoting the time after which this token should no longer be valid.
-                            // notBefore (Number) - A timestamp (as number of seconds since the epoch) denoting the time before which this token should be rejected by the server.
-                            // admin (Boolean) - Set to true if you want to disable all security rules for this client. This will provide the client with read and write access to your entire Firebase.
-                            // debug (Boolean) - Set to true to enable debug output from your security rules. This debug output will be automatically output to the JavaScript console. You should generally not leave this set to true in production (as it slows down the rules implementation and gives your users visibility into your rules), but it can be helpful for debugging.
-                          */
-
-                             //need to use for addit claims
-                            //var tokenArgs = {uid: passORuid, generator: "node-red"}
-
-                            //convert to epoch
-                            this.expires.toString;
-                            var expires = new Date(this.expires).getTime()
-                            console.log("expires ", expires);
-                           // this.notBefore 
+                            if(this.expires !=""){
+                              this.expires.toString;
+                              this.expires = new Date(this.expires).getTime()        
+                            }
+                            if(this.notBefore != ""){
+                              this.notBefore.toString;
+                              this.notBefore = new Date(this.notBefore).getTime()
+                            }
 
                             var tokenArgs = {
-                              admin: true //this.admin
-                            // debug: true //this.debug
-                             //expires: 
-                             //notBefore:
+                              admin: this.admin, 
+                              debug: this.debug, 
+                              expires: this.expires,
+                              notBefore: this.notBefore
                             };
-                         
-                          //TODO sas 
-                         //   for(var i = 0; i < jwtClaims.length; i++)
-                         //     tokenArgs[jwtClaims[i].key] = jwtClaims[i].value
-                            
-                            //var token = tokenGenerator.createToken(tokenArgs);
-                            //was this.fbRef authwithcustomtoken(token, this.onLoginAuth.bind(this))
-                        
-                        //datepicker -    
 
-                        this.fbAdmin.auth().createCustomToken(passORuid, tokenArgs)
+                           for(var i = 0; i < jwtClaims.length; i++){
+                              tokenArgs[jwtClaims[i].key] = jwtClaims[i].value
+                           }
+                           
+                           this.fbAdmin.auth().createCustomToken(passORuid, tokenArgs)
               
                               .then(function(customToken)
                               {
-                                //console.log(customToken);
+                                
                                   this.fbApp.auth().signInWithCustomToken(customToken) //TOOD add additional claims https://firebase.google.com/docs/auth/admin/create-custom-tokens
                                    .catch(function(error) {
                                     _emit("unauthorized");
@@ -292,14 +280,9 @@ module.exports = function (RED) {
                                 console.log("Error creating custom token:", error);
                               });
 
-                        //var test = global.get("foo");
-                      //  console.log("it worked" +  test);                                
-                        //instead of this.fbRef.onAuth(this.onAuth, this);
                         this.fbApp.auth().onAuthStateChanged(function(user) {
                           if(user){
                             user.getToken().then(function(data){
-                              //console.log("the data is here " + data);
-                              // "List: " + list);
                             });
                             console.log("signed in with custom token");
                             _emit("authorized",user);
@@ -308,12 +291,7 @@ module.exports = function (RED) {
                             //this.fbRef.onAuth(this.onAuth, this);
                             break;
 
-                      case 'email':
-                       //new way:
-                        //console.log(connections)
-                        //console.log(secret);
-                        
-                       
+                      case 'email':                    
                         this.fbApp.auth().signInWithEmailAndPassword(secret, passORuid)
                         .catch(function(error) {
                          // node.warn("blabla")
@@ -521,6 +499,7 @@ module.exports = function (RED) {
         //TODO: Input validation on the server (we are doing it on the client but not doing anything here...)
         this.firebaseurl = "https://" + n.firebaseurl + ".firebaseio.com";
         this.api = n.api;
+
         
         this.loginType = n.loginType;
         this.uid = this.credentials.uid;  
@@ -529,7 +508,8 @@ module.exports = function (RED) {
         this.password = this.credentials.password;
 
         this.list = this.credentials.list;
-       
+
+        this.jwtClaims = n.jwt;
         
         if(this.list == undefined && this.loginType == 'customGenerated'){
           this.error("Private Key is required to create a token")
@@ -549,10 +529,8 @@ module.exports = function (RED) {
         this.debug = n.debug;
         this.expires = n.expires;
         this.notBefore = n.notBefore;
-
         
-
-        this.jwtClaims = JSON.parse(this.credentials.jwtClaims != undefined ? this.credentials.jwtClaims : "[]");
+        this.jwtClaims = JSON.parse(this.jwtClaims != undefined ? this.jwtClaims : "[]");
 
         //console.log(this.jwtClaims)
 
@@ -587,7 +565,7 @@ module.exports = function (RED) {
                 this.fbConnection.authorize(this.loginType, this.email, this.password);
                 break;
               case 'customGenerated':
-              this.fbConnection.authorize(this.loginType, this.secret, this.uid, this.jwtClaims,this.privatekey,this.list,this.admin,this.debug,this.expires,this.notBefore);
+              this.fbConnection.authorize(this.loginType, this.secret, this.uid, this.jwtClaims,this.privatekey,this.list,this.admin,this.debug,this.expires,this.notBefore,this.firebaseurl);
                 break;
               case 'facebook': //TODO:
                 break;
@@ -645,15 +623,12 @@ module.exports = function (RED) {
 
     RED.nodes.registerType('firebase config', FirebaseConfig, {
       credentials: {
-         
-          
+                 
           loginType: {type: 'text'},
           uid: {type: 'text'},
           secret: {type: 'password'},
           email: {type: 'text'},
           password: {type: 'password'},
-          jwtClaims: {type: 'text'},
-          //privatekey: {type: 'text'},
           list: {type: 'text'}
       }
     });

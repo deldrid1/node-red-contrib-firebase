@@ -194,11 +194,14 @@
               firebaseurl: {value: "", required: true},
               loginType: {value: "", required: true},
               api: {value:"", required:true},
+              jwt: {type: 'text'},
 
               admin: {value: false, required: false},
               debug: {value: false, required: false},
               expires: {value: "", required: false},
               notBefore: {value: "", required: false}
+
+
             },
 
             credentials: {
@@ -208,6 +211,7 @@
                 password: {type: 'password'},
                 jwtClaims: {type: 'text'},
                 list: { type: 'text'}
+
                // privatekey: {type: 'text'},
                // project_id: {type : 'text'}
             },
@@ -361,6 +365,7 @@
                 }
 
                 function generatejwtClaim(jwtClaims){
+
                   var $jwtClaimContainer = $('<li/>',{style:"background: #fff; margin:0; padding:8px 0px; border-bottom: 1px solid #ccc;"});;
                   var $table = $('<table/>').appendTo($jwtClaimContainer);
                   var $tbody = $('<tbody/>').appendTo($table);
@@ -384,6 +389,7 @@
 
                       //Get list of remaining jwtClaims
                       var jwtClaims = $('#node-input-jwt-claims-container').children();
+
                       if (jwtClaims.length == 0){ //If there are no jwtClaims left, hide container
                         $('#node-input-jwt-claims-overall').hide();
                         $('node-config-dialog-ok').prop('disabled', false);
@@ -404,11 +410,13 @@
                 }
 
                 $("#node-input-add-jwt-claim").click(function() {
+
                   generatejwtClaim();
                   $("#node-input-jwt-claims-container-div").scrollTop($("#node-input-jwt-claims-container-div").get(0).scrollHeight);
                 });
 
                 if(this.credentials.jwtClaims){
+
                   this.credentials.jwtClaims = JSON.parse(this.credentials.jwtClaims)
                   for (i in this.credentials.jwtClaims){
                     generatejwtClaim(this.credentials.jwtClaims[i]);
@@ -465,7 +473,7 @@
 
         
               //Save jwtClaims
-              node.credentials.jwtClaims = [];
+              node.jwt =[]
               var jwtClaims = $("#node-input-jwt-claims-container").children();
               jwtClaims.each(function(idx){
                 var k = $($(this).find('input')[0])
@@ -474,9 +482,10 @@
                   "key": k.is(':visible') ? k.val() : "",
                   "value": v.is(':visible') ? v.val() : ""
                 }
-                node.credentials.jwtClaims.push(claim);
+                node.jwt.push(claim);
               });
-              node.credentials.jwtClaims = JSON.stringify(node.credentials.jwtClaims)
+             
+              node.jwt = JSON.stringify(node.jwt)
             },
 
             exportable: false

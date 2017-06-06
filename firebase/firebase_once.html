@@ -206,7 +206,7 @@
         oneditprepare: function() { //TODO: there is all kinds of validation that needs to be done to ensure only proper combinations of things are allowed...
           
           //Update the eventType node-red property when the value is changed...
-          var node = this;
+              var node = this;
           $('#eventType-select').change(function () {
               $("#node-input-eventType").val($(this).find('option:selected').val())
           });
@@ -215,21 +215,10 @@
           $("#eventType-select").val($("#node-input-eventType").val())
           $('#eventType-select').trigger('change');
 
-          //Set up autocomplete for Childpath field
-          /*var defaultChildpathValues = [
-            "msg.childpath",
-          ];
-          */
-
-          $("#node-input-childpath").typedInput({default: node.childtype,types:['str','msg','flow','global']});
+          $("#node-input-childpath").typedInput({default: node.childtype,types:['str','msg','flow','global','jsonata']});
           $("#node-input-event").typedInput({default: node.eventTypetype ,types:['str','msg','flow','global']});
-           addInputToUI($("#node-input-event"));
-/*
-          $('#node-input-childpath').autocomplete({
-            source: defaultChildpathValues,
-            minLength: 0
-          });
-*/
+
+          addInputToUI($("#node-input-event"));
           //Most of this code is adapted from the switch node - https://raw.githubusercontent.com/node-red/node-red/master/nodes/core/logic/10-switch.html
           var operatorOptions = {
             "orderByChild":{
@@ -348,7 +337,7 @@
 
             ];
 
-            var illegalCombinationShown = false;
+           var illegalCombinationShown = false;
             $('#eventType-select').on('change', function(){
               if ($(this).val() == "shallow_query"){ //disable/hide query paramters window and button
                 $('#node-input-query-illegal-combination-container').fadeOut(300);
@@ -358,34 +347,36 @@
                 });
                 $('#node-dialog-ok').prop('disabled', false);
               } 
-              else if($(this).val() == "msg.eventType"){
+             else if($(this).val() == "msg.eventType"){
               $('#eventType-select').fadeOut(300);
+
               //$('#eventType-typedInput').show();
-              
-              //$('#node-input-event').show();
-              // $("#node-input-event").typedInput({default: node.eventTypetype ,types:['str','msg','flow','global']});
-              
               $('#eventType-typedInput-container').show();
-              
               addInputToUI($("#node-input-event"));
              }
-
               else { //enable/show query paramters window and button
+                 $('#eventType-typedInput-container').fadeOut(300),function(){
+                   $('#eventType-select').fadeIn(300);
+                 }
+    
                 $('#eventType-select-info-container').fadeOut(300, function(){
                   $('#query-parameters-name-container').fadeIn(300)
                   var queries = $('#node-input-query-container').children();
                   if (queries.length > 0) $('#node-input-query-container-overall').fadeIn(300)
+                  var selectsValid = checkSelectsValid();
+                  //var inputsNotEmpty = checkInputsNotEmpty();
+                  //sas cant do that anymore because of timestamp ext dont have input
+                  //if (selectsValid && inputsNotEmpty) $('#node-dialog-ok').prop('disabled', false);
 
-                  //Check to see if ok button should be enabled
-                  if (checkInputsNotEmpty() && checkSelectsValid()) $('#node-dialog-ok').prop('disabled', false);
+                  if (selectsValid) $('#node-dialog-ok').prop('disabled', false);
                   else {
                     var selectsLegal = checkSelectsNotIllegal();
                     if (!selectsLegal) $('#node-input-query-illegal-combination-container').fadeIn(300);
+                    //if (node-input-query-illegal-combination-container
                   }
                 });
               }
             })
-
             //TODO: - Improve query support logic to not allow for invalid input.
             //TODO: hide query parameters if shallow_query is the event type (since they are not supported...)
 
@@ -713,6 +704,8 @@
           node.childtype = $("#node-input-childpath").typedInput('type');
           node.childvalue = $("#node-input-childpath").typedInput('value');//
         
+          node.eventTypetype = $("#node-input-event").typedInput('type');
+          node.eventTypevalue = $("#node-input-event").typedInput('value');
 
           //Save Path [this is automagically taken care of by NR]
           //Save Event type [this is automagically taken care of by NR]
