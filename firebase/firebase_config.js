@@ -629,7 +629,8 @@ module.exports = function (RED) {
           secret: {type: 'password'},
           email: {type: 'text'},
           password: {type: 'password'},
-          list: {type: 'text'}
+          list: {type: 'text'},
+          
       }
     });
 }

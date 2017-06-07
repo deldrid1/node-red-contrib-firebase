@@ -1,9 +1,11 @@
 <script type="text/x-red" data-template-name="firebase.on">
 
-    <div class="form-row">
+
+<div class="form-row">
         <label for="node-input-firebaseconfig"><i class="fa fa-database"></i> Firebase</label>
         <input type="text" id="node-input-firebaseconfig">
     </div>
+
 
 
     <div class="form-row">
@@ -27,8 +29,8 @@
           <option value="msg.eventType">[msg.eventType]</option>
       </select>
 
-     <div id = "eventType-typedInput-container" class="hidden">
-        <label for="node-input-event" ><i class="hidden"></i> </label>
+     <div id = "eventType-typedInput-container" class="form-row">
+        <label for="node-input-event" ><i class=form-row></i> </label>
         <input class="input-append-left" type="text" id="node-input-event" style="width: 41%">
         <a  class="btn btn-mini" id="node-input-back" style="margin-top: 4px;"><i class="fa fa-arrow-left"></i>Back</a>
     </div>
@@ -197,6 +199,7 @@
         label: function() {     // sets the default label contents
             var config = RED.nodes.node(this.firebaseconfig); //server side uses RED.nodes.getNode... go figure...
 
+
             // make sure the path starts with /
             var childpath = (this.childpath.indexOf("/") == 0) ? this.childpath : "/" + this.childpath;
             //make sure the path does not end with /
@@ -213,7 +216,7 @@
 
         oneditprepare: function() { //TODO: there is all kinds of validation that needs to be done to ensure only proper combinations of things are allowed...
           //Update the eventType node-red property when the value is changed...
-       var node = this;
+          var node = this;
 
           $('#eventType-select').change(function () {
               $("#node-input-eventType").val($(this).find('option:selected').val())
@@ -223,8 +226,10 @@
           $("#eventType-select").val($("#node-input-eventType").val())
           $('#eventType-select').trigger('change');
 
-          $("#node-input-childpath").typedInput({default:node.childtype ,types:['str','msg','flow','global','jsonata']});
+          $("#node-input-childpath").typedInput({default: node.childtype,types:['str','msg','flow','global','jsonata']});
           $("#node-input-event").typedInput({default: node.eventTypetype ,types:['str','msg','flow','global']});
+
+
 
           addInputToUI($("#node-input-event"));
 
@@ -244,7 +249,7 @@
           //Most of this code is adapted from the switch node - https://raw.githubusercontent.com/node-red/node-red/master/nodes/core/logic/10-switch.html
           var operatorOptions = {
             "orderByChild":{
-              inputAllowed: true,
+              inputAllowed: false,
               inputRequired: false,
               cannotBeCombinedWith: [
                 "orderByChild",
@@ -347,6 +352,8 @@
 
               //$('#eventType-typedInput').show();
               $('#eventType-typedInput-container').show();
+              $('#node-input-event').show();
+              
               addInputToUI($("#node-input-event"));
              }
               else { //enable/show query paramters window and button
@@ -485,6 +492,8 @@
             }
 
             function generatequery(query){
+
+
               var $queryContainer = $('<li/>',{style:"background: #fff; margin:0; padding:8px 0px; border-bottom: 1px solid #ccc;"});;
               var $table = $('<table/>').appendTo($queryContainer);
               var $tbody = $('<tbody/>').appendTo($table);
@@ -495,13 +504,17 @@
               var firstUnusedOperator = null;
               for (var d in operators){
                 var operator = operators[d];
+
+                
                 var $option = $('<option/>').val(operators[d]).text(operators[d]);
+
                 $select.append($option);
 
                 //Check whether operator is used
                 var used = false;
                 $('#node-input-query-container select').each(function(idx){
                   if ($(this).val() == operator) used = true;
+                  console.log("operatior ", $(this).val()) //contains the type
                   return; //breaks jquery each loop
                 });
 
@@ -511,8 +524,10 @@
                   if (illegalCombinations.length == 0) firstUnusedOperator = operator;
                 }
               }
+             
               var $tdInput = $('<td/>', {style:"width:150px;"}).appendTo($tbody);
               var $input = $('<input/>', {style:"width:100%;"}).addClass('node-input-query-value input-block-level').appendTo($tdInput);
+              
 
  
                $input.typedInput({
@@ -620,7 +635,7 @@
               }
 
               if ($('#node-input-query-container-overall').not(':visible')) $('#node-input-query-container-overall').show();
-            }
+            }//end of generate
 
             $("#node-input-add-query").click(function() {
               var queries = $('#node-input-query-container').children();

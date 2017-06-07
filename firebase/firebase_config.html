@@ -8,6 +8,8 @@
         .firebaseio.com/
     </div>
 
+   
+
     <div class="form-row">
         <label for="node-config-input-api"><i class="fa fa-cloud"></i> API Key</label>
         <input class="input-append-left" type="password" id="node-config-input-api" placeholder="Web API key">
@@ -38,20 +40,6 @@
         <input class="input-append-left" type="text" id="node-config-input-uid" placeholder="token">
     </div>
 
-  
-
-
-<!--here
-  <div class="form-row login-row login-row-customGenerated hidden">
-        <label for="node-config-input-privatekey"><i class="fa fa-user">
-        </i>Path to Private Key </label>
-
-         <input class ="input-append-left" type ="text" id= node-config-input-privatekey placeholder="C://file.json"> 
-
-</div>
- 
--->
-
     <div class="form-row login-row login-row-customGenerated hidden">
         <label for="node-config-input-privatekey"><i class="fa fa-user"></i> Private Key File </label>
         <input class="input-append-left"  type="file" id="node-config-input-privatekey" data-storage="false" >
@@ -64,6 +52,13 @@
       <label for="node-input-add-jwt-claim"><i class="fa fa-asterisk"></i> JWT Claims</label>
       <a href="#" class="btn btn-mini" id="node-input-add-jwt-claim" style="margin-top: 4px;"><i class="fa fa-plus"></i> add additional claims</a>
     </div>
+
+
+    <div id="node-input-illegal-additional" class="form-tips hidden" style="margin-top: 10px;">
+        <p id="node-input-illegal-additional" class="text-center" style="margin: 0;"><strong>Illegal combination of queries.</strong></p>
+      </div>
+
+      
 
      <div class="form-row login-row login-row-customGenerated hidden" id="node-atStart">
         <label for="node-config-input-addclaims"><i class="fa fa-user"></i> Additional Claims </label>
@@ -107,6 +102,12 @@
         <input class="input-append-left" type="password" id="node-config-input-password" placeholder="password">
     </div>
 
+    <div class="form-row">
+        <label for="node-config-input-name"><i class="fa fa-tag"></i> Name</label>
+        
+        <input class="input-append-left" type="text" id="node-config-input-name" placeholder="Firebase Config Name" style="width: 40%">
+       
+    </div>
 
 
 
@@ -191,16 +192,16 @@
             color: "#ffb37a",
 
             defaults: {
+              name:{value: "", required: false},
               firebaseurl: {value: "", required: true},
               loginType: {value: "", required: true},
               api: {value:"", required:true},
-              jwt: {type: 'text'},
-
+              jwt: {value:"",required:false},
+             
               admin: {value: false, required: false},
               debug: {value: false, required: false},
               expires: {value: "", required: false},
               notBefore: {value: "", required: false}
-
 
             },
 
@@ -210,11 +211,10 @@
                 email: {type: 'text'},
                 password: {type: 'password'},
                 jwtClaims: {type: 'text'},
-                list: { type: 'text'}
+                list: { type: 'text'},
 
-               // privatekey: {type: 'text'},
-               // project_id: {type : 'text'}
-            },
+
+                },
 
 
             label: function () {
@@ -253,10 +253,9 @@
                         break;
                   }
                 }
-
-
-
-                return str
+          
+                return this.name || str
+                               
             },
 
             labelStyle: function () {
@@ -265,12 +264,11 @@
 
             oneditprepare: function () {
 
-                //console.log("in preprae",this.list);
-                //console.log("oneditprepare: firebase config") //Used for setting break points on the UI...
-                // console.log("oneditprepare: firebase config: this.firebaseurl == "+this.firebaseurl) //Used for setting break points on the UI...
-                // console.log("oneditprepare: firebase config: #node-input-firebaseconfig == ") //Used for setting break points on the UI...
-        
-                //console.log($('#node-input-firebaseconfig'))
+              console.log("jwt", this.jwt)
+              if(this.jwt[0] != "wow") console.log("problem")
+                //get the jwt values bc this waits for the next round
+                // $('#node-dialog-ok').prop('disabled', true);
+                
                 var $nodeConfigInputType = $('#node-config-input-loginType'),
                     $loginTypeSelect = $('#loginType-select');
                     firebaseConnections = null;
@@ -286,8 +284,11 @@
                     $nodeConfigInputType.val(id);
                 });
 
+                
+                
 
                 //TODO: Possible node-red bug? It looks like defaults don't get set automatically in config nodes?
+                $("#node-config-input-name").val(this.name);
                 $("#node-config-input-firebaseurl").val(this.firebaseurl);
                 $("#node-config-input-api").val(this.api);
                //? $("#list").val(this.list);
@@ -340,6 +341,7 @@
                     //Set up handler
                     $input.off('input');
                     $input.on('input', function(){
+
                       if ($(this).val().length == 0){
                         $(this).addClass('input-error');
                         $('node-config-dialog-ok').prop('disabled', true);
@@ -378,8 +380,6 @@
                   var $tdDeleteBtn = $('<td/>').appendTo($tbody);
                   var $deleteBtn = $('<a/>').addClass('btn btn-mini').append($('<i/>').addClass('fa fa-remove')).appendTo($tdDeleteBtn);
 
-                  addInputToUI($inputKey);
-                  addInputToUI($inputVal);
 
                   //Delete click handler
                   $deleteBtn.on('click', function(){
@@ -462,6 +462,8 @@
             oneditsave: function() {
               var node = this;
 
+
+
               //Save Path [this is automagically taken care of by NR]
               //Save Event type [this is automagically taken care of by NR]
 
@@ -478,6 +480,18 @@
               jwtClaims.each(function(idx){
                 var k = $($(this).find('input')[0])
                 var v = $($(this).find('input')[1])
+                
+                notAllowed = ["alg","acr","amr","at_hash","aud","auth_time","azp,cnf","c_hash,exp","firebase,iat","iss","jti","nbf","nonce,sub"]                
+                
+                if(notAllowed.indexOf(k.val()) != -1){ //meaning the key is an input that isnt allowed
+                  console.log("ohoh")
+                  $('#node-dialog-ok').prop('disabled', true);
+                  //do something
+                  //exit from this
+                  //$('#node-input-illegal-additional').show()
+                  return
+                }
+      
                 var claim = {
                   "key": k.is(':visible') ? k.val() : "",
                   "value": v.is(':visible') ? v.val() : ""

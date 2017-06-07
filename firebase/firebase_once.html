@@ -27,7 +27,7 @@
           <option value="msg.eventType">[msg.eventType]</option>
       </select>
 
-    <div id = "eventType-typedInput-container" class="hidden"> 
+    <div id = "eventType-typedInput-container" class="form-row"> 
         <label for="node-input-event" ><i class = "hidden"></i> </label>
         <input class="input-append-left" type="text" id="node-input-event" style="width: 41%">
         <a  class="btn btn-mini" id="node-input-back" style="margin-top: 4px;"><i class="fa fa-arrow-left"></i>Back</a>
@@ -206,7 +206,9 @@
         oneditprepare: function() { //TODO: there is all kinds of validation that needs to be done to ensure only proper combinations of things are allowed...
           
           //Update the eventType node-red property when the value is changed...
-              var node = this;
+             // var node = this;
+          var node = this;
+
           $('#eventType-select').change(function () {
               $("#node-input-eventType").val($(this).find('option:selected').val())
           });
@@ -219,11 +221,25 @@
           $("#node-input-event").typedInput({default: node.eventTypetype ,types:['str','msg','flow','global']});
 
           addInputToUI($("#node-input-event"));
+
+          //$("#node-input-event").typedInput('width', '200px'); //changes width of the field not of the inputtype
+                     
+/*sas
+          //Set up autocomplete for Childpath field
+          var defaultChildpathValues = [
+            "msg.childpath",
+          ];
+
+          $('#node-input-childpath').autocomplete({
+            source: defaultChildpathValues,
+            minLength: 0
+          });
+*/
           //Most of this code is adapted from the switch node - https://raw.githubusercontent.com/node-red/node-red/master/nodes/core/logic/10-switch.html
           var operatorOptions = {
             "orderByChild":{
-              inputAllowed: true,
-              inputRequired: true,
+              inputAllowed: false,
+              inputRequired: false,
               cannotBeCombinedWith: [
                 "orderByChild",
                 "orderByKey",
@@ -260,7 +276,7 @@
             },
             "startAt":{
               inputAllowed: true,
-              inputRequired: true,
+              inputRequired: false,
               cannotBeCombinedWith: [
                 "startAt",
                 "equalTo"
@@ -268,7 +284,7 @@
             },
             "endAt":{
               inputAllowed: true,
-              inputRequired: true,
+              inputRequired: false,
               cannotBeCombinedWith: [
                 "endAt",
                 "equalTo"
@@ -276,7 +292,7 @@
             },
             "equalTo":{
               inputAllowed: true,
-              inputRequired: true,
+              inputRequired: false,
               cannotBeCombinedWith: [
                 "startAt",
                 "endAt"
@@ -284,14 +300,14 @@
             },
             "limitToFirst":{
               inputAllowed: true,
-              inputRequired: true,
+              inputRequired: false,
               cannotBeCombinedWith: [
                 "limitToFirst"
               ]
             },
             "limitToLast":{
               inputAllowed: true,
-              inputRequired: true,
+              inputRequired: false,
               cannotBeCombinedWith: [
                 "limitToLast"
               ]
@@ -299,21 +315,6 @@
           }
 
           var operators = [
-                // {v:"eq",t:"=="},
-                // {v:"neq",t:"!="},
-                // {v:"lt",t:"<"},
-                // {v:"lte",t:"<="},
-                // {v:"gt",t:">"},
-                // {v:"gte",t:">="},
-                // {v:"btwn",t:"is between"},
-                // {v:"cont",t:"contains"},
-                // {v:"regex",t:"matches regex"},
-                // {v:"true",t:"is true"},
-                // {v:"false",t:"is false"},
-                // {v:"null",t:"is null"},
-                // {v:"nnull",t:"is not null"},
-                // {v:"else",t:"otherwise"},
-
                 "orderByChild",
                 "orderByKey",
                 "orderByValue",
@@ -323,21 +324,9 @@
                 "equalTo",
                 "limitToFirst",
                 "limitToLast",
-
-                // {v:"orderByChild", t:"orderByChild"},
-                // {v:"orderByKey", t:"orderByKey"},
-                // {v:"orderByValue", t:"orderByValue"},
-                // {v:"orderByPriority", t:"orderByPriority"},
-                // {v:"startAt", t:"startAt"},
-                // {v:"endAt", t:"endAt"},
-                // {v:"equalTo", t:"equalTo"},
-                // {v:"limitToFirst", t:"limitToFirst"},
-                // {v:"limitToLast", t:"limitToLast"},
-                //{v:"limit", t:"limit"}  //deprecated
-
             ];
 
-           var illegalCombinationShown = false;
+            var illegalCombinationShown = false;
             $('#eventType-select').on('change', function(){
               if ($(this).val() == "shallow_query"){ //disable/hide query paramters window and button
                 $('#node-input-query-illegal-combination-container').fadeOut(300);
@@ -377,21 +366,19 @@
                 });
               }
             })
+
             //TODO: - Improve query support logic to not allow for invalid input.
             //TODO: hide query parameters if shallow_query is the event type (since they are not supported...)
 
             function checkForIllegalComnbinationOfQueries(select, operator){
               //Look for illegal combinations of queries
               var illegalCombinations = [];
-              //console.log(operator)
-              if(operatorOptions[operator] && operatorOptions[operator].cannotBeCombinedWith){
-                for (var i in operatorOptions[operator].cannotBeCombinedWith){
-                  $('#node-input-query-container select').not(select).each(function(idx){
-                    if ($(this).val() == operatorOptions[operator].cannotBeCombinedWith[i]){
-                      illegalCombinations.push($(this).val());
-                    }
-                  });
-                }
+              for (i in operatorOptions[operator].cannotBeCombinedWith){
+                $('#node-input-query-container select').not(select).each(function(idx){
+                  if ($(this).val() == operatorOptions[operator].cannotBeCombinedWith[i]){
+                    illegalCombinations.push($(this).val());
+                  }
+                });
               }
               return illegalCombinations;
             }
@@ -424,10 +411,6 @@
               }
             }
 
-            function checkSelectsValid(){
-              return checkSelectsNotIllegal() && checkSelectsNotEmpty();
-            }
-
             function checkSelectsNotEmpty(){
               var valid = true;
               $('#node-input-query-container select').each(function(idx){
@@ -443,9 +426,13 @@
               return ($('#node-input-query-illegal-combination-container > p').length > 1 ? false : true)
             }
 
+            function checkSelectsValid(){
+              return checkSelectsNotIllegal() && checkSelectsNotEmpty();
+            }
+
             function addInputToUI($input){
               if ($input.not(':visible')){
-                //console.log("input not visible");
+              
 
                 //Check if input already has text
                 if ($input.val() == null || $input.val().length == 0){
@@ -455,8 +442,7 @@
 
                 //Set up handler
                 $input.off('input');
-                $input.on('input', function(e){
-                  e.preventDefault();
+                $input.on('input', function(){
                   if ($(this).val().length == 0){
                     $(this).addClass('input-error');
                     $('#node-dialog-ok').prop('disabled', true);
@@ -467,7 +453,7 @@
                     else $('#node-dialog-ok').prop('disabled', true);
                   }
                 });
-                $input.parent().fadeIn(300);
+                $input.fadeIn(300);
               } else {
                 //console.log("input visible")
               }
@@ -475,7 +461,7 @@
 
             function removeInputFromUI($input){
               $input.off('input'); //remove listener
-              $input.parent().hide()  // hide the input and the typedInput div
+              $input.hide();
               //Check all other inputs and see whether or not they have text
               if (checkInputsNotEmpty() && checkSelectsValid()) $('#node-dialog-ok').prop('disabled', false);
               else $('#node-dialog-ok').prop('disabled', true);
@@ -494,6 +480,7 @@
 
             function generatequery(query){
 
+
               var $queryContainer = $('<li/>',{style:"background: #fff; margin:0; padding:8px 0px; border-bottom: 1px solid #ccc;"});;
               var $table = $('<table/>').appendTo($queryContainer);
               var $tbody = $('<tbody/>').appendTo($table);
@@ -504,13 +491,17 @@
               var firstUnusedOperator = null;
               for (var d in operators){
                 var operator = operators[d];
+
+                
                 var $option = $('<option/>').val(operators[d]).text(operators[d]);
+
                 $select.append($option);
 
-                //Check whether operator is used AND whether it's valid
+                //Check whether operator is used
                 var used = false;
                 $('#node-input-query-container select').each(function(idx){
                   if ($(this).val() == operator) used = true;
+                  console.log("operatior ", $(this).val()) //contains the type
                   return; //breaks jquery each loop
                 });
 
@@ -520,29 +511,33 @@
                   if (illegalCombinations.length == 0) firstUnusedOperator = operator;
                 }
               }
-              var $tdInput = $('<td/>', {style:"width:200px;"}).appendTo($tbody);
+             
+              var $tdInput = $('<td/>', {style:"width:150px;"}).appendTo($tbody);
               var $input = $('<input/>', {style:"width:100%;"}).addClass('node-input-query-value input-block-level').appendTo($tdInput);
-              
-              //heree
-              $input.typedInput({
-                  default:  node.querytype,
-                  //default: 'str',
-                  typeField: $("#node-input-payloadType"),
-                  types:['flow','global','msg', 'str']
-              });
-              //$input.typedInput('type',query.q);
 
+ 
+               $input.typedInput({
+                  default: node.querytype,//node.payloadtype,
+                 // typeField: $("#node-input-payloadType"),
+                  types:['str','global','msg', 'flow','jsonata','json','num','bool','re','date']
+              });
+
+
+               
 
               var $tdDeleteBtn = $('<td/>').appendTo($tbody);
               var $deleteBtn = $('<a/>').addClass('btn btn-mini').append($('<i/>').addClass('fa fa-remove')).appendTo($tdDeleteBtn);
 
               //Set current operator for this query
               if (firstUnusedOperator) $select.val(firstUnusedOperator);
-              else $select.prop('selectedIndex', -1); //I still have this here, but it doesn't actually work -- the element must be added to the UI first before this works (stupid...), so it is done below after it is appended to the table
+              else {
+                $select.prop('selectedIndex', -1); //I still have this here, but it doesn't actually work -- the element must be added to the UI first before this works (stupid...), so it is done below after it is appended to the table
+                $('#node-dialog-ok').prop('disabled', true);
+              }
               var currentOperator = $select.val();
 
               //Check if input is allowed
-              if (currentOperator && operatorOptions[currentOperator] && operatorOptions[currentOperator].inputAllowed) addInputToUI($input);
+              if (operatorOptions[currentOperator].inputAllowed) addInputToUI($input);
               else removeInputFromUI($input);
 
               //Look for illegal combinations of queries
@@ -551,15 +546,12 @@
               //else removeIllegalCombinationFromUI(currentOperator)
 
               //Loop through all other queries and remove currentOperator from their list of availables
-              if (firstUnusedOperator){
-                $('#node-input-query-container select').not($select).each(function(idx){
-                  $(this).find('option[value="'+currentOperator+'"]').hide();
-                });
-              }
+              $('#node-input-query-container select').not($select).each(function(idx){
+                $(this).find('option[value="'+currentOperator+'"]').hide();
+              });
 
               //Select change handler
-              $select.on('change', function(e){
-                e.preventDefault();
+              $select.on('change', function(){
                 var newSelectVal = $(this).val();
 
                 //Check for new illegal combinations
@@ -616,7 +608,7 @@
               if (!firstUnusedOperator) $select.prop('selectedIndex', -1); //Have to do this after it had been added to the UI, stupid...
 
               if (query){
-                //console.log(query);
+                
                 if ($select.val() != query.name){
                   $select.val(query.name);
                   $select.trigger('change');
@@ -629,23 +621,21 @@
               }
 
               if ($('#node-input-query-container-overall').not(':visible')) $('#node-input-query-container-overall').show();
-            }
+            }//end of generate
 
-               //back button clicked
+            $("#node-input-add-query").click(function() {
+              var queries = $('#node-input-query-container').children();
+              if (queries.length < operators.length) generatequery();
+              //generatequery($("#node-input-query-container").children().length+1,{t:"",v:"",v2:""});
+              $("#node-input-query-container-div").scrollTop($("#node-input-query-container-div").get(0).scrollHeight);
+            });
+
+            //back button clicked
             $("#node-input-back").click(function(){
                $('#eventType-select').show();
                $('#node-input-event').fadeOut(300);
                $('#eventType-typedInput-container').fadeOut(300);
                
-            });
-
-            $("#node-input-add-query").click(function(e) {
-              console.log(e)
-              e.preventDefault();
-              var queries = $('#node-input-query-container').children();
-              if (queries.length < operators.length) generatequery();
-              //generatequery($("#node-input-query-container").children().length+1,{t:"",v:"",v2:""});
-              $("#node-input-query-container-div").scrollTop($("#node-input-query-container-div").get(0).scrollHeight);
             });
 
             if(this.queries){
@@ -692,7 +682,8 @@
                 $( "#dialog" ).off("dialogresize",switchDialogResize);
             });
 
-             //$('#eventType-select').change() //added sas
+            $('#eventType-select').change()
+
 
         },
 

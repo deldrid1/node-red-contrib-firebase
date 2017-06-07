@@ -102,8 +102,7 @@ var bool;
         }.bind(this);
 
         this.registerListeners = function(msg){
-          
-          
+              
           //this.log("Registering Listener for " + this.config.firebaseurl + (this.childpath || ""))
 
           if(this.ready == true)
@@ -139,7 +138,7 @@ var bool;
                 console.log("childpath is ", childpath);
                 }
             catch(e){
-                      console.log("ERROR WITH JSONATA");
+                console.log("ERROR WITH JSONATA");
                     }
           }
 
@@ -167,8 +166,6 @@ var bool;
 
           for (var i=0; i<this.queries.length; i+=1) {
               var query = this.queries[i];
- console.log("query type " , query.valType);
-  console.log("query val ", query.value);
 
               switch(query.name){
                 case "orderByKey":    
@@ -243,9 +240,10 @@ var bool;
                     // check this is parsable JSON
                       var val = JSON.parse(query.value);
                       ref = ref.equalTo(val);
+
                     } catch(e2) {
                     var valid = false;
-                    console.log("not valid json");
+                    console.log("not valid json",e2);
                     //this.error(RED._("change.errors.invalid-json"));
                     }
                   }
@@ -328,31 +326,7 @@ var bool;
               }
           }
           
-          var event;
-          console.log("comeback here " ,this.eventType); //not getting here
-
-          //BUG WITH VALUE NOT BEING STORED - maybe something with it being hidden and unhidden?
-/*
-          if(this.eventType =="msg.eventType"){ //sas change name
-            console.log("inside!")
-            if(this.eventTypetype == "msg"){
-              event = this.msg[this.eventTypevalue];
-              console.log("event is ", event)
-            }
-            else if(this.eventTypetype =="flow"){
-
-            }
-            else if(this.eventTypetype =="global"){
-
-            }
-            else if(this.eventTypetype =="str"){
-
-            }
-           } 
-  */    
-          //do the eventtypes written in also have to be from the valid event types?
-
-          //change this.msg.eventType to event set
+          //eventtype stuff set in .on("input")
           ref.on(this.eventType == "msg.eventType" ? this.msg.eventType : this.eventType, this.onFBValue, this.onFBError, this);
           //ref.orderbyKey().equalTo("hi").on
           //ref.on("child_added", function(snapshot) {
@@ -477,12 +451,13 @@ var bool;
 
         this.on('input', function(msg) {
           var eventType
-        
+
           if(this.eventType == "msg.eventType"){
 
             if(this.eventTypetype == "msg"){
             
               eventType = msg[this.eventTypevalue];
+              console.log("in herrr" ,eventType)
 
             }
             else if(this.eventTypetype =="flow"){
@@ -499,6 +474,7 @@ var bool;
 
             }
             else {
+               
               this.error("Expected \"eventType\" property in msg object", msg)
               return;
             } 
@@ -507,10 +483,10 @@ var bool;
             eventType = this.eventType
           }
 
-          if(!(eventType in this.validEventTypes)){
-            this.error("Invalid msg.eventType property \"" + eventType + "\".  Expected one of the following: [\"" + Object.keys(this.validEventTypes).join("\", \"") + "\"].", msg)
-            return;
-          }
+        //  if(!(eventType in this.validEventTypes)){
+        //    this.error("Invalid msg.eventType property \"" + eventType + "\".  Expected one of the following: [\"" + Object.keys(this.validEventTypes).join("\", \"") + "\"].", msg)
+        //    return;
+        //sas  }
 
              var childpath
           //Parse out msg.childpath
