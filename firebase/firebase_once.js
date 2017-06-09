@@ -3,7 +3,7 @@ module.exports = function(RED) {
     var https = require("follow-redirects").https;
     var urllib = require("url");
     var jsonata = require("jsonata");
-
+console.log("inside once ")
     var getPushIdTimestamp = (function getPushIdTimestamp() {
       var PUSH_CHARS = '-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz';
 
@@ -271,6 +271,39 @@ module.exports = function(RED) {
                     var val =  this.context().global.get(query.value);
                     ref = ref.startAt(val);
                   }
+                  else if(query.valType == "num"){
+
+                    var val = query.value.toString();
+                    ref = ref.startAt(val);
+                  }
+                  else if(query.valType == "json"){ //not valid json .. find valid json to test with
+                    try {
+                      var val = JSON.stringify(query.value);
+                    } catch(e2) {
+                        console.log("not a valid json",e2);
+                    //this.error(RED._("change.errors.invalid-json"));
+                    }
+                    ref = ref.startAt(val);
+                  }
+                  else if(query.valType == ""){ //taken out for now..
+                    console.log("in date")
+                    var val = Date.now();
+                    val = val.toString();
+                    console.log(val)
+                    console.log(query.value);
+                    ref = ref.startAt(val);
+                  }
+
+                  else if(query.valType == "jsonata"){ //test w/jsonata string
+                    try{
+                      var val = jsonata(query.value);
+                      ref = ref.startAt(val.evaluate({msg:msg}));
+                    }
+                    catch(e){
+                      console.log("ERROR WITH JSONATA");
+                    }
+                    //value = query.value.evaluate({msg:msg}); //look into evaluate  https://github.com/node-red/node-red/blob/master/nodes/core/logic/15-change.js#L126
+                  }
                   break;
                 case "endAt":
                   if(query.valType == "str"){
@@ -289,6 +322,39 @@ module.exports = function(RED) {
                     var val =  this.context().global.get(query.value);
                     ref = ref.endAt(val);
                   }
+                  else if(query.valType == "num"){
+
+                    var val = query.value.toString();
+                    ref = ref.endAt(val);
+                  }
+                  else if(query.valType == "json"){ //not valid json .. find valid json to test with
+                    try {
+                      var val = JSON.stringify(query.value);
+                    } catch(e2) {
+                        console.log("not a valid json",e2);
+                    //this.error(RED._("change.errors.invalid-json"));
+                    }
+                    ref = ref.endAt(val);
+                  }
+                  else if(query.valType == ""){ //taken out for now..
+                    console.log("in date")
+                    var val = Date.now();
+                    val = val.toString();
+                    console.log(val)
+                    console.log(query.value);
+                    ref = ref.endAt(val);
+                  }
+
+                  else if(query.valType == "jsonata"){ //test w/jsonata string
+                    try{
+                      var val = jsonata(query.value);
+                      ref = ref.endAt(val.evaluate({msg:msg}));
+                    }
+                    catch(e){
+                      console.log("ERROR WITH JSONATA");
+                    }
+                    //value = query.value.evaluate({msg:msg}); //look into evaluate  https://github.com/node-red/node-red/blob/master/nodes/core/logic/15-change.js#L126
+                  }
                   break;
                 case "equalTo":
                   if(query.valType == "str"){
@@ -306,6 +372,30 @@ module.exports = function(RED) {
                     {
                     var val =  this.context().global.get(query.value);
                     ref = ref.equalTo(val);
+                  }
+                  else if(query.valType == "num"){
+
+                    var val = query.value.toString();
+                    ref = ref.equalTo(val);
+                  }
+                  else if(query.valType == "json"){ //not valid json .. find valid json to test with
+                    try {
+                      var val = JSON.stringify(query.value);
+                    } catch(e2) {
+                        console.log("not a valid json",e2);
+                    //this.error(RED._("change.errors.invalid-json"));
+                    }
+                    ref = ref.equalTo(val);
+                  }
+                  else if(query.valType == "jsonata"){ //test w/jsonata string
+                    try{
+                      var val = jsonata(query.value);
+                      ref = ref.equalTo(val.evaluate({msg:msg}));
+                    }
+                    catch(e){
+                      console.log("ERROR WITH JSONATA");
+                    }
+                    //value = query.value.evaluate({msg:msg}); //look into evaluate  https://github.com/node-red/node-red/blob/master/nodes/core/logic/15-change.js#L126
                   }
                     break;  
                 case "limitToFirst":
@@ -327,6 +417,31 @@ module.exports = function(RED) {
                     var val =  this.context().global.get(query.value);
                     ref = ref.limitToFirst(val);
                   }
+                  else if(query.valType == "num"){
+                    val = parseInt(query.value);
+                    ref = ref.limitToFirst(val);
+                  }
+                   else if(query.valType == "json"){ //not valid json .. find valid json to test with
+                    try {
+                      var val = JSON.stringify(query.value);
+                      val = parseInt(val);
+                    } catch(e2) {
+                        console.log("not a valid json",e2);
+                    //this.error(RED._("change.errors.invalid-json"));
+                    }
+                    ref = ref.limitToFirst(val);
+                  }
+                  else if(query.valType == "jsonata"){ //test w/jsonata string
+                    try{
+                      var val = jsonata(query.value);
+
+                      ref = ref.limitToFirst(parseInt(val.evaluate({msg:msg})));
+                    }
+                    catch(e){
+                      console.log("ERROR WITH JSONATA");
+                    }
+                    //value = query.value.evaluate({msg:msg}); //look into evaluate  https://github.com/node-red/node-red/blob/master/nodes/core/logic/15-change.js#L126
+                  }
                   break;
                 case "limitToLast":
                   if(query.valType == "str"){
@@ -346,6 +461,31 @@ module.exports = function(RED) {
                   else if(query.valType == "global"){
                     var val =  this.context().global.get(query.value);
                     ref = ref.limitToLast(val);
+                  }
+                  else if(query.valType == "num"){
+                    val = parseInt(query.value);
+                    ref = ref.limitToLast(val);
+                  }
+                  else if(query.valType == "json"){ //not valid json .. find valid json to test with
+                    try {
+                      var val = JSON.stringify(query.value);
+                      val = parseInt(val);
+                    } catch(e2) {
+                        console.log("not a valid json",e2);
+                    //this.error(RED._("change.errors.invalid-json"));
+                    }
+                    ref = ref.limitToLast(val);
+                  }
+                  else if(query.valType == "jsonata"){ //test w/jsonata string
+                    try{
+                      var val = jsonata(query.value);
+
+                      ref = ref.limitToLast(parseInt(val.evaluate({msg:msg})));
+                    }
+                    catch(e){
+                      console.log("ERROR WITH JSONATA");
+                    }
+                    //value = query.value.evaluate({msg:msg}); //look into evaluate  https://github.com/node-red/node-red/blob/master/nodes/core/logic/15-change.js#L126
                   }
                   break;
                 default:

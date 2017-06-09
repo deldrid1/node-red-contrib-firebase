@@ -264,7 +264,9 @@
 
             oneditprepare: function () {
 
-              console.log("jwt", this.jwt)
+              console.log("jwt whole", this.jwt)
+              //console.log("jwt", JSON.parse(this.jwt["key"])
+              //figure out what access to key is -iots not jwt[0]
               if(this.jwt[0] != "wow") console.log("problem")
                 //get the jwt values bc this waits for the next round
                 // $('#node-dialog-ok').prop('disabled', true);

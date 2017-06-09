@@ -38,7 +38,7 @@ var bool;
         this.childvalue = n.childvalue;
         this.eventTypetype = n.eventTypetype;
         this.eventTypevalue = n.eventTypevalue;
-        this.querytype = n.querytype; 
+        //this.querytype = n.querytype; 
 
   
        // console.log("childpath thisthing", this.childpath)
@@ -166,7 +166,8 @@ var bool;
 
           for (var i=0; i<this.queries.length; i+=1) {
               var query = this.queries[i];
-
+              console.log("query is", query.valType)
+              console.log("val is ", query.value)
               switch(query.name){
                 case "orderByKey":    
                 case "orderByValue":
@@ -190,6 +191,37 @@ var bool;
                     var val =  this.context().global.get(query.value);
                     ref = ref.startAt(val);
                   }
+                  else if(query.valType == "num"){
+
+                    var val = query.value.toString();
+                    ref = ref.startAt(val);
+                  }
+                  else if(query.valType == "json"){ //not valid json .. find valid json to test with
+                    try {
+                      var val = JSON.stringify(query.value);
+                    } catch(e2) {
+                        console.log("not a valid json",e2);
+                    //this.error(RED._("change.errors.invalid-json"));
+                    }
+                    ref = ref.startAt(val);
+                  }
+                  else if(query.valType == "date"){ //doesnt work 
+                    console.log("in date")
+                    var val = Date.now();
+                    console.log(query.value);
+                    ref = ref.startAt(val);
+                  }
+
+                  else if(query.valType == "jsonata"){ //test w/jsonata string
+                    try{
+                      var val = jsonata(query.value);
+                      ref = ref.startAt(val);
+                    }
+                    catch(e){
+                      console.log("ERROR WITH JSONATA");
+                    }
+                    //value = query.value.evaluate({msg:msg}); //look into evaluate  https://github.com/node-red/node-red/blob/master/nodes/core/logic/15-change.js#L126
+                  }
                   break;
                 case "endAt":
                   if(query.valType == "str"){
@@ -207,6 +239,37 @@ var bool;
                   else if(query.valType == "global"){
                     var val =  this.context().global.get(query.value);
                     ref = ref.endAt(val);
+                  }
+                  else if(query.valType == "num"){
+
+                    var val = query.value.toString();
+                    ref = ref.endAt(val);
+                  }
+                  else if(query.valType == "json"){ //not valid json .. find valid json to test with
+                    try {
+                      var val = JSON.stringify(query.value);
+                    } catch(e2) {
+                        console.log("not a valid json",e2);
+                    //this.error(RED._("change.errors.invalid-json"));
+                    }
+                    ref = ref.endAt(val);
+                  }
+                  else if(query.valType == "date"){ //doesnt work 
+                    console.log("in date")
+                    var val = Date.now();
+                    console.log(query.value);
+                    ref = ref.endAt(val);
+                  }
+
+                  else if(query.valType == "jsonata"){ //test w/jsonata string
+                    try{
+                      var val = jsonata(query.value);
+                      ref = ref.endAt(val);
+                    }
+                    catch(e){
+                      console.log("ERROR WITH JSONATA");
+                    }
+                    //value = query.value.evaluate({msg:msg}); //look into evaluate  https://github.com/node-red/node-red/blob/master/nodes/core/logic/15-change.js#L126
                   }
                   break;
                 case "equalTo":
@@ -226,40 +289,18 @@ var bool;
                     ref = ref.equalTo(val);
                   }
                   else if(query.valType == "num"){
-                    var val = parseInt(query.value);
+
+                    var val = query.value.toString();
                     ref = ref.equalTo(val);
                   }
-                  else if(query.valType == "bool"){ //its empty
-                    var val = query.value;
-                    console.log("in booll ",  query.value);
-                    //ref= ref.equalTo(val);
-                  }
                   else if(query.valType == "json"){ //not valid json .. find valid json to test with
-                    console.log("in json " ,query.value);
                     try {
-                    // check this is parsable JSON
-                      var val = JSON.parse(query.value);
-                      ref = ref.equalTo(val);
-
+                      var val = JSON.stringify(query.value);
                     } catch(e2) {
-                    var valid = false;
-                    console.log("not valid json",e2);
+                        console.log("not a valid json",e2);
                     //this.error(RED._("change.errors.invalid-json"));
                     }
-                  }
-                  else if(query.valType == "re"){ //gets input but need to test 
-                    
-                    console.log(query.value);
-                    //var fromRE = query.value.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
-                    /*
-                    try {
-                    fromRE = new RegExp(fromRE, "g");
-                    } catch (e) {
-                    valid = false;
-                    node.error(RED._("change.errors.invalid-from",{error:e.message}));
-                    return;
-                    }
-                    */
+                    ref = ref.equalTo(val);
                   }
                   else if(query.valType == "date"){ //doesnt work 
                     console.log("in date")
@@ -278,7 +319,6 @@ var bool;
                     }
                     //value = query.value.evaluate({msg:msg}); //look into evaluate  https://github.com/node-red/node-red/blob/master/nodes/core/logic/15-change.js#L126
                   }
-               
                   break;  
                 case "limitToFirst":
                   if(query.valType == "str"){
@@ -298,6 +338,31 @@ var bool;
                   else if(query.valType == "global"){
                     var val =  this.context().global.get(query.value);
                     ref = ref.limitToFirst(val);
+                  }
+                  else if(query.valType == "num"){
+                    val = parseInt(query.value);
+                    ref = ref.limitToFirst(val);
+                  }
+                   else if(query.valType == "json"){ //not valid json .. find valid json to test with
+                    try {
+                      var val = JSON.stringify(query.value);
+                      val = parseInt(val);
+                    } catch(e2) {
+                        console.log("not a valid json",e2);
+                    //this.error(RED._("change.errors.invalid-json"));
+                    }
+                    ref = ref.limitToFirst(val);
+                  }
+                  else if(query.valType == "jsonata"){ //test w/jsonata string
+                    try{
+                      var val = jsonata(query.value);
+
+                      ref = ref.limitToFirst(parseInt(val.evaluate({msg:msg})));
+                    }
+                    catch(e){
+                      console.log("ERROR WITH JSONATA");
+                    }
+                    //value = query.value.evaluate({msg:msg}); //look into evaluate  https://github.com/node-red/node-red/blob/master/nodes/core/logic/15-change.js#L126
                   }
                   break;
                 case "limitToLast":
@@ -319,6 +384,30 @@ var bool;
                     var val =  this.context().global.get(query.value);
                     ref = ref.limitToLast(val);
                   }
+                  else if(query.valType == "num"){
+                    val = parseInt(query.value);
+                    ref = ref.limitToLast(val);
+                  }
+                  else if(query.valType == "json"){ //not valid json .. find valid json to test with
+                    try {
+                      var val = JSON.stringify(query.value);
+                      val = parseInt(val);
+                    } catch(e2) {
+                        console.log("not a valid json",e2);
+                    //this.error(RED._("change.errors.invalid-json"));
+                    }
+                    ref = ref.limitToLast(val);
+                  }
+                  else if(query.valType == "jsonata"){ //test w/jsonata string
+                    try{
+                      var val = jsonata(query.value);
+
+                      ref = ref.limitToLast(parseInt(val.evaluate({msg:msg})));
+                    }
+                    catch(e){
+                      console.log("ERROR WITH JSONATA");
+                    }
+                  break;
                   break;
                 default:
                   //TODO:

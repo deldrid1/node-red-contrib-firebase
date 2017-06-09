@@ -181,7 +181,7 @@
             event : {value: '',required: false},
             atStart: {value: true, required: true},
             eventType: {value: "value", required: true},
-            queries: {value:[], required: true},
+            queries: {value:[], required: false},
             childtype: {value: '', required: false},
             childvalue: {value: '', required: false},
             eventTypetype:{value: '', required: false},
@@ -450,7 +450,7 @@
                 //Check if input already has text
                 if ($input.val() == null || $input.val().length == 0){
                   $input.addClass('input-error');
-                  $('#node-dialog-ok').prop('disabled', true);
+                 // $('#node-dialog-ok').prop('disabled', true);taken out since it gave JSONATA issues..
                 }
 
                 //Set up handler
@@ -533,7 +533,7 @@
                $input.typedInput({
                   default: node.querytype,//node.payloadtype,
                  // typeField: $("#node-input-payloadType"),
-                  types:['str','global','msg', 'flow','jsonata','json','num','bool','re','date']
+                  types:['str','global','msg', 'flow','jsonata','json','num']
               });
 
 
@@ -546,7 +546,7 @@
               if (firstUnusedOperator) $select.val(firstUnusedOperator);
               else {
                 $select.prop('selectedIndex', -1); //I still have this here, but it doesn't actually work -- the element must be added to the UI first before this works (stupid...), so it is done below after it is appended to the table
-                $('#node-dialog-ok').prop('disabled', true);
+                $('#node-dialog-ok').prop('disabled', true); //problem for when the query typedinput is timestamp
               }
               var currentOperator = $select.val();
 
