@@ -115,7 +115,8 @@ var bool;
           var ref
 
           var childpath;
-          //Parse out msg.childpath
+          //Parse out msg.childpath   
+
           if(this.childtype == "str"){
             childpath = this.childpath
           }
@@ -135,11 +136,13 @@ var bool;
             try{
                 var childvalue = this.childvalue;
                 childpath = jsonata(childvalue);
+                childpath = childpath.evaluate({msg:msg})
                 console.log("childpath is ", childpath);
                 }
             catch(e){
                 console.log("ERROR WITH JSONATA");
                     }
+                    //value = query.value.evaluate({msg:msg}); //look into evaluate  https://github.com/node-red/node-red/blob/master/nodes/core/logic/15-change.js#L126            
           }
 
           
@@ -343,27 +346,6 @@ var bool;
                     val = parseInt(query.value);
                     ref = ref.limitToFirst(val);
                   }
-                   else if(query.valType == "json"){ //not valid json .. find valid json to test with
-                    try {
-                      var val = JSON.stringify(query.value);
-                      val = parseInt(val);
-                    } catch(e2) {
-                        console.log("not a valid json",e2);
-                    //this.error(RED._("change.errors.invalid-json"));
-                    }
-                    ref = ref.limitToFirst(val);
-                  }
-                  else if(query.valType == "jsonata"){ //test w/jsonata string
-                    try{
-                      var val = jsonata(query.value);
-
-                      ref = ref.limitToFirst(parseInt(val.evaluate({msg:msg})));
-                    }
-                    catch(e){
-                      console.log("ERROR WITH JSONATA");
-                    }
-                    //value = query.value.evaluate({msg:msg}); //look into evaluate  https://github.com/node-red/node-red/blob/master/nodes/core/logic/15-change.js#L126
-                  }
                   break;
                 case "limitToLast":
                   if(query.valType == "str"){
@@ -388,26 +370,6 @@ var bool;
                     val = parseInt(query.value);
                     ref = ref.limitToLast(val);
                   }
-                  else if(query.valType == "json"){ //not valid json .. find valid json to test with
-                    try {
-                      var val = JSON.stringify(query.value);
-                      val = parseInt(val);
-                    } catch(e2) {
-                        console.log("not a valid json",e2);
-                    //this.error(RED._("change.errors.invalid-json"));
-                    }
-                    ref = ref.limitToLast(val);
-                  }
-                  else if(query.valType == "jsonata"){ //test w/jsonata string
-                    try{
-                      var val = jsonata(query.value);
-
-                      ref = ref.limitToLast(parseInt(val.evaluate({msg:msg})));
-                    }
-                    catch(e){
-                      console.log("ERROR WITH JSONATA");
-                    }
-                  break;
                   break;
                 default:
                   //TODO:

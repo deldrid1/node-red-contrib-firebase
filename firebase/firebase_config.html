@@ -42,11 +42,12 @@
 
     <div class="form-row login-row login-row-customGenerated hidden">
         <label for="node-config-input-privatekey"><i class="fa fa-user"></i> Private Key File </label>
-        <input class="input-append-left"  type="file" id="node-config-input-privatekey" data-storage="false" >
-        <output hidden="" class="input-append-left" type = "text "  id= "node-config-input-list"></output>
+        <input class="input-append-left"  type="file" id="node-config-input-privatekey" data-storage="false" style='display: none'; >
+        <label for="node-config-input-privatekey" class='btn' onclick="addtext()"> Choose File</label>
+
+        <label style='display: none' id=selectedfile> File Successfully Chosen </label> 
+        <output style = 'display:none' class="input-append-left" type = "text "  id= "node-config-input-list"></output>
     </div>
-
-
    
     <div id="jwt-claims-container" class="form-row login-row login-row-customGenerated hidden">
       <label for="node-input-add-jwt-claim"><i class="fa fa-asterisk"></i> JWT Claims</label>
@@ -66,13 +67,7 @@
        
           <label> Admin <input name="admin" id= "node-config-input-admin" type="checkbox" style="display: inline-block; width: auto; vertical-align: top;" > </label>
           <label> Debug <input name="debug" id= "node-config-input-debug" type="checkbox" value="true" style="display: inline-block; width: auto; vertical-align: top;" >  </label>
-       
-        <div align="center">
-           <label for="expires">Expires</label> <input type="date" id="node-config-input-expires" style= "width:auto;" /> 
-        </div>
-        <div align="center">
-          <label for="notBefore">Not Before</label> <input type="date" id="node-config-input-notBefore" style= "width:auto;" /> 
-        </div>
+      
       </div>
 
     <!--//TODO: this node would be formatted nicer if #node-inpu-query-container-div was hidden until a query was added (or already present)... -->
@@ -118,6 +113,12 @@
 -->
 
 <script type="text/javascript">
+
+function addtext(){
+
+  document.getElementById('selectedfile').style.display = 'inline';
+  console.log("click worked")
+}
 
  function handleFileSelect(evt) {
 
@@ -200,8 +201,6 @@
              
               admin: {value: false, required: false},
               debug: {value: false, required: false},
-              expires: {value: "", required: false},
-              notBefore: {value: "", required: false}
 
             },
 
@@ -264,12 +263,9 @@
 
             oneditprepare: function () {
 
-              console.log("jwt whole", this.jwt)
-              //console.log("jwt", JSON.parse(this.jwt["key"])
-              //figure out what access to key is -iots not jwt[0]
-              if(this.jwt[0] != "wow") console.log("problem")
-                //get the jwt values bc this waits for the next round
-                // $('#node-dialog-ok').prop('disabled', true);
+                if(this.credentials.list != undefined){
+                    document.getElementById('selectedfile').style.display = 'inline';
+                }
                 
                 var $nodeConfigInputType = $('#node-config-input-loginType'),
                     $loginTypeSelect = $('#loginType-select');
@@ -294,7 +290,9 @@
                 $("#node-config-input-firebaseurl").val(this.firebaseurl);
                 $("#node-config-input-api").val(this.api);
                //? $("#list").val(this.list);
+                if(this.list != undefined){
                 $("#node-config-input-list").val(this.list);
+                }
                 $('.login-row').hide();
                 if (this.loginType && this.loginType != "") {
                     $loginTypeSelect.val(this.loginType); //sets the drop down
@@ -391,6 +389,7 @@
 
                       //Get list of remaining jwtClaims
                       var jwtClaims = $('#node-input-jwt-claims-container').children();
+                      console.log("claims are", jwtClaims);
 
                       if (jwtClaims.length == 0){ //If there are no jwtClaims left, hide container
                         $('#node-input-jwt-claims-overall').hide();
@@ -457,7 +456,10 @@
                 });
 
             //TODO: BUG: oneditsave: should really look at the return value and if it is a string, provide an alert to a user as to what went wrong and take you back to the edit dialogue box - I don't think Node-Red allows for this...
-
+               
+               //var jwtClaims = $("#node-input-jwt-claims-container").children();
+               //if(jwtClaims != "bla") console.log("EROROR WITH JWTS ");
+               //$('#node-dialog-update').prop('disabled', true);
 
             }, //end oneditprepare
 
@@ -483,16 +485,16 @@
                 var k = $($(this).find('input')[0])
                 var v = $($(this).find('input')[1])
                 
-                notAllowed = ["alg","acr","amr","at_hash","aud","auth_time","azp,cnf","c_hash,exp","firebase,iat","iss","jti","nbf","nonce,sub"]                
+                notAllowed = ["alg","acr","amr","at_hash","aud","auth_time","azp,cnf","c_hash,exp","firebase,iat","iss","jti","nbf","nonce","sub"]                
                 
-                if(notAllowed.indexOf(k.val()) != -1){ //meaning the key is an input that isnt allowed
-                  console.log("ohoh")
-                  $('#node-dialog-ok').prop('disabled', true);
+                //if(notAllowed.indexOf(k.val()) != -1){ //meaning the key is an input that isnt allowed
+                 // console.log("ohoh")
+                 // $('#node-dialog-ok').prop('disabled', true);
                   //do something
                   //exit from this
                   //$('#node-input-illegal-additional').show()
-                  return
-                }
+                 // return
+               // }
       
                 var claim = {
                   "key": k.is(':visible') ? k.val() : "",
@@ -524,4 +526,8 @@
 <p> Click on choose file and locate the downloaded file. </p>
 <!--<p>Give the path to where the file is stored. (Example: If the file is stored in the C drive under a users downloaded folder give the path C://Users/username/Dowloads/filename.json) </p> 
 -->
+<p> <b>Additional JWT Claims: </b><p> 
+
+<p> The following list of additional claim keys are reserved by firebase and cannot be used : alg,acr,amr,at_hash,aud,auth_time,azp,cnf,c_hash,exp,firebase,iat,iss,jti,nbf,nonce,sub"
+</p>
 </script>

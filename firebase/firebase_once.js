@@ -161,11 +161,14 @@ console.log("inside once ")
             try{
                 var childvalue = this.childvalue;
                 childpath = jsonata(childvalue);
+                childpath = childpath.evaluate({msg:msg})
                 console.log("childpath is ", childpath);
                 }
             catch(e){
                 console.log("ERROR WITH JSONATA");
                     }
+                    //value = query.value.evaluate({msg:msg}); //look into evaluate  https://github.com/node-red/node-red/blob/master/nodes/core/logic/15-change.js#L126
+                  
           }
 /*
 /*

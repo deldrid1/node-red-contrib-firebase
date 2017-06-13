@@ -144,13 +144,11 @@ module.exports = function (RED) {
                 on: function(a,b) { _emitter.on(a,b); },
                 once: function(a,b) { _emitter.once(a,b); },
 
-                authorize: function(loginType, secret, passORuid, jwtClaims,privatekey,list,admin,debug,expires,notBefore,firebaseurl){
+                authorize: function(loginType, secret, passORuid, jwtClaims,privatekey,list,admin,debug,firebaseurl){
                   //console.log("Attempting to authorize with loginType="+loginType+" with secret="+secret+" and pass/uid="+passORuid)
                   this.list = list;
                   this.admin = admin;
                   this.debug = debug;
-                  this.expires = expires;
-                  this.notBefore = notBefore;
                   this.firebaseurl = firebaseurl; 
                 
                   if(this.loginType && this.authData){
@@ -239,23 +237,19 @@ module.exports = function (RED) {
                         //call Admin function to make fbAdmin ref
                         this.makeadmin(this.list,this.firebaseurl);
 
-                            if(this.expires !=""){
-                              this.expires.toString;
-                              this.expires = new Date(this.expires).getTime()        
-                            }
-                            if(this.notBefore != ""){
-                              this.notBefore.toString;
-                              this.notBefore = new Date(this.notBefore).getTime()
-                            }
-
+                    
                             var tokenArgs = {
                               admin: this.admin, 
                               debug: this.debug, 
-                              expires: this.expires,
-                              notBefore: this.notBefore
                             };
 
+                          var notAllowed = ["alg","acr","amr","at_hash","aud","auth_time","azp,cnf","c_hash,exp","firebase,iat","iss","jti","nbf","nonce","sub"];              
                            for(var i = 0; i < jwtClaims.length; i++){
+                              if(notAllowed.indexOf(jwtClaims[i].key) != -1){ //meaning the key is an input that isnt allowed                      
+                                _emit("error","JWT additional claims error. The key specified isnt allowed ");
+                                return;
+      
+                              }
                               tokenArgs[jwtClaims[i].key] = jwtClaims[i].value
                            }
                            
@@ -264,7 +258,7 @@ module.exports = function (RED) {
                               .then(function(customToken)
                               {
                                 
-                                  this.fbApp.auth().signInWithCustomToken(customToken) //TOOD add additional claims https://firebase.google.com/docs/auth/admin/create-custom-tokens
+                                  this.fbApp.auth().signInWithCustomToken(customToken)
                                    .catch(function(error) {
                                     _emit("unauthorized");
                                     console.log("error in token")
@@ -280,11 +274,15 @@ module.exports = function (RED) {
                                 console.log("Error creating custom token:", error);
                               });
 
+
+
                         this.fbApp.auth().onAuthStateChanged(function(user) {
                           if(user){
                             user.getToken().then(function(data){
                             });
                             console.log("signed in with custom token");
+      
+                            //console.log("auth exp", this.fbApp.auth().exp)
                             _emit("authorized",user);
                           }
                         }); 
@@ -527,8 +525,7 @@ module.exports = function (RED) {
 
         this.admin = n.admin;
         this.debug = n.debug;
-        this.expires = n.expires;
-        this.notBefore = n.notBefore;
+
         
         this.jwtClaims = JSON.parse(this.jwtClaims != undefined ? this.jwtClaims : "[]");
 
@@ -565,7 +562,7 @@ module.exports = function (RED) {
                 this.fbConnection.authorize(this.loginType, this.email, this.password);
                 break;
               case 'customGenerated':
-              this.fbConnection.authorize(this.loginType, this.secret, this.uid, this.jwtClaims,this.privatekey,this.list,this.admin,this.debug,this.expires,this.notBefore,this.firebaseurl);
+              this.fbConnection.authorize(this.loginType, this.secret, this.uid, this.jwtClaims,this.privatekey,this.list,this.admin,this.debug,this.firebaseurl);
                 break;
               case 'facebook': //TODO:
                 break;

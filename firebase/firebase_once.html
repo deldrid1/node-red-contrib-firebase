@@ -437,7 +437,7 @@
                 //Check if input already has text
                 if ($input.val() == null || $input.val().length == 0){
                   $input.addClass('input-error');
-                  //$('#node-dialog-ok').prop('disabled', true); taken out since it gave JSONATA issues..
+                  //$('#node-dialog-ok').prop('disabled', true); taken out since it gave
                 }
 
                 //Set up handler
@@ -457,6 +457,12 @@
               } else {
                 //console.log("input visible")
               }
+
+              $input.typedInput({
+                  default: node.querytype,//node.payloadtype,
+                 // typeField: $("#node-input-payloadType"),
+                  types:['str','global','msg', 'flow','jsonata','json','num']
+              });
             }
 
             function removeInputFromUI($input){
@@ -513,15 +519,16 @@
               }
              
               var $tdInput = $('<td/>', {style:"width:150px;"}).appendTo($tbody);
-              var $input = $('<input/>', {style:"width:100%;"}).addClass('node-input-query-value input-block-level').appendTo($tdInput);
+              var $input = $('<input/>', {style:"width:200px;", display: "input-append-left" }).addClass('form-row').appendTo($tdInput);
 
+
+
+//display:block; left 56px; right: 0px;"
  
-               $input.typedInput({
-                  default: node.querytype,//node.payloadtype,
-                 // typeField: $("#node-input-payloadType"),
-                  types:['str','global','msg', 'flow','jsonata','json','num']
-              });
+               
 
+               //sas
+               $(".input").on('change', function(type, value) {console.log("changed")} );
 
                
 
@@ -535,11 +542,19 @@
                 $select.prop('selectedIndex', -1); //I still have this here, but it doesn't actually work -- the element must be added to the UI first before this works (stupid...), so it is done below after it is appended to the table
                 //$('#node-dialog-ok').prop('disabled', true);
               }
+
+              $input.typedInput({
+                  default: node.querytype,//node.payloadtype,
+                 // typeField: $("#node-input-payloadType"),
+                  types:['str','global','msg', 'flow','jsonata','json','num']
+              });
+
+
               var currentOperator = $select.val();
 
               //Check if input is allowed
-              if (operatorOptions[currentOperator].inputAllowed) addInputToUI($input);
-              else removeInputFromUI($input);
+             if (operatorOptions[currentOperator].inputAllowed) addInputToUI($input);
+             else removeInputFromUI($input);
 
               //Look for illegal combinations of queries
               var illegalCombinations = checkForIllegalComnbinationOfQueries($select, currentOperator);
