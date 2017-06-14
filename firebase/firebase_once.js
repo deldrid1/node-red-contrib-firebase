@@ -3,7 +3,7 @@ module.exports = function(RED) {
     var https = require("follow-redirects").https;
     var urllib = require("url");
     var jsonata = require("jsonata");
-console.log("inside once ")
+
     var getPushIdTimestamp = (function getPushIdTimestamp() {
       var PUSH_CHARS = '-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz';
 
@@ -167,8 +167,7 @@ console.log("inside once ")
             catch(e){
                 console.log("ERROR WITH JSONATA");
                     }
-                    //value = query.value.evaluate({msg:msg}); //look into evaluate  https://github.com/node-red/node-red/blob/master/nodes/core/logic/15-change.js#L126
-                  
+                    //value = query.value.evaluate({msg:msg}); //look into evaluate  https://github.com/node-red/node-red/blob/master/nodes/core/logic/15-change.js#L126            
           }
 /*
 /*
@@ -228,6 +227,7 @@ console.log("inside once ")
           //Create the firebase reference to the path
           var ref
           if(msg.childpath){
+
             ref = this.config.fbConnection.fbRef.child(msg.childpath)
           }else{
             ref = this.config.fbConnection.fbRef
@@ -496,7 +496,7 @@ console.log("inside once ")
                   break;
               }
           }
-
+      
           ref.once(eventType, this.onFBData, this.onFBError, this);
         }.bind(this)
 
@@ -619,6 +619,7 @@ console.log("inside once ")
 
         }.bind(this)
 
+
         //this.config.fbConnection EventEmitter Handlers
         this.fbInitializing = function(){  //This isn't being called because its emitted too early...
           // this.log("initializing...")
@@ -666,6 +667,7 @@ console.log("inside once ")
         }.bind(this)
 
         //Register Handlers
+  
         this.config.fbConnection.on("initializing", this.fbInitializing)
         this.config.fbConnection.on("connected", this.fbConnected)
         this.config.fbConnection.on("disconnected", this.fbDisconnected)
@@ -677,6 +679,7 @@ console.log("inside once ")
         this.setStatus()
 
         this.on('input', function(msg) {
+
             if(this.ready){
               this.registerListeners(msg);
             } else {

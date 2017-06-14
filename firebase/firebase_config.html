@@ -1,5 +1,4 @@
 <script type="text/x-red" data-template-name="firebase config" >
-
      
     <div class="form-row">
         <label for="node-config-input-firebaseurl"><i class="fa fa-cloud"></i> Firebase</label>
@@ -7,14 +6,11 @@
         <input class="input-append-left" type="text" id="node-config-input-firebaseurl" placeholder="your-firebase" style="width: 28%">
         .firebaseio.com/
     </div>
-
    
-
     <div class="form-row">
         <label for="node-config-input-api"><i class="fa fa-cloud"></i> API Key</label>
         <input class="input-append-left" type="password" id="node-config-input-api" placeholder="Web API key">
     </div>
-
     <!-- Select type -->
     <div class="form-row">
         <label for="loginType-select"><i class="fa fa-shield"></i> Auth Type</label>
@@ -23,122 +19,90 @@
             <option value="anonymous">Anonymous</option>
             <option value="email">Email</option>
             <option value="jwt">JSON Web Token</option>
-            <option value="customGenerated">Custom Token Generated with Secret</option>
+            <option value="customGenerated">Custom Token Generated with Private Key</option>
+            <option value="admin">Administrator</option>
         </select>
         <input type="hidden" id="node-config-input-loginType">
     </div>
-
     <!-- Custom login with new token generated from master-->
     <div class="form-row login-row login-row-jwt hidden">
         <label for="node-config-input-secret"><i class="fa fa-key"></i> JWT</label>
         <input class="input-append-left" type="password" id="node-config-input-secret" placeholder="Jason Web Token"> <!-- //TODO: Add a show button like on the forge? -->
     </div>
-
     <!-- Custom login -->
     <div class="form-row login-row login-row-customGenerated hidden">
         <label for="node-config-input-uid"><i class="fa fa-user"></i> Unique ID</label> <!-- //TODO: Change these labels depending on the strategy used to make them make more sense -->
         <input class="input-append-left" type="text" id="node-config-input-uid" placeholder="token">
     </div>
-
-    <div class="form-row login-row login-row-customGenerated hidden">
+    <div class="form-row login-row login-row-customGenerated login-row login-row-admin hidden">
         <label for="node-config-input-privatekey"><i class="fa fa-user"></i> Private Key File </label>
-        <input class="input-append-left"  type="file" id="node-config-input-privatekey" data-storage="false" style='display: none'; >
-        <label for="node-config-input-privatekey" class='btn' onclick="addtext()"> Choose File</label>
-
-        <label style='display: none' id=selectedfile> File Successfully Chosen </label> 
-        <output style = 'display:none' class="input-append-left" type = "text "  id= "node-config-input-list"></output>
+        <input class="input-append-left"  type="file" id="node-config-input-privatekey" data-storage="false" >
+        <output hidden="" class="input-append-left" type = "text "  id= "node-config-input-list"></output>
     </div>
    
     <div id="jwt-claims-container" class="form-row login-row login-row-customGenerated hidden">
       <label for="node-input-add-jwt-claim"><i class="fa fa-asterisk"></i> JWT Claims</label>
       <a href="#" class="btn btn-mini" id="node-input-add-jwt-claim" style="margin-top: 4px;"><i class="fa fa-plus"></i> add additional claims</a>
     </div>
-
-
     <div id="node-input-illegal-additional" class="form-tips hidden" style="margin-top: 10px;">
         <p id="node-input-illegal-additional" class="text-center" style="margin: 0;"><strong>Illegal combination of queries.</strong></p>
       </div>
-
       
-
      <div class="form-row login-row login-row-customGenerated hidden" id="node-atStart">
         <label for="node-config-input-addclaims"><i class="fa fa-user"></i> Additional Claims </label>
         <!-- <input class="input-append-left"  type="checkbox" id="node-config-input-addclaim" value="admin"  > -->
        
           <label> Admin <input name="admin" id= "node-config-input-admin" type="checkbox" style="display: inline-block; width: auto; vertical-align: top;" > </label>
           <label> Debug <input name="debug" id= "node-config-input-debug" type="checkbox" value="true" style="display: inline-block; width: auto; vertical-align: top;" >  </label>
-      
+       
+        <div align="center">
+           <label for="expires">Expires</label> <input type="date" id="node-config-input-expires" style= "width:auto;" /> 
+        </div>
+        <div align="center">
+          <label for="notBefore">Not Before</label> <input type="date" id="node-config-input-notBefore" style= "width:auto;" /> 
+        </div>
       </div>
-
     <!--//TODO: this node would be formatted nicer if #node-inpu-query-container-div was hidden until a query was added (or already present)... -->
     <!-- Query Dialog Box -->
-
     <!-- -->
     <div id="node-input-jwt-claims-overall" class="form-row node-input-jwt-claims-overall-row hidden">
       <!-- <ol id="node-input-jwt-claims" style=" list-style-type:none; margin: 0;"></ol> -->
-
         <div id="node-input-jwt-claims-container-div" style="box-sizing: border-box; border-radius: 5px; max-height: 200px; padding: 5px; border: 1px solid #ccc; overflow-y:scroll;">
           <ol id="node-input-jwt-claims-container" style=" list-style-type:none; margin: 0;"></ol>
         </div>
     </div>
-
-
-
-
-
     <!-- Email login -->
     <div class="form-row login-row login-row-email hidden" id="login-row-email">
         <label for="node-config-input-email"><i class="fa fa-envelope"></i> Email</label>
         <input class="input-append-left" type="email" id="node-config-input-email" placeholder="your@email.com">
     </div>
-
     <div class="form-row login-row login-row-email hidden" id="login-row-email-password">
         <label for="node-config-input-password"><i class="fa fa-lock"></i> Password</label>
         <input class="input-append-left" type="password" id="node-config-input-password" placeholder="password">
     </div>
-
     <div class="form-row">
         <label for="node-config-input-name"><i class="fa fa-tag"></i> Name</label>
         
         <input class="input-append-left" type="text" id="node-config-input-name" placeholder="Firebase Config Name" style="width: 40%">
        
     </div>
-
-
-
-
 <!--
 <input type="button" id="loadFileXml" value="loadXml" onclick="document.getElementById('file').click();" />
 <input type="file" style="display:none;" id="file" name="file"/>
 -->
-
 <script type="text/javascript">
-
-function addtext(){
-
-  document.getElementById('selectedfile').style.display = 'inline';
-  console.log("click worked")
-}
-
  function handleFileSelect(evt) {
-
       
         var files = evt.target.files; // FileList object
-
         // Loop through the FileList
         for (var i = 0, f; f = files[i]; i++) {
-
           var reader = new FileReader();
-
           // Closure to capture the file information.
           reader.onload = (function(theFile) {
             return function(e) {
-
               //var test;
              // global.test = "hi";
-
                var results = e.target.result;
-
          
                var obj = JSON.parse(results);
              
@@ -146,7 +110,6 @@ function addtext(){
                client_email = obj.client_email;
                  
               // private_key  = obj.private_key;
-
                //make it a hidden element 
               // Print the contents of the file
              var span = document.createElement('span');                    
@@ -154,7 +117,6 @@ function addtext(){
              document.getElementById('node-config-input-list').insertBefore(span, null);
             };
           })(f);
-
           // Read in the file
           //reader.readAsDataText(f,UTF-8);
         //reader.readAsDataURL(f);
@@ -162,13 +124,11 @@ function addtext(){
         }
     
       }
-
       var element = document.getElementById('node-config-input-privatekey')
       if(element != null){
         
          document.getElementById('node-config-input-privatekey').addEventListener('change', handleFileSelect, false);
       } 
-
 </script>
 
 
@@ -180,18 +140,12 @@ function addtext(){
 <script type="text/javascript">
       
     (function () {
-
       var project_id;
       var client_email; 
       var private_key;
-
-
-
         RED.nodes.registerType('firebase config', {
             category: 'config',
-
             color: "#ffb37a",
-
             defaults: {
               name:{value: "", required: false},
               firebaseurl: {value: "", required: true},
@@ -201,9 +155,9 @@ function addtext(){
              
               admin: {value: false, required: false},
               debug: {value: false, required: false},
-
+              expires: {value: "", required: false},
+              notBefore: {value: "", required: false}
             },
-
             credentials: {
                 uid: {type: 'text'},
                 secret: {type: 'password'},
@@ -211,19 +165,12 @@ function addtext(){
                 password: {type: 'password'},
                 jwtClaims: {type: 'text'},
                 list: { type: 'text'},
-
-
                 },
-
-
             label: function () {
-
                 //return typeof this.appid ? 'Firebase ' + this.appid : 'Firebase ' + this.email;
                 var str = 'firebase config Node Error'
-
                 if(this.firebaseurl)
                   str = "https://"+this.firebaseurl+".firebaseio.com/"
-
                 //TODO: File node red bug on credentials not being set on this in the client before the label function is called
                 //TODO: BUG: Node-Red doesn't provide credentials as early as it provides defaults... Need to file a bug request so that we don't need to store data twice
                 if(this.credentials && this.loginType){
@@ -256,24 +203,20 @@ function addtext(){
                 return this.name || str
                                
             },
-
             labelStyle: function () {
                 return this.name ? 'node_label_italic' : '';
             },
-
             oneditprepare: function () {
-
-                if(this.credentials.list != undefined){
-                    document.getElementById('selectedfile').style.display = 'inline';
-                }
+              console.log("jwt", this.jwt)
+              if(this.jwt[0] != "wow") console.log("problem")
+                //get the jwt values bc this waits for the next round
+                // $('#node-dialog-ok').prop('disabled', true);
                 
                 var $nodeConfigInputType = $('#node-config-input-loginType'),
                     $loginTypeSelect = $('#loginType-select');
                     firebaseConnections = null;
-
                 // Disable the Add button until we are ready
                 //$("#node-config-dialog-ok").button("disable");
-
                 //Update the form if the login type changes
                 $loginTypeSelect.change(function () {
                     var id = $(this).find('option:selected').val();
@@ -281,18 +224,14 @@ function addtext(){
                     $('.login-row-' + id).show();
                     $nodeConfigInputType.val(id);
                 });
-
                 
                 
-
                 //TODO: Possible node-red bug? It looks like defaults don't get set automatically in config nodes?
                 $("#node-config-input-name").val(this.name);
                 $("#node-config-input-firebaseurl").val(this.firebaseurl);
                 $("#node-config-input-api").val(this.api);
                //? $("#list").val(this.list);
-                if(this.list != undefined){
                 $("#node-config-input-list").val(this.list);
-                }
                 $('.login-row').hide();
                 if (this.loginType && this.loginType != "") {
                     $loginTypeSelect.val(this.loginType); //sets the drop down
@@ -304,8 +243,6 @@ function addtext(){
                     $loginTypeSelect.val('email');
                     $nodeConfigInputType.val('email');
                 }
-
-
                 function checkSelectsNotEmpty(){
                   var valid = true;
                   $('#node-input-jwt-claims-container select').each(function(idx){
@@ -316,7 +253,6 @@ function addtext(){
                   });
                   return valid;
                 }
-
                 function checkInputsNotEmpty(){
                   var valid = true;
                   $('#node-input-jwt-claims-container input').each(function(idx){
@@ -327,21 +263,17 @@ function addtext(){
                   })
                   return valid;
                 }
-
                 function addInputToUI($input){
                   if ($input.not(':visible')){
                     //console.log("input not visible");
-
                     //Check if input already has text
                     if ($input.val() == null || $input.val().length == 0){
                       $input.addClass('input-error');
                       $('node-config-dialog-ok').prop('disabled', true);
                     }
-
                     //Set up handler
                     $input.off('input');
                     $input.on('input', function(){
-
                       if ($(this).val().length == 0){
                         $(this).addClass('input-error');
                         $('node-config-dialog-ok').prop('disabled', true);
@@ -357,7 +289,6 @@ function addtext(){
                     //console.log("input visible")
                   }
                 }
-
                 function removeInputFromUI($input){
                   $input.off('input'); //remove listener
                   $input.hide();
@@ -365,9 +296,7 @@ function addtext(){
                   if (checkInputsNotEmpty() && checkSelectsNotEmpty()) $('node-config-dialog-ok').prop('disabled', false);
                   else $('node-config-dialog-ok').prop('disabled', true); //TODO: BUG: These are no longer working but it's not the end of the world because the generated JWT's are still valid...
                 }
-
                 function generatejwtClaim(jwtClaims){
-
                   var $jwtClaimContainer = $('<li/>',{style:"background: #fff; margin:0; padding:8px 0px; border-bottom: 1px solid #ccc;"});;
                   var $table = $('<table/>').appendTo($jwtClaimContainer);
                   var $tbody = $('<tbody/>').appendTo($table);
@@ -379,51 +308,38 @@ function addtext(){
                   var $inputVal = $('<input/>', {style:"width:100%;", placeholder: "Value"}).addClass('node-input-jwt-claims-value input-block-level').appendTo($tdInputVal);
                   var $tdDeleteBtn = $('<td/>').appendTo($tbody);
                   var $deleteBtn = $('<a/>').addClass('btn btn-mini').append($('<i/>').addClass('fa fa-remove')).appendTo($tdDeleteBtn);
-
-
                   //Delete click handler
                   $deleteBtn.on('click', function(){
                     $jwtClaimContainer.css({"background":"#fee"});
                     $jwtClaimContainer.fadeOut(300, function() {
                       $(this).remove();
-
                       //Get list of remaining jwtClaims
                       var jwtClaims = $('#node-input-jwt-claims-container').children();
-                      console.log("claims are", jwtClaims);
-
                       if (jwtClaims.length == 0){ //If there are no jwtClaims left, hide container
                         $('#node-input-jwt-claims-overall').hide();
                         $('node-config-dialog-ok').prop('disabled', false);
                       }
                     });
                   });
-
                   $("#node-input-jwt-claims-container").append($jwtClaimContainer);
-
                   if (jwtClaims){
                     $inputKey.val(jwtClaims.key ? jwtClaims.key : "")
                     $inputVal.val((jwtClaims.value ? jwtClaims.value : ""));
                     $inputKey.trigger('input');
                     $inputVal.trigger('input');
                   }
-
                   if ($('#node-input-jwt-claims-overall').not(':visible')) $('#node-input-jwt-claims-overall').show();
                 }
-
                 $("#node-input-add-jwt-claim").click(function() {
-
                   generatejwtClaim();
                   $("#node-input-jwt-claims-container-div").scrollTop($("#node-input-jwt-claims-container-div").get(0).scrollHeight);
                 });
-
                 if(this.credentials.jwtClaims){
-
                   this.credentials.jwtClaims = JSON.parse(this.credentials.jwtClaims)
                   for (i in this.credentials.jwtClaims){
                     generatejwtClaim(this.credentials.jwtClaims[i]);
                   }
                 }
-
                 function switchDialogResize() {
                     var rows = $("#dialog-form>div:not(.node-input-jwt-claims-container-row)");
                     var height = $("#dialog-form").height();
@@ -434,14 +350,12 @@ function addtext(){
                     height -= (parseInt(editorRow.css("marginTop"))+parseInt(editorRow.css("marginBottom")));
                     $("#node-input-jwt-claims-container-div").css("height",height+"px");
                 };
-
                 $( "#node-input-jwt-claims-container" ).sortable({
                     axis: "y",
                     handle:".node-input-jwt-claims-handle",
                     cursor: "move"
                 });
                 $( "#node-input-jwt-claims-container .node-input-jwt-claims-handle" ).disableSelection();
-
                 $( "#dialog" ).on("dialogresize", switchDialogResize);
                 $( "#dialog" ).one("dialogopen", function(ev) {
                     var size = $( "#dialog" ).dialog('option','sizeCache-switch');
@@ -454,29 +368,17 @@ function addtext(){
                 $( "#dialog" ).one("dialogclose", function(ev,ui) {
                     $( "#dialog" ).off("dialogresize",switchDialogResize);
                 });
-
             //TODO: BUG: oneditsave: should really look at the return value and if it is a string, provide an alert to a user as to what went wrong and take you back to the edit dialogue box - I don't think Node-Red allows for this...
-               
-               //var jwtClaims = $("#node-input-jwt-claims-container").children();
-               //if(jwtClaims != "bla") console.log("EROROR WITH JWTS ");
-               //$('#node-dialog-update').prop('disabled', true);
-
             }, //end oneditprepare
-
             oneditsave: function() {
               var node = this;
-
-
-
               //Save Path [this is automagically taken care of by NR]
               //Save Event type [this is automagically taken care of by NR]
-
               node.credentials.list = "";
               var output = $("#node-config-input-list").val();
               output = JSON.stringify(output);
               node.credentials.list = output;
               //console.log("List output: ", node.credentials.list);
-
         
               //Save jwtClaims
               node.jwt =[]
@@ -485,16 +387,16 @@ function addtext(){
                 var k = $($(this).find('input')[0])
                 var v = $($(this).find('input')[1])
                 
-                notAllowed = ["alg","acr","amr","at_hash","aud","auth_time","azp,cnf","c_hash,exp","firebase,iat","iss","jti","nbf","nonce","sub"]                
+                notAllowed = ["alg","acr","amr","at_hash","aud","auth_time","azp,cnf","c_hash,exp","firebase,iat","iss","jti","nbf","nonce,sub"]                
                 
-                //if(notAllowed.indexOf(k.val()) != -1){ //meaning the key is an input that isnt allowed
-                 // console.log("ohoh")
-                 // $('#node-dialog-ok').prop('disabled', true);
+                if(notAllowed.indexOf(k.val()) != -1){ //meaning the key is an input that isnt allowed
+                  console.log("ohoh")
+                  $('#node-dialog-ok').prop('disabled', true);
                   //do something
                   //exit from this
                   //$('#node-input-illegal-additional').show()
-                 // return
-               // }
+                  return
+                }
       
                 var claim = {
                   "key": k.is(':visible') ? k.val() : "",
@@ -505,29 +407,18 @@ function addtext(){
              
               node.jwt = JSON.stringify(node.jwt)
             },
-
             exportable: false
         });
     })();
 </script>
 
 <script type="text/x-red" data-help-name="firebase config">
-
 <p><b>API Key: </b></p>
-
 <p> To locate your API Key, go to the desired firebase project in the firebase console. Locate the settings icon wheel on the left, next to "Overview". The API Key will be labeled as "Web API Key". </p>
-
 <p><b> Private Key File: </b></p>
-
 <p> A private key needs to be generated in order to use the Access Token verification.
-
 <p>To retreive the Private Key file, go the the desired project in the firebase console. Locate the settings icon wheel on the left, next to "Overview". Next click the Service Accounts Tab. Finally, click on "Generate New Private Key". This will download a file onto your computer </p>
-
 <p> Click on choose file and locate the downloaded file. </p>
 <!--<p>Give the path to where the file is stored. (Example: If the file is stored in the C drive under a users downloaded folder give the path C://Users/username/Dowloads/filename.json) </p> 
 -->
-<p> <b>Additional JWT Claims: </b><p> 
-
-<p> The following list of additional claim keys are reserved by firebase and cannot be used : alg,acr,amr,at_hash,aud,auth_time,azp,cnf,c_hash,exp,firebase,iat,iss,jti,nbf,nonce,sub"
-</p>
 </script>
