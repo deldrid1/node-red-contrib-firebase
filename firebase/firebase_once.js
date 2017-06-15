@@ -146,6 +146,7 @@ module.exports = function(RED) {
             childpath = this.childpath
           }
           else if(this.childtype == "msg"){
+
             var childvalue = this.childvalue;
             childpath = msg[childvalue];
           }
@@ -162,7 +163,6 @@ module.exports = function(RED) {
                 var childvalue = this.childvalue;
                 childpath = jsonata(childvalue);
                 childpath = childpath.evaluate({msg:msg})
-                console.log("childpath is ", childpath);
                 }
             catch(e){
                 console.log("ERROR WITH JSONATA");

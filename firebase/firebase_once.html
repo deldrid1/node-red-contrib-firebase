@@ -507,7 +507,7 @@
                 var used = false;
                 $('#node-input-query-container select').each(function(idx){
                   if ($(this).val() == operator) used = true;
-                  console.log("operatior ", $(this).val()) //contains the type
+                 
                   return; //breaks jquery each loop
                 });
 
@@ -522,19 +522,16 @@
               var $input = $('<input/>', {style:"width:200px;", display: "input-append-left" }).addClass('form-row').appendTo($tdInput);
 
 
-
-//display:block; left 56px; right: 0px;"
- 
-               
-
-               //sas
-               $(".input").on('change', function(type, value) {console.log("changed")} );
-
+               $(".input").on('change', function(type, value) 
+                {
+                  //console.log("changed")
+                });
+  
                
 
               var $tdDeleteBtn = $('<td/>').appendTo($tbody);
               var $deleteBtn = $('<a/>').addClass('btn btn-mini').append($('<i/>').addClass('fa fa-remove')).appendTo($tdDeleteBtn);
-              console.log("in html once")
+ 
               //Set current operator for this query
               if (firstUnusedOperator) $select.val(firstUnusedOperator);
               else {

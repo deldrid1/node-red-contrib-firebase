@@ -65,9 +65,7 @@ module.exports = function (RED) {
       return {
         get: function(firebaseurl, configNodeID, api,loginType,list){
           if(!connections[configNodeID]){ //Lazily create a new Firebase Reference if it does not exist
-            //console.log("the connections",connections)
-           //console.log(configNodeID)
-
+  
             connections[configNodeID] = function(){
 
               //Private
@@ -86,8 +84,6 @@ module.exports = function (RED) {
                 _emitter.emit(a,b)
               }
             
-
-
               var obj = {
                 Firebase: Firebase,  //Needed for Firebase.ServerValue.TIMESTAMP...
 
@@ -118,24 +114,17 @@ module.exports = function (RED) {
                   this.list = list;
                   this.firebaseurl = firebaseurl;
 
-     
-                  
                   if(list !=undefined){
                   var project_id = list["project_id"];
                   var private_key = list["private_key"];
                   var client_email = list["client_email"];
-                  
-                  //for now
-                  //var serviceAccount = "C://testing-19109-firebase-adminsdk-n0bx5-096122e57c.json";
-                  
-                   var fbAdmin = admin.initializeApp({
+
+                  var fbAdmin = admin.initializeApp({
 
                     credential: admin.credential.cert({
                     projectId: project_id,
                     clientEmail: client_email,
                     privateKey: private_key
-
-                  //credential: admin.credential.cert(serviceAccount), //can do other way also https://firebase.google.com/docs/admin/setup
                  }),
                   databaseURL: this.firebaseurl
                 },configNodeID + "admin");
@@ -148,13 +137,11 @@ module.exports = function (RED) {
                 on: function(a,b) { _emitter.on(a,b); },
                 once: function(a,b) { _emitter.once(a,b); },
 
-                authorize: function(loginType, secret, passORuid, jwtClaims,privatekey,list,firebaseurl,admin,debug,expires,notBefore){
+                authorize: function(loginType, secret, passORuid, jwtClaims,privatekey,list,firebaseurl,admin,debug){
                   //console.log("Attempting to authorize with loginType="+loginType+" with secret="+secret+" and pass/uid="+passORuid)
                   this.list = list;
                   this.admin = admin;
                   this.debug = debug;
-                  this.expires = expires;
-                  this.notBefore = notBefore;
                   this.firebaseurl =firebaseurl
 
                 
@@ -176,20 +163,13 @@ module.exports = function (RED) {
                           else{
                             console.log("user logged out ")
                           }
-                        });  
-
-                    //old way
-                    //this.fbRef.offAuth(this.onAuth, this);
-                    //this.fbRef.unauth();
-
+                        }); 
                     _emit("unauthorized");
                   }
                   
                   this.loginType = loginType
                   this.secret = secret
                   this.passORuid = passORuid
-                  //this.privatekey = privatekey
-
                   switch (loginType) {
                       case 'none':
                       
@@ -203,7 +183,6 @@ module.exports = function (RED) {
                                 _emit("unauthorized");
                                 console.log("Error wrong JWT token:", error);
                               });      
-
                       this.fbApp.auth().onAuthStateChanged(function(user) {
                           if(user){
                             //var isAnonymous = user.isAnonymous;
@@ -212,9 +191,6 @@ module.exports = function (RED) {
 
                           }
                         });   
-                            
-                          //this.fbRef.authWithCustomToken(secret, this.onLoginAuth.bind(this))
-                          //this.fbRef.onAuth(this.onAuth, this);
                           break;
                       case 'anonymous':
                           this.fbApp.auth().signInAnonymously()
@@ -234,70 +210,35 @@ module.exports = function (RED) {
                           }
                         });                        
                          break;
-                          /*old
-                          this.fbRef.authAnonymously(this.onLoginAuth.bind(this));
-                          this.fbRef.onAuth(this.onAuth, this);
-                          */
-                      case 'admin':
-                        process.nextTick(function(){
-                            _emit("authorized", null)
-                          }.bind(this));
-                          break;
-                        //call Admin function to make fbAdmin ref
-
-                      //bj.fbRef = obj.fbApp.database().ref();
-                    //var connectedRef = this.fbApp.database().ref(".info/connected");
-                      //connectedRef.on("value", obj.onConnectionStatusChange, obj);
-                      /*
-                        this.makeadmin(this.list,this.firebaseurl);
-                        console.log("in admin")
-
-                        
-                        //console.log("worked",this.fbAdmin.database().ref())
-                      
-
-                         var db = this.fbAdmin.database();
-                         var connectedRef  = db.ref(".info/connected");
-                         
-                         //connectedRef.on("value", this.onConnectionStatusChange, this);
-                     
-                     
-                     */
-                       break;
-                      
                       case 'customGenerated':
                       
                         //call Admin function to make fbAdmin ref
   
                         this.makeadmin(this.list,this.firebaseurl);
-                        console.log("in custom")
-                            if(this.expires !=""){
-                              this.expires.toString;
-                              this.expires = new Date(this.expires).getTime()        
-                            }
-                            if(this.notBefore != ""){
-                              this.notBefore.toString;
-                              this.notBefore = new Date(this.notBefore).getTime()
-                            }
-
+   
                             var tokenArgs = {
                               admin: this.admin, 
                               debug: this.debug, 
-                              expires: this.expires,
-                              notBefore: this.notBefore
+  
                             };
-
+                          var notAllowed = ["alg","acr","amr","at_hash","aud","auth_time","azp,cnf","c_hash,exp","firebase,iat","iss","jti","nbf","nonce","sub"];              
                            for(var i = 0; i < jwtClaims.length; i++){
+                              if(notAllowed.indexOf(jwtClaims[i].key) != -1){ //meaning the key is an input that isnt allowed                      
+                                _emit("error","JWT additional claims error. The key specified isnt allowed ");
+                                return;
+      
+                              }
                               tokenArgs[jwtClaims[i].key] = jwtClaims[i].value
                            }
+                           
 
                            
-                           
-                           this.fbAdmin.auth().createCustomToken(passORuid, tokenArgs)
+                      this.fbAdmin.auth().createCustomToken(passORuid, tokenArgs)
               
                               .then(function(customToken)
                               {
-                                  this.fbpp.auth().signInWithCustomToken(customToken)
+                                
+                                  this.fbApp.auth().signInWithCustomToken(customToken)
                                    .catch(function(error) {
                                     _emit("unauthorized");
                                     console.log("error in token")
@@ -323,7 +264,11 @@ module.exports = function (RED) {
                         }); 
                             //this.fbRef.onAuth(this.onAuth, this);
                             break;
-
+                       case 'admin':
+                        process.nextTick(function(){
+                            _emit("authorized", null)
+                          }.bind(this));
+                          break;
                       case 'email':
                                      
                         this.fbApp.auth().signInWithEmailAndPassword(secret, passORuid)
@@ -399,19 +344,6 @@ module.exports = function (RED) {
 */
                 onLoginAuth: function(error, authData) {
                   if (error) {
-                    // switch (error.code) {
-                    //   case "INVALID_EMAIL":
-                    //     error = "The specified user account email is invalid.";
-                    //     break;
-                    //   case "INVALID_PASSWORD":
-                    //     error = "The specified user account password is incorrect.";
-                    //     break;
-                    //   case "INVALID_USER":
-                    //     error = "The specified user account does not exist.";
-                    //     break;
-                    //   default:
-                    //     error = "Error logging user in: " + error.toString();
-                    // }
                     _emit("error", error.code);  //TODO: evaluate being verbose vs. using the error.code...
                   } //else //onAuth handles success conditions
                       //console.log("onLoginAuth Success: Logged into  " + this.firebaseurl + " as " + JSON.stringify(authData))
@@ -423,18 +355,13 @@ module.exports = function (RED) {
                   _emit("closed")
                   _emitter.removeAllListeners();  //Makes sure everybody stopped listening to us... //TODO: This may prevent nodes from receiving the "closed" event...
 
-                  //Clean up the Firebase Reference and tear down the connection
-                  
-                  //old
-                  //this.fbRef.child(".info/connected").off("value", obj.onConnectionStatusChange, obj);
-                  
+                  //Clean up the Firebase Reference and tear down the connection 
                    if(this.fbAdmin){
                      this.fbAdmin.delete()
                     .then(function() {
                      //console.log("App deleted successfully2");
                     })
-                   }
-               
+                   }    
                    this.fbApp.delete()
                     .then(function() {
                      //console.log("App deleted successfully2");
@@ -442,48 +369,30 @@ module.exports = function (RED) {
                    
 
                   if(this.loginType){
-                   //old way
-                   // this.fbRef.offAuth(obj.onAuth, obj);
-
-                    //this.fbRef.unauth();
                      this.fbApp.auth().signOut().then(function(){ 
-                      //console.log("signed out successfully2");
                     }, function(error){
                        console.log("error signing out2");
                     });
-
-
                     this.fbApp.auth().onAuthStateChanged(function(user) {
                           if(user){
-                            //var isAnonymous = user.isAnonymous;
-                            //console.log("User still logged in2" + user);
-                            
+                            //var isAnonymous = user.isAnonymous;  
                           }
                           else{
-                            console.log("User not logged in anymore2")
+                            //console.log("User not logged in anymore2")
                           }
                     });
-
-                    
-
-                  }
+                   }
                  // console.log(connections + "afer");
                 }//end of close func
               };//end of obj
             
-            //create db reference
-
-          
-        
-             
+            //create db reference    
               if(loginType == "admin"){
 
-    
+                  
                  obj.makeadmin(list,firebaseurl);
                 
                 obj.fbRef = obj.fbAdmin.database().ref();
-
-
 
                 _emit = _emit.bind(obj);
                 _emitter.setMaxListeners(0);  //Suppress Memory Leak warnings, 0 means unlimited listeners
@@ -496,10 +405,12 @@ module.exports = function (RED) {
                 
 
                 }.bind(obj))
+
+                return obj;
                                          
               }//end of if
 
-              else{
+              
                 obj.fbRef = obj.fbApp.database().ref();
               
                 //Set "this" in our private functions
@@ -518,16 +429,14 @@ module.exports = function (RED) {
                  //sas TODO
                 }.bind(obj))
 
-              }//end of else
+              
 
               return obj;
             }();
           }
 
           connections[configNodeID].nodeCount++;
-          //console.log("botttttom");
-          //console.log(configNodeID);
-          //console.log(Firebase.apps.length);
+
           return connections[configNodeID]
         },
 
@@ -551,11 +460,6 @@ module.exports = function (RED) {
     function FirebaseConfig(n) {
         RED.nodes.createNode(this, n);
 
-        
-        //this.log(JSON.stringify(n, null, "\t"))
-        //this.log(JSON.stringify(this, null, "\t"))
-
-        //TODO: Input validation on the server (we are doing it on the client but not doing anything here...)
         this.firebaseurl = "https://" + n.firebaseurl + ".firebaseio.com";
         this.api = n.api;
 
@@ -574,12 +478,12 @@ module.exports = function (RED) {
 
         if( (this.email == undefined  && this.loginType == 'email' ) || (this.password == undefined && this.loginType == 'email') ){
           this.error("Email and password required");
-          _emit('disconnected')
+          _emit('error',"disconnected")
         }
         
         if((this.list == undefined && this.loginType == 'customGenerated') || (this.list == undefined && this.loginType == 'admin')){
           this.error("Private Key is required to create a token")
-          _emit("disconnected")
+          _emit('error',"disconnected")
         }
         if(this.uid == undefined && this.loginType == 'customGenerated'){
           this.error("unique ID is required");
@@ -593,21 +497,11 @@ module.exports = function (RED) {
 
         this.admin = n.admin;
         this.debug = n.debug;
-        this.expires = n.expires;
-        this.notBefore = n.notBefore;
+
         
         this.jwtClaims = JSON.parse(this.jwtClaims != undefined ? this.jwtClaims : "[]");
 
-        //console.log(this.jwtClaims)
-
-        //private key filepath
-        if(this.privatekey != " "){
-        
-        //serviceAccount = require(this.privatekey);
-        //require("C://testing-19109-firebase-adminsdk-n0bx5-096122e57c.json");
-        }
         this.id = generateUID();
-
 
         if(this.loginType){ //getting empty logintypes for some reason
 
@@ -620,7 +514,6 @@ module.exports = function (RED) {
 
       
         this.fbConnection.on("connected", function(){
-          // this.log("connected to " + this.firebaseurl)
 
           switch (this.loginType) {
               case 'none':
@@ -640,7 +533,7 @@ module.exports = function (RED) {
                 this.status({fill:"green", shape:"ring", text:"connected"})
                 break;
               case 'customGenerated':
-                this.fbConnection.authorize(this.loginType, this.secret, this.uid, this.jwtClaims,this.privatekey,this.list,this.firebaseurl,this.admin,this.debug,this.expires,this.notBefore);
+                this.fbConnection.authorize(this.loginType, this.secret, this.uid, this.jwtClaims,this.privatekey,this.list,this.firebaseurl,this.admin,this.debug);
                 break;     
               case 'facebook': //TODO:
                 break;
@@ -659,31 +552,24 @@ module.exports = function (RED) {
         }.bind(this))
 
         this.fbConnection.on("disconnected", function(){
-          // this.log("disconnected from " + this.firebaseurl)
+
           this.status({fill:"red", shape:"ring", text:"disconnected"})
         }.bind(this))
 
         this.fbConnection.on("authorized", function(authData){
-          // this.log("authorized to " + this.firebaseurl + (authData ? " as " + JSON.stringify(authData) : " without auth"))
+  
         }.bind(this))
 
         this.fbConnection.on("unauthorized", function(){
-          // this.log("unauthorized from " + this.firebaseurl)
 
           this.status({fill:"red", shape:"dot", text:"unauthorized"})
         }.bind(this))
 
         this.fbConnection.on("error", function(error){
-          // this.log("error [" + this.firebaseurl + "] - " + error)
+
           this.status({fill:"red", shape:"ring", text:error})
           this.error(JSON.stringify(error), error);//TODO: BUG: Config nodes have no where to pass there second error param...
         }.bind(this))
-
-        // this.on('input', function(msg) { //Meaningless in a Config Node
-        //     // do something with 'msg'
-        // });
-
-        //this.send({payload: "hi"})  //Also meaningless for Config Nodes
 
         this.on('close', function() {
           //console.log("in close function")

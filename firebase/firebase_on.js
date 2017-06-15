@@ -33,7 +33,7 @@ var bool;
         this.event = n.event;
         this.atStart = n.atStart;
         this.eventType = n.eventType;
-		    this.queries = n.queries
+        this.queries = n.queries
         this.childtype = n.childtype;
         this.childvalue = n.childvalue;
         this.eventTypetype = n.eventTypetype;
@@ -116,7 +116,6 @@ var bool;
 
           var childpath;
           //Parse out msg.childpath   
-
           if(this.childtype == "str"){
             childpath = this.childpath
           }
@@ -462,8 +461,9 @@ var bool;
           this.setStatus();
 
           if((this.eventType != "msg.eventType" && this.childpath != "msg.childpath") || this.msg != null)
-            this.registerListeners();
-
+            if(this.msg != null){
+              this.registerListeners();
+            }
         }.bind(this)
 
         this.fbUnauthorized = function(){
