@@ -8,12 +8,6 @@ module.exports = function (RED) {
     var Firebase = require('firebase'); //for new version
     var auth = require('firebase/auth');
     var admin = require('firebase-admin');
-    //var serviceAccount = require("./modules/testing-19109-firebase-adminsdk-n0bx5-096122e57c.json");
-    //var serviceAccount = "C://testing-19109-firebase-adminsdk-n0bx5-096122e57c.json";
-
-
-//C:\Users\c9924310\AppData\Roaming\npm\node_modules\node-red-contrib-firebase\firebase
-
     var FirebaseTokenGenerator = require("firebase-token-generator");
     var events = require("events");
     var path = require("path");
@@ -89,8 +83,7 @@ module.exports = function (RED) {
 
                 firebaseurl: firebaseurl,  //TODO: Some of this data is duplicated...
                 api: api,
-                //fbRef: new Firebase(firebaseurl, configNodeID), //Including a second argument is a hack which allows us to have multiple auths connected to the same Firebase - see https://github.com/deldrid1/node-red-contrib-firebase/issues/3
-                
+                              
                 fbApp:Firebase.initializeApp({apiKey: api,databaseURL: firebaseurl},configNodeID),
 
                 fbRef: null,
@@ -158,7 +151,6 @@ module.exports = function (RED) {
                       this.fbApp.auth().onAuthStateChanged(function(user) {
                           if(user){
                             //console.log("still signed in")
-
                           }
                           else{
                             console.log("user logged out ")
@@ -172,8 +164,7 @@ module.exports = function (RED) {
                   this.passORuid = passORuid
                   switch (loginType) {
                       case 'none':
-                      
-                          process.nextTick(function(){
+                            process.nextTick(function(){
                             _emit("authorized", null)
                           }.bind(this));
                           break;
@@ -185,8 +176,6 @@ module.exports = function (RED) {
                               });      
                       this.fbApp.auth().onAuthStateChanged(function(user) {
                           if(user){
-                            //var isAnonymous = user.isAnonymous;
-                           // console.log("signed in jwt");
                             _emit("authorized",user);
 
                           }
@@ -203,7 +192,6 @@ module.exports = function (RED) {
 
                            this.fbApp.auth().onAuthStateChanged(function(user) {
                           if(user){
-                            //var isAnonymous = user.isAnonymous;
                             console.log("signed in anonymous");
                             _emit("authorized",user);
 
@@ -211,9 +199,6 @@ module.exports = function (RED) {
                         });                        
                          break;
                       case 'customGenerated':
-                      
-                        //call Admin function to make fbAdmin ref
-  
                         this.makeadmin(this.list,this.firebaseurl);
    
                             var tokenArgs = {
@@ -229,31 +214,21 @@ module.exports = function (RED) {
       
                               }
                               tokenArgs[jwtClaims[i].key] = jwtClaims[i].value
-                           }
-                           
-
-                           
+                           }            
                       this.fbAdmin.auth().createCustomToken(passORuid, tokenArgs)
-              
-                              .then(function(customToken)
-                              {
-                                
-                                  this.fbApp.auth().signInWithCustomToken(customToken)
+                              .then(function(customToken){
+                                this.fbApp.auth().signInWithCustomToken(customToken)
                                    .catch(function(error) {
                                     _emit("unauthorized");
                                     console.log("error in token")
                                     var errorCode = error.code;
                                     var errorMessage = error.message;
                                     console.log(error);
-
-
                           }); 
-
-                              }.bind(this))
+                             }.bind(this))
                               .catch(function(error){
                                 console.log("Error creating custom token:", error);
                               });
-
                         this.fbApp.auth().onAuthStateChanged(function(user) {
                           if(user){
                             user.getToken().then(function(data){
@@ -262,24 +237,19 @@ module.exports = function (RED) {
                             _emit("authorized",user);
                           }
                         }); 
-                            //this.fbRef.onAuth(this.onAuth, this);
-                            break;
+                          break;
                        case 'admin':
                         process.nextTick(function(){
                             _emit("authorized", null)
                           }.bind(this));
                           break;
-                      case 'email':
-                                     
+                      case 'email':                 
                         this.fbApp.auth().signInWithEmailAndPassword(secret, passORuid)
                         .catch(function(error) {
-                         // node.warn("blabla")
-
                           var errorCode = error.code;
                           var errorMessage = error.message;
                           if (errorCode === 'auth/wrong-password') {
-                            //  alert('ERROR: Invalid loginType in firebase " + this.firebaseurl + " config - " + this.loginType');
-                            
+                            //  alert('ERROR: Invalid loginType in firebase " + this.firebaseurl + " config - " + this.loginType');   
                             } else {
                            //   alert(errorMessage);
                             }
@@ -287,25 +257,16 @@ module.exports = function (RED) {
                             _emit("unauthorized");
 
                           })     
-                        //instead of this.fbRef.onAuth(this.onAuth, this);
-                        //this.fbApp.onAuth(this.on)
-
-                    
                         this.fbApp.auth().onAuthStateChanged(function(user) {
                           if(user){
-                            //console.log("signed in");
                             _emit("authorized",user);
                           }
                         });                        
-                         break;
-                      
+                         break;                     
                       default:
                            console.log("ERROR: Invalid loginType in firebase " + this.firebaseurl + " config - " + this.loginType)
                            this.status({fill:"red", shape:"ring", text:"invalid loginType"})
                            break;
-
-                        
-                           
                   }//logintype end 
                 }, // end of authorize
 
@@ -365,9 +326,7 @@ module.exports = function (RED) {
                    this.fbApp.delete()
                     .then(function() {
                      //console.log("App deleted successfully2");
-                    });
-                   
-
+                    });                  
                   if(this.loginType){
                      this.fbApp.auth().signOut().then(function(){ 
                     }, function(error){
@@ -384,53 +343,33 @@ module.exports = function (RED) {
                    }
                  // console.log(connections + "afer");
                 }//end of close func
-              };//end of obj
-            
+              };//end of obj            
             //create db reference    
-              if(loginType == "admin"){
-
-                  
+              if(loginType == "admin"){                  
                  obj.makeadmin(list,firebaseurl);
-                
-                obj.fbRef = obj.fbAdmin.database().ref();
-
+                 obj.fbRef = obj.fbAdmin.database().ref();
                 _emit = _emit.bind(obj);
                 _emitter.setMaxListeners(0);  //Suppress Memory Leak warnings, 0 means unlimited listeners
                 process.nextTick(function(){
                   _emitter.emit("initializing");  //_emit would suppress this because of the default value...
                 
-
                 var connectedRef = this.fbAdmin.database().ref(".info/connected");
-                connectedRef.on("value", obj.onConnectionStatusChange, obj);
-                
-
+                connectedRef.on("value", obj.onConnectionStatusChange, obj);          
                 }.bind(obj))
-
-                return obj;
-                                         
+                
+                return obj;                                        
               }//end of if
-
               
-                obj.fbRef = obj.fbApp.database().ref();
-              
+                obj.fbRef = obj.fbApp.database().ref();              
                 //Set "this" in our private functions
                 _emit = _emit.bind(obj);
                 _emitter.setMaxListeners(0);  //Suppress Memory Leak warnings, 0 means unlimited listeners
                 process.nextTick(function(){
-                  _emitter.emit("initializing");  //_emit would suppress this because of the default value...
-                
-                
+                _emitter.emit("initializing");  //_emit would suppress this because of the default value...
+                  
                 var connectedRef = this.fbApp.database().ref(".info/connected");
-              
                 connectedRef.on("value", obj.onConnectionStatusChange, obj);
-                
-
-                 //obj.fbRef.child(".info/connected").on("value", obj.onConnectionStatusChange, obj);
-                 //sas TODO
                 }.bind(obj))
-
-              
-
               return obj;
             }();
           }
@@ -461,26 +400,19 @@ module.exports = function (RED) {
         RED.nodes.createNode(this, n);
 
         this.firebaseurl = "https://" + n.firebaseurl + ".firebaseio.com";
-        this.api = n.api;
-
-        
+        this.api = n.api;        
         this.loginType = n.loginType;
-
-        
-        this.uid = this.credentials.uid;  
+        this.uid = this.credentials.uid;    
         this.secret = this.credentials.secret;
         this.email = this.credentials.email;
         this.password = this.credentials.password;
-
         this.list = this.credentials.list;
-
         this.jwtClaims = n.jwt;
 
         if( (this.email == undefined  && this.loginType == 'email' ) || (this.password == undefined && this.loginType == 'email') ){
           this.error("Email and password required");
           _emit('error',"disconnected")
-        }
-        
+        }       
         if((this.list == undefined && this.loginType == 'customGenerated') || (this.list == undefined && this.loginType == 'admin')){
           this.error("Private Key is required to create a token")
           _emit('error',"disconnected")
@@ -496,23 +428,16 @@ module.exports = function (RED) {
        }
 
         this.admin = n.admin;
-        this.debug = n.debug;
-
-        
+        this.debug = n.debug;        
         this.jwtClaims = JSON.parse(this.jwtClaims != undefined ? this.jwtClaims : "[]");
-
         this.id = generateUID();
-
-        if(this.loginType){ //getting empty logintypes for some reason
-
-         this.fbConnection = connectionPool.get(this.firebaseurl, this.id,this.api,this.loginType,this.list)
-       
-        this.fbConnection.on("initializing", function(){
+        
+        if(this.loginType){ //getting empty logintypes
+          this.fbConnection = connectionPool.get(this.firebaseurl, this.id,this.api,this.loginType,this.list)
+          this.fbConnection.on("initializing", function(){
           // this.log("initializing to " + this.firebaseurl)
           this.status({fill:"grey", shape:"ring", text:"initializing..."})
-        }.bind(this))
-
-      
+          }.bind(this)) 
         this.fbConnection.on("connected", function(){
 
           switch (this.loginType) {
@@ -577,9 +502,7 @@ module.exports = function (RED) {
             // We need to unbind our callback, or we'll get duplicate messages when we redeploy
             //console.log(this.id + "thats the id")
             connectionPool.close(this.id)
-
         });
-        //
       }
     }
 

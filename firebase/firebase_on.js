@@ -1,11 +1,6 @@
 module.exports = function(RED) {
     'use strict';
-
     var jsonata = require("jsonata");
-    var startAtvar;
-    var equalTovar;
-    var bool;
-
     var getPushIdTimestamp = (function getPushIdTimestamp() {
       var PUSH_CHARS = '-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz';
 
@@ -22,9 +17,6 @@ module.exports = function(RED) {
         } catch(ex){}
       }
     })();
-
-var startAtvar;
-var bool;
     function FirebaseOn(n) {
         RED.nodes.createNode(this,n);
 
@@ -38,11 +30,6 @@ var bool;
         this.childvalue = n.childvalue;
         this.eventTypetype = n.eventTypetype;
         this.eventTypevalue = n.eventTypevalue;
-        //this.querytype = n.querytype; 
-
-  
-       // console.log("childpath thisthing", this.childpath)
-        
         this.ready = false;
         this.ignoreFirst = this.atStart;
         this.authorized = false;
@@ -80,7 +67,6 @@ var bool;
             var msg = {};
             msg.href = snapshot.ref.toString();
             msg.key = snapshot.key;
-
             msg.payload = snapshot.val();
    
             if(snapshot.getPriority())
@@ -136,26 +122,18 @@ var bool;
                 var childvalue = this.childvalue;
                 childpath = jsonata(childvalue);
                 childpath = childpath.evaluate({msg:msg})
-                console.log("childpath is ", childpath);
-                }
-            catch(e){
+            }catch(e){
                 console.log("ERROR WITH JSONATA");
-                    }
-                    //value = query.value.evaluate({msg:msg}); //look into evaluate  https://github.com/node-red/node-red/blob/master/nodes/core/logic/15-change.js#L126            
-          }
-
-          
+             }
+          }          
           if(this.childpath){
-            //ref = this.config.fbConnection.fbRef.child(this.childpath  == "msg.childpath" ? this.msg.childpath : this.childpath)  //Decide if we are using our input msg object or the string we were configured with
             ref = this.config.fbConnection.fbRef.child(childpath)  
           } else {
             ref = this.config.fbConnection.fbRef
           }
-
           var bool = false;
           //set a default for what the query should be ordered by if none is chosen
           for (var i=0; i<this.queries.length; i+=1) {
-
             var q = this.queries[i].name;
             if( q == "orderByKey" || q == "orderByValue" || q =="orderByPriority" || q == "orderByChild"){ 
               bool = true;
@@ -168,8 +146,6 @@ var bool;
 
           for (var i=0; i<this.queries.length; i+=1) {
               var query = this.queries[i];
-              console.log("query is", query.valType)
-              console.log("val is ", query.value)
               switch(query.name){
                 case "orderByKey":    
                 case "orderByValue":
@@ -186,35 +162,31 @@ var bool;
                   }
                   else if(query.valType == "flow"){
                     var val =  this.context().flow.get(query.value);
-                    ref = ref.startAt(val);
-                    
+                    ref = ref.startAt(val);                  
                   }
                   else if(query.valType == "global"){
                     var val =  this.context().global.get(query.value);
                     ref = ref.startAt(val);
                   }
                   else if(query.valType == "num"){
-
                     var val = query.value.toString();
                     ref = ref.startAt(val);
                   }
-                  else if(query.valType == "json"){ //not valid json .. find valid json to test with
+                  else if(query.valType == "json"){ 
                     try {
                       var val = JSON.stringify(query.value);
                     } catch(e2) {
                         console.log("not a valid json",e2);
-                    //this.error(RED._("change.errors.invalid-json"));
                     }
                     ref = ref.startAt(val);
                   }
-                  else if(query.valType == "date"){ //doesnt work 
+                  else if(query.valType == "date"){ //not using this now
                     console.log("in date")
                     var val = Date.now();
                     console.log(query.value);
                     ref = ref.startAt(val);
                   }
-
-                  else if(query.valType == "jsonata"){ //test w/jsonata string
+                  else if(query.valType == "jsonata"){ 
                     try{
                       var val = jsonata(query.value);
                       ref = ref.startAt(val);
@@ -222,7 +194,6 @@ var bool;
                     catch(e){
                       console.log("ERROR WITH JSONATA");
                     }
-                    //value = query.value.evaluate({msg:msg}); //look into evaluate  https://github.com/node-red/node-red/blob/master/nodes/core/logic/15-change.js#L126
                   }
                   break;
                 case "endAt":
@@ -235,35 +206,31 @@ var bool;
                   }
                   else if(query.valType == "flow"){
                     var val =  this.context().flow.get(query.value);
-                    ref = ref.endAt(val);
-                    
+                    ref = ref.endAt(val);                
                   }
                   else if(query.valType == "global"){
                     var val =  this.context().global.get(query.value);
                     ref = ref.endAt(val);
                   }
                   else if(query.valType == "num"){
-
                     var val = query.value.toString();
                     ref = ref.endAt(val);
                   }
-                  else if(query.valType == "json"){ //not valid json .. find valid json to test with
+                  else if(query.valType == "json"){ 
                     try {
                       var val = JSON.stringify(query.value);
                     } catch(e2) {
                         console.log("not a valid json",e2);
-                    //this.error(RED._("change.errors.invalid-json"));
                     }
                     ref = ref.endAt(val);
                   }
-                  else if(query.valType == "date"){ //doesnt work 
+                  else if(query.valType == "date"){ 
                     console.log("in date")
                     var val = Date.now();
                     console.log(query.value);
                     ref = ref.endAt(val);
                   }
-
-                  else if(query.valType == "jsonata"){ //test w/jsonata string
+                  else if(query.valType == "jsonata"){ 
                     try{
                       var val = jsonata(query.value);
                       ref = ref.endAt(val);
@@ -271,7 +238,6 @@ var bool;
                     catch(e){
                       console.log("ERROR WITH JSONATA");
                     }
-                    //value = query.value.evaluate({msg:msg}); //look into evaluate  https://github.com/node-red/node-red/blob/master/nodes/core/logic/15-change.js#L126
                   }
                   break;
                 case "equalTo":
@@ -295,23 +261,21 @@ var bool;
                     var val = query.value.toString();
                     ref = ref.equalTo(val);
                   }
-                  else if(query.valType == "json"){ //not valid json .. find valid json to test with
+                  else if(query.valType == "json"){ 
                     try {
                       var val = JSON.stringify(query.value);
                     } catch(e2) {
-                        console.log("not a valid json",e2);
-                    //this.error(RED._("change.errors.invalid-json"));
+                      console.log("not a valid json",e2);
                     }
                     ref = ref.equalTo(val);
                   }
-                  else if(query.valType == "date"){ //doesnt work 
+                  else if(query.valType == "date"){ 
                     console.log("in date")
                     var val = Date.now();
                     console.log(query.value);
                     ref = ref.equalTo(val);
                   }
-
-                  else if(query.valType == "jsonata"){ //test w/jsonata string
+                  else if(query.valType == "jsonata"){ 
                     try{
                       var val = jsonata(query.value);
                       ref = ref.equalTo(val);
@@ -319,7 +283,6 @@ var bool;
                     catch(e){
                       console.log("ERROR WITH JSONATA");
                     }
-                    //value = query.value.evaluate({msg:msg}); //look into evaluate  https://github.com/node-red/node-red/blob/master/nodes/core/logic/15-change.js#L126
                   }
                   break;  
                 case "limitToFirst":
@@ -330,12 +293,11 @@ var bool;
                   else if (query.valType == "msg") { 
                     var val = this.msg[query.value]; 
                     val = parseInt(val);
-                    ref = ref.limitToFirst(val); //val 
+                    ref = ref.limitToFirst(val);  
                   }
                   else if(query.valType == "flow"){
                     var val =  this.context().flow.get(query.value);
-                    ref = ref.limitToFirst(val);
-                    
+                    ref = ref.limitToFirst(val);                   
                   }
                   else if(query.valType == "global"){
                     var val =  this.context().global.get(query.value);
@@ -358,8 +320,7 @@ var bool;
                   }
                   else if(query.valType == "flow"){
                     var val =  this.context().flow.get(query.value);
-                    ref = ref.limitToLast(val);
-                    
+                    ref = ref.limitToLast(val);                   
                   }
                   else if(query.valType == "global"){
                     var val =  this.context().global.get(query.value);
@@ -375,12 +336,8 @@ var bool;
                   break;
               }
           }
-          
-          //eventtype stuff set in .on("input")
+
           ref.on(this.eventType == "msg.eventType" ? this.msg.eventType : this.eventType, this.onFBValue, this.onFBError, this);
-          //ref.orderbyKey().equalTo("hi").on
-          //ref.on("child_added", function(snapshot) {
-        
         
         }.bind(this);
 
@@ -400,7 +357,6 @@ var bool;
             else
               this.config.fbConnection.fbRef.off(this.eventType == "msg.eventType" ? this.msg.eventType : this.eventType, this.onFBValue, this);
           }
-
           this.ready = false;
           this.msg == null;
 
@@ -459,7 +415,6 @@ var bool;
           // this.log("authorized")
           this.authorized = true;
           this.setStatus();
-
           if((this.eventType != "msg.eventType" && this.childpath != "msg.childpath") || this.msg != null)
             if(this.msg != null){
               this.registerListeners();
@@ -467,7 +422,6 @@ var bool;
         }.bind(this)
 
         this.fbUnauthorized = function(){
-          // this.log("unauthorized")
           this.authorized = false;
           this.setStatus();
           this.destroyListeners();
@@ -502,30 +456,20 @@ var bool;
 
         this.on('input', function(msg) {
           var eventType
-
           if(this.eventType == "msg.eventType"){
-
-            if(this.eventTypetype == "msg"){
-            
+            if(this.eventTypetype == "msg"){       
               eventType = msg[this.eventTypevalue];
-              console.log("in herrr" ,eventType)
-
             }
-            else if(this.eventTypetype =="flow"){
-             
+            else if(this.eventTypetype =="flow"){            
               eventType =  this.context().flow.get(this.eventTypevalue);
-
             }
             else if(this.eventTypetype =="global"){
-              eventType =  this.context().global.get(this.eventTypevalue);
- 
+              eventType =  this.context().global.get(this.eventTypevalue); 
             }
             else if(this.eventTypetype =="str"){
               eventType =  this.eventTypevalue
-
             }
-            else {
-               
+            else {             
               this.error("Expected \"eventType\" property in msg object", msg)
               return;
             } 
@@ -533,17 +477,11 @@ var bool;
           else {
             eventType = this.eventType
           }
-
-        //  if(!(eventType in this.validEventTypes)){
-        //    this.error("Invalid msg.eventType property \"" + eventType + "\".  Expected one of the following: [\"" + Object.keys(this.validEventTypes).join("\", \"") + "\"].", msg)
-        //    return;
-        //sas  }
-
-             var childpath
+          
+          var childpath
           //Parse out msg.childpath
           if(this.childtype == "str"){
             childpath = this.childpath
-            //console.log("childdpath is " ,childpath)
           }
           else if(this.childtype == "msg"){
             var childvalue = this.childvalue;

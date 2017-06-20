@@ -3,10 +3,8 @@ module.exports = function(RED) {
     var https = require("follow-redirects").https;
     var urllib = require("url");
     var jsonata = require("jsonata");
-
     var getPushIdTimestamp = (function getPushIdTimestamp() {
-      var PUSH_CHARS = '-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz';
-
+    var PUSH_CHARS = '-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz';
       return function getTimestampFromId(id) {
         try {
           var time = 0;
@@ -15,7 +13,6 @@ module.exports = function(RED) {
           for (var i = 0; i < 8; i++) {
             time = time * 64 + PUSH_CHARS.indexOf(data[i]);
           }
-
           return time;
         } catch(ex){}
       }
@@ -37,22 +34,11 @@ module.exports = function(RED) {
 
         this.activeRequests = [];
         this.ready = false;
-
-        // Check credentials
         if (!this.config) {
             this.status({fill:"red", shape:"ring", text:"invalid credentials"})
             this.error('You need to setup Firebase credentials!');
             return
         }
-
-        // for (var i=0; i<this.queries.length; i+=1) {
-        //     var query = this.queries[i];
-        //     if (!isNaN(Number(query.value))) {
-        //       query.value = Number(query.value);
-        //       query.value2 = Number(query.value2);
-        //     }
-        // }
-
         this.validEventTypes = {
           "value": true,
           "child_added": true,
@@ -74,8 +60,6 @@ module.exports = function(RED) {
             var msg = this.activeRequests.shift();
 
             msg.href = snapshot.ref.toString();
-            //console.log("HERE:");
-            //console.log(msg.href);
             msg.key = snapshot.key; //broken
             //console.log(snapshot);
             msg.payload = snapshot.val(); //
@@ -107,46 +91,35 @@ module.exports = function(RED) {
 
           var eventType = this.eventType
           if(eventType == "msg.eventType"){
-
             if(this.eventTypetype == "msg"){
-
-             // msg[query.value]; 
               eventType = this.eventTypevalue;
               eventType = msg[eventType];
             }
-            else if(this.eventTypetype =="flow"){
-             
+            else if(this.eventTypetype =="flow"){          
               eventType =  this.context().flow.get(this.eventTypevalue);
-
             }
             else if(this.eventTypetype =="global"){
               eventType =  this.context().global.get(this.eventTypevalue);
- 
             }
             else if(this.eventTypetype =="str"){
               eventType =  this.eventTypevalue
-
             }
             else {
-
               this.error("Expected \"eventType\" property in msg object here", msg)
               return;
             }
           }
-
           if(!(eventType in this.validEventTypes)){
             this.error("Invalid msg.eventType property \"" + eventType + "\".  Expected one of the following: [\"" + Object.keys(this.validEventTypes).join("\", \"") + "\"].", msg)
             return;
           }
 
           var childpath
-          //Parse out msg.childpath
-          
+          //Parse out msg.childpath         
           if(this.childtype == "str"){
             childpath = this.childpath
           }
           else if(this.childtype == "msg"){
-
             var childvalue = this.childvalue;
             childpath = msg[childvalue];
           }
@@ -163,22 +136,12 @@ module.exports = function(RED) {
                 var childvalue = this.childvalue;
                 childpath = jsonata(childvalue);
                 childpath = childpath.evaluate({msg:msg})
-                }
-            catch(e){
+            }catch(e){
                 console.log("ERROR WITH JSONATA");
-                    }
-                    //value = query.value.evaluate({msg:msg}); //look into evaluate  https://github.com/node-red/node-red/blob/master/nodes/core/logic/15-change.js#L126            
+                    }           
           }
-/*
-/*
-          if(childpath == "msg.childpath"){
-            if("childpath" in msg){
-              childpath = msg.childpath
-            }
-          }
-*/
+         
           childpath = childpath || "/"
-
           msg.eventType = eventType;
           msg.childpath = childpath || "/";
 
@@ -192,17 +155,12 @@ module.exports = function(RED) {
           } else {
             this.fbOnce(eventType, msg);
           }
-
         }.bind(this);
 
         this.destroyListeners = function(reason){
           if(this.activeRequests.length > 0 && reason){  //ensure the close function doesn't trigger this
-            // var msg = {};
-            // msg.href = this.config.firebaseurl;
-            // msg.payload = "ERROR: " + reason;
             var msg = this.activeRequests.shift()
             this.error(reason, msg)
-
             var eventType = this.eventType
             if(eventType == "msg.eventType")
               eventType = msg.eventType
@@ -211,7 +169,6 @@ module.exports = function(RED) {
               //this.error("Invalid eventType - \"" + eventType + "\"", msg)  //We have already errored on the registerListener call
               return;
             }
-
             // We need to unbind our callback, or we'll get duplicate messages when we redeploy
             if(msg.childpath)
               this.config.fbConnection.fbRef.child(msg.childpath).off(eventType, this.onFBData, this);
@@ -223,7 +180,6 @@ module.exports = function(RED) {
         this.fbOnce = function(eventType, msg){
           this.status({fill:"blue",shape:"dot",text:"requesting from firebase..."});
 
-
           //Create the firebase reference to the path
           var ref
           if(msg.childpath){
@@ -232,11 +188,9 @@ module.exports = function(RED) {
           }else{
             ref = this.config.fbConnection.fbRef
           }
-
           var bool = false;
           //set a default for what the query should be ordered by if none is chosen
           for (var i=0; i<this.queries.length; i+=1) {
-
             var q = this.queries[i].name;
             if( q == "orderByKey" || q == "orderByValue" || q =="orderByPriority" || q == "orderByChild"){ 
               bool = true;
@@ -249,7 +203,6 @@ module.exports = function(RED) {
 
           for (var i=0; i<this.queries.length; i+=1) {
               var query = this.queries[i];
-
               switch(query.name){
                 case "orderByKey":    
                 case "orderByValue":
@@ -261,30 +214,26 @@ module.exports = function(RED) {
                     ref = ref.startAt(query.value); 
                   } 
                   else if (query.valType == "msg") {
-
                     var val = msg[query.value]; 
                     ref = ref.startAt(val);
                   }
                   else if(query.valType == "flow"){
                     var val =  this.context().flow.get(query.value);
-                    ref = ref.startAt(val);
-                    
+                    ref = ref.startAt(val);                  
                   }
                   else if(query.valType == "global"){
                     var val =  this.context().global.get(query.value);
                     ref = ref.startAt(val);
                   }
                   else if(query.valType == "num"){
-
                     var val = query.value.toString();
                     ref = ref.startAt(val);
                   }
-                  else if(query.valType == "json"){ //not valid json .. find valid json to test with
+                  else if(query.valType == "json"){ 
                     try {
                       var val = JSON.stringify(query.value);
                     } catch(e2) {
                         console.log("not a valid json",e2);
-                    //this.error(RED._("change.errors.invalid-json"));
                     }
                     ref = ref.startAt(val);
                   }
@@ -296,8 +245,7 @@ module.exports = function(RED) {
                     console.log(query.value);
                     ref = ref.startAt(val);
                   }
-
-                  else if(query.valType == "jsonata"){ //test w/jsonata string
+                  else if(query.valType == "jsonata"){ 
                     try{
                       var val = jsonata(query.value);
                       ref = ref.startAt(val.evaluate({msg:msg}));
@@ -305,7 +253,6 @@ module.exports = function(RED) {
                     catch(e){
                       console.log("ERROR WITH JSONATA");
                     }
-                    //value = query.value.evaluate({msg:msg}); //look into evaluate  https://github.com/node-red/node-red/blob/master/nodes/core/logic/15-change.js#L126
                   }
                   break;
                 case "endAt":
@@ -318,24 +265,21 @@ module.exports = function(RED) {
                   }
                   else if(query.valType == "flow"){
                     var val =  this.context().flow.get(query.value);
-                    ref = ref.endAt(val);
-                    
+                    ref = ref.endAt(val);          
                   }
                   else if(query.valType == "global"){
                     var val =  this.context().global.get(query.value);
                     ref = ref.endAt(val);
                   }
                   else if(query.valType == "num"){
-
                     var val = query.value.toString();
                     ref = ref.endAt(val);
                   }
-                  else if(query.valType == "json"){ //not valid json .. find valid json to test with
+                  else if(query.valType == "json"){ 
                     try {
                       var val = JSON.stringify(query.value);
                     } catch(e2) {
                         console.log("not a valid json",e2);
-                    //this.error(RED._("change.errors.invalid-json"));
                     }
                     ref = ref.endAt(val);
                   }
@@ -356,7 +300,6 @@ module.exports = function(RED) {
                     catch(e){
                       console.log("ERROR WITH JSONATA");
                     }
-                    //value = query.value.evaluate({msg:msg}); //look into evaluate  https://github.com/node-red/node-red/blob/master/nodes/core/logic/15-change.js#L126
                   }
                   break;
                 case "equalTo":
@@ -377,20 +320,18 @@ module.exports = function(RED) {
                     ref = ref.equalTo(val);
                   }
                   else if(query.valType == "num"){
-
                     var val = query.value.toString();
                     ref = ref.equalTo(val);
                   }
-                  else if(query.valType == "json"){ //not valid json .. find valid json to test with
+                  else if(query.valType == "json"){ 
                     try {
                       var val = JSON.stringify(query.value);
                     } catch(e2) {
                         console.log("not a valid json",e2);
-                    //this.error(RED._("change.errors.invalid-json"));
                     }
                     ref = ref.equalTo(val);
                   }
-                  else if(query.valType == "jsonata"){ //test w/jsonata string
+                  else if(query.valType == "jsonata"){ 
                     try{
                       var val = jsonata(query.value);
                       ref = ref.equalTo(val.evaluate({msg:msg}));
@@ -398,7 +339,6 @@ module.exports = function(RED) {
                     catch(e){
                       console.log("ERROR WITH JSONATA");
                     }
-                    //value = query.value.evaluate({msg:msg}); //look into evaluate  https://github.com/node-red/node-red/blob/master/nodes/core/logic/15-change.js#L126
                   }
                     break;  
                 case "limitToFirst":
@@ -413,8 +353,7 @@ module.exports = function(RED) {
                   }
                   else if(query.valType == "flow"){
                     var val =  this.context().flow.get(query.value);
-                    ref = ref.limitToFirst(val);
-                    
+                    ref = ref.limitToFirst(val);                    
                   }
                   else if(query.valType == "global"){
                     var val =  this.context().global.get(query.value);
@@ -424,26 +363,23 @@ module.exports = function(RED) {
                     val = parseInt(query.value);
                     ref = ref.limitToFirst(val);
                   }
-                   else if(query.valType == "json"){ //not valid json .. find valid json to test with
+                   else if(query.valType == "json"){ 
                     try {
                       var val = JSON.stringify(query.value);
                       val = parseInt(val);
                     } catch(e2) {
                         console.log("not a valid json",e2);
-                    //this.error(RED._("change.errors.invalid-json"));
                     }
                     ref = ref.limitToFirst(val);
                   }
-                  else if(query.valType == "jsonata"){ //test w/jsonata string
+                  else if(query.valType == "jsonata"){ 
                     try{
                       var val = jsonata(query.value);
-
                       ref = ref.limitToFirst(parseInt(val.evaluate({msg:msg})));
                     }
                     catch(e){
                       console.log("ERROR WITH JSONATA");
                     }
-                    //value = query.value.evaluate({msg:msg}); //look into evaluate  https://github.com/node-red/node-red/blob/master/nodes/core/logic/15-change.js#L126
                   }
                   break;
                 case "limitToLast":
@@ -458,8 +394,7 @@ module.exports = function(RED) {
                   }
                   else if(query.valType == "flow"){
                     var val =  this.context().flow.get(query.value);
-                    ref = ref.limitToLast(val);
-                    
+                    ref = ref.limitToLast(val);                   
                   }
                   else if(query.valType == "global"){
                     var val =  this.context().global.get(query.value);
@@ -469,34 +404,30 @@ module.exports = function(RED) {
                     val = parseInt(query.value);
                     ref = ref.limitToLast(val);
                   }
-                  else if(query.valType == "json"){ //not valid json .. find valid json to test with
+                  else if(query.valType == "json"){ 
                     try {
                       var val = JSON.stringify(query.value);
                       val = parseInt(val);
                     } catch(e2) {
                         console.log("not a valid json",e2);
-                    //this.error(RED._("change.errors.invalid-json"));
                     }
                     ref = ref.limitToLast(val);
                   }
-                  else if(query.valType == "jsonata"){ //test w/jsonata string
+                  else if(query.valType == "jsonata"){ 
                     try{
                       var val = jsonata(query.value);
-
                       ref = ref.limitToLast(parseInt(val.evaluate({msg:msg})));
                     }
                     catch(e){
                       console.log("ERROR WITH JSONATA");
                     }
-                    //value = query.value.evaluate({msg:msg}); //look into evaluate  https://github.com/node-red/node-red/blob/master/nodes/core/logic/15-change.js#L126
                   }
                   break;
                 default:
                   //TODO:
                   break;
               }
-          }
-      
+          }     
           ref.once(eventType, this.onFBData, this.onFBError, this);
         }.bind(this)
 
@@ -536,7 +467,6 @@ module.exports = function(RED) {
                 case "orderByPriority":
                   url += '&orderBy="$priority"'
                   break;
-
                 case "startAt":
                 case "endAt":
                 case "equalTo":

@@ -32,7 +32,6 @@
         <input class="input-append-left" type="text" id="node-input-event" style="width: 41%">
         <a  class="btn btn-mini" id="node-input-back" style="margin-top: 4px;"><i class="fa fa-arrow-left"></i>Back</a>
    </div> 
-
       ")
       <input type="hidden" id="node-input-eventType">
   </div>
@@ -58,12 +57,10 @@
     <!-- Query Dialog Box -->
     <div id="node-input-query-container-overall" class="form-row node-input-query-container-row" style="display:none">
       <!-- <ol id="node-input-query-container" style=" list-style-type:none; margin: 0;"></ol> -->
-
         <div id="node-input-query-container-div" style="box-sizing: border-box; border-radius: 5px; max-height: 200px; padding: 5px; border: 1px solid #ccc; overflow-y:scroll;">
           <ol id="node-input-query-container" style=" list-style-type:none; margin: 0;"></ol>
         </div>
     </div>
-
     <!-- By convention, most nodes have a 'name' property. The following div -->
     <!-- provides the necessary field. Should always be the last option      -->
     <div class="form-row">
@@ -151,13 +148,13 @@
      </li><br />
      <li>
        <strong>.once([msg.eventType]):</strong>
-       The <em>[msg.eventType]</em> allows for the passage of any of the event types listed above.
+       The <em>[msg.eventType]</em> allows for the passage of any of the event types listed above with a chosen typedinput of string,msg,flow or global.
      </li>
    </ul>
 
    <p>By checking the repeat request if null, the node will attempt up to 100 times to poll the location for a non-null value.</p>
 
-   <p>Optional: <strong>msg.childpath</strong> is the name of a message property that can be used to dynamically set the .child() on the Firebase URL.  This requires that the <em>childpath</em> property is set to <em>msg.childpath</em> in the node's edit dialog box.</p>
+   <p>Optional: <strong>childpath</strong> is the name of a message property that can be used to dynamically set the .child() on the Firebase URL.</p>
 
  </script>
 
@@ -183,17 +180,13 @@
         outputs:1,              // set the number of outputs - 0 to n
         // set the icon (held in icons dir below where you save the node)
         icon: 'firebase.png',     // saved in  icons/myicon.png
-
         paletteLabel: "firebase.once()",
-
         label: function() {     // sets the default label contents
            var config = RED.nodes.node(this.firebaseconfig); //server side uses RED.nodes.getNode... go figure...
-
            // make sure the path starts with /
            var childpath = (this.childpath.indexOf("/") == 0) ? this.childpath : "/" + this.childpath;
            //make sure the path does not end with /
            childpath = childpath.substr(-1) == "/" ? childpath.slice(0,-1) : childpath
-
            //TODO: should we try to use the config nodes path and append to childpath or is that too long?
            return this.name ||
                   (config ? "https://"+config.firebaseurl+".firebaseio.com"+(childpath||"") + ".once(\""+this.eventType+"\")" : childpath + ".once(\""+this.eventType+"\")") ||
@@ -204,15 +197,10 @@
         },
 
         oneditprepare: function() { //TODO: there is all kinds of validation that needs to be done to ensure only proper combinations of things are allowed...
-          
-          //Update the eventType node-red property when the value is changed...
-             // var node = this;
           var node = this;
-
           $('#eventType-select').change(function () {
               $("#node-input-eventType").val($(this).find('option:selected').val())
           });
-
           //Set the select's to the node-red hidden properties
           $("#eventType-select").val($("#node-input-eventType").val())
           $('#eventType-select').trigger('change');
@@ -221,20 +209,6 @@
           $("#node-input-event").typedInput({default: node.eventTypetype ,types:['str','msg','flow','global']});
 
           addInputToUI($("#node-input-event"));
-
-          //$("#node-input-event").typedInput('width', '200px'); //changes width of the field not of the inputtype
-                     
-/*sas
-          //Set up autocomplete for Childpath field
-          var defaultChildpathValues = [
-            "msg.childpath",
-          ];
-
-          $('#node-input-childpath').autocomplete({
-            source: defaultChildpathValues,
-            minLength: 0
-          });
-*/
           //Most of this code is adapted from the switch node - https://raw.githubusercontent.com/node-red/node-red/master/nodes/core/logic/10-switch.html
           var operatorOptions = {
             "orderByChild":{
@@ -313,7 +287,6 @@
               ]
             }
           }
-
           var operators = [
                 "orderByChild",
                 "orderByKey",
@@ -325,7 +298,6 @@
                 "limitToFirst",
                 "limitToLast",
             ];
-
             var illegalCombinationShown = false;
             $('#eventType-select').on('change', function(){
               if ($(this).val() == "shallow_query"){ //disable/hide query paramters window and button
@@ -338,38 +310,26 @@
               } 
              else if($(this).val() == "msg.eventType"){
               $('#eventType-select').fadeOut(300);
-
-              //$('#eventType-typedInput').show();
               $('#eventType-typedInput-container').show();
               addInputToUI($("#node-input-event"));
              }
               else { //enable/show query paramters window and button
                  $('#eventType-typedInput-container').fadeOut(300),function(){
                    $('#eventType-select').fadeIn(300);
-                 }
-    
+                 }   
                 $('#eventType-select-info-container').fadeOut(300, function(){
                   $('#query-parameters-name-container').fadeIn(300)
                   var queries = $('#node-input-query-container').children();
                   if (queries.length > 0) $('#node-input-query-container-overall').fadeIn(300)
                   var selectsValid = checkSelectsValid();
-                  //var inputsNotEmpty = checkInputsNotEmpty();
-                  //sas cant do that anymore because of timestamp ext dont have input
-                  //if (selectsValid && inputsNotEmpty) $('#node-dialog-ok').prop('disabled', false);
-
                   if (selectsValid) $('#node-dialog-ok').prop('disabled', false);
                   else {
                     var selectsLegal = checkSelectsNotIllegal();
                     if (!selectsLegal) $('#node-input-query-illegal-combination-container').fadeIn(300);
-                    //if (node-input-query-illegal-combination-container
                   }
                 });
               }
             })
-
-            //TODO: - Improve query support logic to not allow for invalid input.
-            //TODO: hide query parameters if shallow_query is the event type (since they are not supported...)
-
             function checkForIllegalComnbinationOfQueries(select, operator){
               //Look for illegal combinations of queries
               var illegalCombinations = [];
@@ -382,25 +342,20 @@
               }
               return illegalCombinations;
             }
-
             function addIllegalCombinationToUI(operator, illegal){
               //console.log("Adding illegal combination for -- "+operator+" and illegal "+illegal);
               if ($('#node-input-query-illegal-combination-container > p#'+operator+"[illegal=\""+illegal+"\"]").length == 0){
                 var $p = $('<p/>', {id: operator, style: 'margin: 0;', class: 'text-center', illegal: illegal}).append('Cannot combine "'+operator+'" with "'+illegal+'".');
                 $('#node-input-query-illegal-combination-container').append($p);
               }
-              if ($('#node-input-query-illegal-combination-container').not(':visible')) $('#node-input-query-illegal-combination-container').show(); //fadeIn(300);
+              if ($('#node-input-query-illegal-combination-container').not(':visible')) $('#node-input-query-illegal-combination-container').show(); 
               $('#node-dialog-ok').prop('disabled', true);
             }
-
             function removeIllegalCombinationFromUI(operator){
-              //Check if it was the original operator
               var enableModalOkay = false;
               if ($('#node-input-query-illegal-combination-container > p#'+operator).length > 0){
                 $('#node-input-query-illegal-combination-container > p#'+operator).remove();
               }
-
-              //Check if it was the illegal match
               if ($('#node-input-query-illegal-combination-container > p[illegal="'+operator+'"]').length > 0){
                 $('#node-input-query-illegal-combination-container > p[illegal="'+operator+'"]').remove();
               }
@@ -410,7 +365,6 @@
                 $('#node-input-query-illegal-combination-container').hide() //fadeOut(300);
               }
             }
-
             function checkSelectsNotEmpty(){
               var valid = true;
               $('#node-input-query-container select').each(function(idx){
@@ -421,7 +375,6 @@
               });
               return valid;
             }
-
             function checkSelectsNotIllegal(){
               return ($('#node-input-query-illegal-combination-container > p').length > 1 ? false : true)
             }
@@ -431,15 +384,11 @@
             }
 
             function addInputToUI($input){
-              if ($input.not(':visible')){
-              
-
+              if ($input.not(':visible')){            
                 //Check if input already has text
                 if ($input.val() == null || $input.val().length == 0){
                   $input.addClass('input-error');
-                  //$('#node-dialog-ok').prop('disabled', true); taken out since it gave
                 }
-
                 //Set up handler
                 $input.off('input');
                 $input.on('input', function(){
@@ -457,10 +406,8 @@
               } else {
                 //console.log("input visible")
               }
-
               $input.typedInput({
-                  default: node.querytype,//node.payloadtype,
-                 // typeField: $("#node-input-payloadType"),
+                  default: node.querytype,
                   types:['str','global','msg', 'flow','jsonata','json','num']
               });
             }
@@ -485,8 +432,6 @@
             }
 
             function generatequery(query){
-
-
               var $queryContainer = $('<li/>',{style:"background: #fff; margin:0; padding:8px 0px; border-bottom: 1px solid #ccc;"});;
               var $table = $('<table/>').appendTo($queryContainer);
               var $tbody = $('<tbody/>').appendTo($table);
@@ -497,12 +442,10 @@
               var firstUnusedOperator = null;
               for (var d in operators){
                 var operator = operators[d];
-
                 
                 var $option = $('<option/>').val(operators[d]).text(operators[d]);
 
                 $select.append($option);
-
                 //Check whether operator is used
                 var used = false;
                 $('#node-input-query-container select').each(function(idx){
@@ -516,19 +459,9 @@
                   var illegalCombinations = checkForIllegalComnbinationOfQueries($select, operator);
                   if (illegalCombinations.length == 0) firstUnusedOperator = operator;
                 }
-              }
-             
+              }             
               var $tdInput = $('<td/>', {style:"width:150px;"}).appendTo($tbody);
-              var $input = $('<input/>', {style:"width:200px;", display: "input-append-left" }).addClass('form-row').appendTo($tdInput);
-
-
-               $(".input").on('change', function(type, value) 
-                {
-                  //console.log("changed")
-                });
-  
-               
-
+              var $input = $('<input/>', {style:"width:200px;", display: "input-append-left" }).addClass('form-row').appendTo($tdInput);           
               var $tdDeleteBtn = $('<td/>').appendTo($tbody);
               var $deleteBtn = $('<a/>').addClass('btn btn-mini').append($('<i/>').addClass('fa fa-remove')).appendTo($tdDeleteBtn);
  
@@ -537,16 +470,11 @@
               else {
 
                 $select.prop('selectedIndex', -1); //I still have this here, but it doesn't actually work -- the element must be added to the UI first before this works (stupid...), so it is done below after it is appended to the table
-                //$('#node-dialog-ok').prop('disabled', true);
               }
-
               $input.typedInput({
-                  default: node.querytype,//node.payloadtype,
-                 // typeField: $("#node-input-payloadType"),
+                  default: node.querytype,
                   types:['str','global','msg', 'flow','jsonata','json','num']
               });
-
-
               var currentOperator = $select.val();
 
               //Check if input is allowed
@@ -650,7 +578,6 @@
                $('#eventType-typedInput-container').fadeOut(300);
                
             });
-
             if(this.queries){
               for (i in this.queries){
               //for (i = 0; i < this.queries.length; i++){ //TODO: For some reason this doesn't work
