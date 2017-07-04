@@ -19,6 +19,7 @@ module.exports = function(RED) {
     })();
     function FirebaseOn(n) {
         RED.nodes.createNode(this,n);
+        console.log("helllo")
 
         this.config = RED.nodes.getNode(n.firebaseconfig);
         this.childpath = n.childpath;
@@ -416,9 +417,9 @@ module.exports = function(RED) {
           this.authorized = true;
           this.setStatus();
           if((this.eventType != "msg.eventType" && this.childpath != "msg.childpath") || this.msg != null)
-            if(this.msg != null){
+            //sas if(this.msg != null){
               this.registerListeners();
-            }
+            //}
         }.bind(this)
 
         this.fbUnauthorized = function(){
