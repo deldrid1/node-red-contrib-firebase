@@ -19,7 +19,6 @@ module.exports = function(RED) {
     })();
     function FirebaseOn(n) {
         RED.nodes.createNode(this,n);
-        console.log("helllo")
 
         this.config = RED.nodes.getNode(n.firebaseconfig);
         this.childpath = n.childpath;
@@ -89,7 +88,9 @@ module.exports = function(RED) {
         }.bind(this);
 
         this.registerListeners = function(msg){
-              
+            
+
+
           //this.log("Registering Listener for " + this.config.firebaseurl + (this.childpath || ""))
 
           if(this.ready == true)
@@ -100,15 +101,18 @@ module.exports = function(RED) {
 
           //Create the firebase reference to the path
           var ref
-
+  
           var childpath;
+
           //Parse out msg.childpath   
           if(this.childtype == "str"){
             childpath = this.childpath
           }
           else if(this.childtype == "msg"){
-            var childvalue = this.childvalue;
+         
+            var childvalue = this.childvalue;          
             childpath = this.msg[childvalue];
+
           }
           else if(this.childtype == "flow"){
             var childvalue = this.childvalue;
@@ -126,7 +130,8 @@ module.exports = function(RED) {
             }catch(e){
                 console.log("ERROR WITH JSONATA");
              }
-          }          
+          }   
+           
           if(this.childpath){
             ref = this.config.fbConnection.fbRef.child(childpath)  
           } else {
@@ -337,8 +342,9 @@ module.exports = function(RED) {
                   break;
               }
           }
-
+         
           ref.on(this.eventType == "msg.eventType" ? this.msg.eventType : this.eventType, this.onFBValue, this.onFBError, this);
+          //ref.on(eventType, this.onFBData, this.onFBError, this);
         
         }.bind(this);
 
@@ -416,9 +422,9 @@ module.exports = function(RED) {
           // this.log("authorized")
           this.authorized = true;
           this.setStatus();
-          if((this.eventType != "msg.eventType" && this.childpath != "msg.childpath") || this.msg != null)
-            //sas if(this.msg != null){
-              this.registerListeners();
+          if(this.childtype == "str"){ //only fire without input if its a string
+             this.registerListeners(); 
+            }
             //}
         }.bind(this)
 
@@ -503,6 +509,7 @@ module.exports = function(RED) {
               childpath = msg.childpath
             }
           }
+
           childpath = childpath || "/"
 
           msg.eventType = eventType;

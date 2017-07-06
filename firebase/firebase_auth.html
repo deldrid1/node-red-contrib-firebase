@@ -42,7 +42,6 @@
         button: {
             onclick: function() {
                 var config = RED.nodes.node(this.firebaseconfig); //server side uses RED.nodes.getNode... go figure...
-
                 $.ajax({
                     url: "firebase/"+this.id+"/auth",
                     type:"POST",
@@ -62,6 +61,6 @@
                     }
                 });
             }
-        }
+        } 
     });
 </script>

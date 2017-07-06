@@ -125,6 +125,7 @@
              
               admin: {value: false, required: false},
               debug: {value: false, required: false},
+              emailaddress: {value:"",required:false}
 
             },
 
@@ -144,14 +145,15 @@
                   str = "https://"+this.firebaseurl+".firebaseio.com/"
                 //TODO: File node red bug on credentials not being set on this in the client before the label function is called
                 //TODO: BUG: Node-Red doesn't provide credentials as early as it provides defaults... Need to file a bug request so that we don't need to store data twice
-                if(this.credentials && this.loginType){
+                //if(this.credentials && this.loginType){
+                  if(this.loginType){
                   switch (this.loginType) {
                       case 'jwt':
                         str += " - JSON Web Token"
                         break;
                       case 'email':
-                        if(this.credentials.email)
-                          str += " - " + this.credentials.email
+                        if(this.emailaddress)
+                          str += " - " + this.emailaddress;
                         break;
                       case 'anonymous':
                         str += " - Anonymous"
@@ -169,10 +171,11 @@
                       case 'default': //TODO:
                         break;
                   }
-                }
-          
+  
+                }  
+
                 return this.name || str
-                               
+                          
             },
 
             labelStyle: function () {
@@ -180,7 +183,9 @@
             },
 
             oneditprepare: function () {
-               $("#node-config-input-list").val(this.list);                
+              
+              $("#node-config-input-list").val(this.list);   
+              $("#node-config-input-email").val(this.credentials.email);           
                 var $nodeConfigInputType = $('#node-config-input-loginType'),
                     $loginTypeSelect = $('#loginType-select');
                     firebaseConnections = null;
@@ -372,6 +377,12 @@
               var output = $("#node-config-input-list").val();
               output = JSON.stringify(output);
               node.credentials.list = output;
+
+              if(node.loginType == "email"){
+                  node.credentials.email = $("#node-config-input-email").val();
+                  node.emailaddress = node.credentials.email;
+              }
+              
                      
               //Save jwtClaims
               node.jwt =[]
