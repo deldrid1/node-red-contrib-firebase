@@ -13,7 +13,36 @@
 
 <script type="text/x-red" data-help-name="firebase auth">
    <p>Provides Firebase Auth Data to flows</p>
-   <p>Select a Firebase Config Node from the dropdown.  Any time that Firebase Auth data is changed, this node will send a message.</p>
+   
+   <h3> Outputs </h3>
+
+   <ol class="node-ports">
+             <dl class="message-properties">
+                 <dt>uid <span class="property-type">string</span></dt>
+                 <dd>The unique ID of the config node chosen</dd>
+                 <dt>email<span class="property-type">string</span></dt>
+                 <dd>The email associated with the config node.</dd>
+                 <dt>emailverified<span class="property-type">bool</span></dt>
+                 <dd>True if the email is verified, False if it is not verified.</dd>
+                 <dt>phoneNumber<span class="property-type">string</span></dt>
+                 <dd>The phone number associated with the config node.</dd>
+                 <dt>apiKey<span class="property-type">string</span></dt>
+                 <dd>The apiKey associated with the config node.</dd>
+                 <dt>appName<span class="property-type">string</span></dt>
+                 <dd>The application name.</dd>
+                 <dt>refreshToken<span class="property-type">string</span></dt>
+                 <dd>The refresh token of the JWT.</dd>
+                 <dt>accessToken<span class="property-type">string</span></dt>
+                 <dd>The accessToken of the JWT.</dd>
+                 <dt>expirationTime<span class="property-type">string</span></dt>
+                 <dd>The time of expiration for the JWT.</dd>
+             </dl>
+        
+     </ol>
+
+   <h3> Details </h3>
+
+    <p>Select a Firebase Config Node from the dropdown.  Any time that Firebase Auth data is changed, this node will send a message.</p>
    <p>You may also click the inject button to inject the auth currently in use into a flow.</p>
 </script>
 

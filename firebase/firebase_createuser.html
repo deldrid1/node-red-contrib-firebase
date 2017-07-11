@@ -30,27 +30,40 @@
   <!-- node in the palette.                                                 -->
   <p>Create Email & Password User(s).</p>
 
-  <p>Supply a Firebase configuration and this node will create Email & Password user(s) for that particular Firebase.</p>
+   <h3> Inputs </h3>
+  <dl class="message-properties">
+        <dt>Firebase Configuration<span class="property-type">config node</span></dt>
+        <dd> Supply a Firebase configuration and this node will create Email & Password user(s) for that particular Firebase.</dd>
 
-  <p>If there is no email and password supplied in the node form, the node will check for the existence of an input <strong><em>msg.users</em></strong>
-  which should be an array of objects with two parameters, <em>email</em> and <em>password</em>.
-  </p>
+        <dt>Email<span class="property-type">string</span></dt>
+        <dd> Supply the email wanting to be associated with the firebase.</dd>
 
-  <p>This node outputs an object called <b>msg</b> containing <b>msg.payload</b>.
-  <ul>
-    <li>
-      <strong>msg.payload</strong> - An array of objects. Each object contains two objects, `email` and either `uid` or `error`.
-    </li><br />
-    <li>
-      <strong>msg.payload[i].email</strong> - The email address of the user that was attempted to be created.
-    </li><br />
-    <li>
-      <strong>msg.payload[i].uid</strong> - <em>(Included if creating the user was successful)</em> The Firebase-generated unique identifier for that user (included if creating the user was successful)
-    </li><br />
-    <li>
-      <strong>msg.payload[i].error</strong> - <em>(Included if creating the user was unsuccessful)</em> An object from Firebase describing why the Email & Password user could not becreated.
-    </li>
-  </ul>
+        <dt>Password<span class="property-type">string</span></dt>
+        <dd> Supply the password associated with the email.</dd>
+
+        <dt> msg.users<span class="property-type">string</span></dt>
+        <dd> If there is no email and password supplied in the node form, the node will check for the existence of an input <code> msg.users </code> which should be an array of objects with two parameters: email and password </dd>
+
+
+  </dl>
+  
+   <h3> Output </h3>
+
+    <dl class="message-properties">
+      <dt>msg.payload<span class="property-type">object</span></dt>
+        <dd> An array of objects. Each object contains two objects, `email` and either `uid` or `error`. </dd>
+      
+      <dt>msg.payload[i].email<span class="property-type">object</span></dt>
+        <dd> An array of objects. Each object contains two objects, `email` and either `uid` or `error`. </dd>
+      
+      <dt>msg.payload[i].uid<span class="property-type">object</span></dt>
+        <dd> The Firebase-generated unique identifier for that user (included if creating the user was successful) </dd>
+
+      <dt>msg.payload[i].error<span class="property-type">object</span></dt>
+        <dd>An object from Firebase describing why the Email & Password user could not becreated.(included if creating the user was unsuccessful)</dd>
+
+    </dl>
+
 
  </script>
 

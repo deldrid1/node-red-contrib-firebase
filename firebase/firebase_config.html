@@ -408,18 +408,38 @@
 
 <script type="text/x-red" data-help-name="firebase config">
 
-<p><b>API Key: </b></p>
+<p>Allows to connect to a Firebase database using various authentication options.</p>
 
-<p> To locate your API Key, go to the desired firebase project in the firebase console. Locate the settings icon wheel on the left, next to "Overview". The API Key will be labeled as "Web API Key". </p>
+<h3>Inputs</h3>
 
-<p><b> Private Key File: </b></p>
+<dt>Project ID  <span class="property-type">string</span></dt>
+<dd>The name of your Firebase.This is a unique identifier for your Firebase project which can be found in this project's URL: https://console.firebase.google.com/project/{projectId} </dd>
 
-<p> A private key needs to be generated in order to use the Access Token verification.
+<dt>API Key  <span class="property-type">string</span></dt>
+<dd>The API Key associated with your Firebase </dd>
+<dd>To locate your API Key, go to the desired firebase project in the firebase console. Locate the settings icon wheel on the left, next to "Overview". The API Key will be labeled as "Web API Key". </dd>
 
-<p>To retreive the Private Key file, go the the desired project in the firebase console. Locate the settings icon wheel on the left, next to "Overview". Next click the Service Accounts Tab. Finally, click on "Generate New Private Key". This will download a file onto your computer </p>
+<dt>Email and Password  <span class="property-type">string</span></dt>
+<dd>The Email and Password associated to your Firebase </dd>
 
-<p> Click on choose file and locate the downloaded file. </p>
-<!--<p>Give the path to where the file is stored. (Example: If the file is stored in the C drive under a users downloaded folder give the path C://Users/username/Dowloads/filename.json) </p> 
+<dt>JWT<span class="property-type">string</span></dt>
+<dd>The JWT token associated to your Firebase </dd>
+
+<dt>Private Key File<span class="property-type">file</span></dt>
+<dd>A private key needs to be generated in order to use the Access Token verification. </dd>
+<dd> To retreive the Private Key file, go the the desired project in the firebase console. Locate the settings icon wheel on the left, next to "Overview". Next click the Service Accounts Tab. Finally, click on "Generate New Private Key". This will download a file onto your computer</dd>
+<dd>Click on choose file and locate the downloaded file. <dd>
+
+<dt>Private Key File<span class="property-type">file</span></dt>
+<dd>A private key needs to be generated in order to use the Access Token verification. </dd>
+
+<dt class="optional">Name <span class="property-type">string</span></dt>
+<dd> the MQTT topic to publish to.</dd>
+
+
+
+
+
 -->
 <p> <b>Additional JWT Claims: </b><p> 
 

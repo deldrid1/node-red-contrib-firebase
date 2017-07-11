@@ -55,7 +55,7 @@ module.exports = function (RED) {
       //closed
     var connectionPool = function(){  //TODO: This could probably be refactored to be a bit simpler now...
       var connections = {}
-
+      console.log("hiii")
       return {
         get: function(firebaseurl, configNodeID, api,loginType,list){
           if(!connections[configNodeID]){ //Lazily create a new Firebase Reference if it does not exist

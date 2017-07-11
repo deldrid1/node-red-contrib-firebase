@@ -70,87 +70,94 @@
    <!-- node in the palette.                                                 -->
    <p>Generate messages for Firebase .on() events.</p>
 
-   <p>Supply a Firebase configuration and this node will watch for any changes at that location and generate messages.</p>
-
-   <p>This node outputs an object called <b>msg</b> containing <b>msg.href</b>, <b>msg.key</b>, and
-   <b>msg.payload</b>. Depending on the event type and data available <b>msg.priority</b>, <b>msg.pushIDTimestamp</b>
-   and <b>msg.previousChildName</b> may also be set:
-   <ul>
-     <li>
-       <strong>msg.payload</strong> - the data returned from Firebase
-       (The type of msg.payload depends on the data at that location)
-     </li><br />
-     <li>
-        <strong>msg.href</strong> - the url of the data
-     </li><br />
-     <li>
-        <strong>msg.key</strong> - the key of the Firebase data
-     </li><br />
-     <li>
-        <strong><em>msg.priority</em></strong> - <em>(optional)</em> the priority of the Firebase data
-     </li><br />
-     <li>
-        <strong><em>msg.pushIDTimestamp</em></strong> - <em>(optional)</em> the timestamp as decoded from the key of the event, which is assumed to be a Firebase Push ID (this will be available if "child_added", "child_changed", "child_moved", or "child_removed" is selected as the event)
-     </li><br />
-     <li>
-        <strong><em>msg.previousChildName</em></strong> - <em>(optional)</em> the key for the previous child of the Firebase data (this will be available, for ordering purposes, if "child_added", "child_changed", "child_moved", or "child_removed" is selected as the event)
-     </li>
-   </ul>
-
-   <p>This node can be backed by several different Firebase API methods:</p>
-   <!-- https://www.firebase.com/docs/web/guide/retrieving-data.html -->
-    <ul>
-      <li>
-        <strong>.on("value"):</strong>
-        The <em>value</em> event is used to read a static snapshot of the contents at a given path, as they existed at the time of the read event.
+   <h3> Inputs </h3>
+  <dl class="message-properties">
+        <dt>Firebase Configuration
+            <span class="property-type">config node</span>
+        </dt>
+        <dd> Supply a Firebase configuration and this node will watch for any changes at that location and generate messages </dd>
+      <dt class="optional">Child Path <span class="property-type">string |msg | flow | global| jsonata </span></dt>
+        <dd> the childpath of the database that can be used to dynamically set the .child() on the Firebase URL.</dd>
+        
+        <dt class="optional">EventType <span class="property-type"></span></dt>
+        
+        <li> .on("value")
+        <dd> The <code>value</code> event is used to read a static snapshot of the contents at a given path, as they existed at the time of the read event.
         The flow is triggered once with the initial data (assuming the fire last known data at start box is checked) and again every time
-        the data changes. <em>msg.payload</em> is passed a snapshot containing all data at that location, including child data.
-      </li><br />
-      <li>
-        <strong>.on("child_added"):</strong>
-        The <em>child_added</em> event is typically used when retrieving a list of items in Firebase.
-        Unlike <em>value</em> events which returns the entire contents of the location, <em>child_added</em>
+        the data changes. <code>msg.payload</code> is passed a snapshot containing all data at that location, including child data.</dd>
+        </li>
+
+        <li>.on("child_added")
+        <dd> The <code> child_added </code> event is typically used when retrieving a list of items in Firebase.
+        Unlike <code>value</code>events which returns the entire contents of the location, <code>child_added</code>
         is triggered once for each existing child and then again every time a new child is added to the specified path.
-        <em>msg.payload</em> is passed a snapshot containing the new child's data. <!-- ' -->
-      </li><br />
-      <li>
-        <strong>.on("child_changed"):</strong>
-        The <em>child_changed</em> event is triggered any time a child node is modified.
+        <code>msg.payload</code> is passed a snapshot containing the new child's data. </dd>
+        </li>
+
+        <li>.on("child_changed")
+        <dd>  The <code>child_changed</code> event is triggered any time a child node is modified.
         This includes any modifications to descendants of the child node. It is typically used in conjunction with
-        <em>child_added</em> and <em>child_removed</em> to respond to changes to a list of items.
-        <em>msg.payload</em> contains the updated data for the child.
-      </li><br />
-      <li>
-        <strong>.on("child_removed"):</strong>
-        The <em>child_removed</em> event is triggered when an immediate child is removed.
-        It is typically used in conjunction with <em>child_added</em> and <em>child_changed</em>.
-        <em>msg.payload</em> contains the data for the removed child.
-      </li><br />
-      <li>
-        <strong>.on("child_moved"):</strong>
-        The <em>child_moved</em> event is used when working with ordered data.
-        This event type is used for advanced Firebase applications see
-        <a href="https://www.firebase.com/docs/web/guide/retrieving-data.html#section-ordered-data">https://www.firebase.com/docs/web/guide/retrieving-data.html#section-ordered-data</a>
-        for more information.
-      </li>
-      <li>
-        <strong>.once("shallow_query"):</strong>
-        The <em>shallow_query</em> only receives the node keys at the supplied Firebase path. Currently, it cannot be paired with other query parameters.
-        This event type is used for advanced Firebase applications designed to help work with large datasets without needing to download everything. See
-        <a href="https://www.firebase.com/docs/rest/api/#section-query-parameters">https://www.firebase.com/docs/rest/api/#section-query-parameters</a>
-        for more information.
-        If this method is used, the node will require an input to kick off the flow.
-      </li><br />
-      <li>
-        <strong>.once([msg.eventType]):</strong>
-        The <em>[msg.eventType]</em> allows for the passage of any of the event types listed above.
-        If this method is used, the node will require an input to kick off the flow.
-      </li>
+        <code>child_added</code> and <code>child_removed</code> to respond to changes to a list of items.
+        <code>msg.payload</code> contains the updated data for the child. </dd>
+        </li>
+
+        <li>.on("child_removed")
+        <dd>The <code>child_removed</code> event is triggered when an immediate child is removed.
+        It is typically used in conjunction with <code>child_added</code> and <code>child_changed</code>.
+        <code>msg.payload</code> contains the data for the removed child.  </dd>
+        </li>
+
+        <li>.on("child_moved"):
+
+        <dd> The <code>child_moved</code> event is used when working with ordered data.
+       This event type is used for advanced Firebase applications.</dd>
+       </li>
+
+       <li>.on("shallow_query")
+       <dd> The <code>shallow_query</code> only receives the node keys at the supplied Firebase path. Currently, it cannot be paired with other query parameters.
+       This event type is used for advanced Firebase applications designed to help work with large datasets without needing to download everything. </dd>
+       </li>
+
+       <li>on([msg.eventType])
+        <dd> The <code>[msg.eventType]</code> allows for the passage of any of the event types listed above with a chosen typedinput of string,msg,flow or global.</dd>
+        </li>
+
+
+        <dt class="optional">Queries <span class="property-type">string</span></dt>
+        <dd> the query type selected for the retrieval of items in the database .</dd>
+
+        <dt class="optional">Name <span class="property-type">string</span></dt>
+        <dd> Allows to name the node</dd>
+
+
+  </dl>
+
+  <h3> Outputs </h3>
+  <dl class="message-properties">
+          <dt>msg <span class="property-type">object</span></dt>
+          <dd>msg contains <code> msg.href </code> , <code> msg.key</code> and <code> msg.payload</code> </dd>
+  </dl>
+  <dl class="message-properties">
+          <dt>msg <span class="property-type">object</span></dt>
+          <dd>msg could also contain <code> msg.priority </code> , <code> msg.pushIDTimestamp</code> and <code> msg.previousChildName</code> </dd>
+  </dl>
+
+  <h3>Details</h3>
+
+   <p>This node differs from the .once node since the reference to the firebase stays open and keeps watching for changes while the .once node only will output once per deploy</p>
+
+   <h3>References</h3>
+    <ul>
+        <li>
+       <a href="https://www.firebase.com/docs/rest/api/#section-query-parameters">Query Parameters information</a>
+       </li>
+        <li>
+       <a href="https://www.firebase.com/docs/web/guide/retrieving-data.html#section-ordered-data">Ordered Data Retrieval</a>
+       </li>
     </ul>
 
-    <p>Optional: This node will dynamically take an input (that is required to start generating Firebase events) if Child Path is set to an input type with a variable such as <strong> msg.childpath </strong> or an input type and a variable such as <strong> msg.eventType</strong> if that option is chosen for the EventType.
 
-    Pass in the appropriate input-type.properties if this advanced functionality is used.</p>
+
 
 
 </script>
