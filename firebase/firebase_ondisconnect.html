@@ -129,7 +129,7 @@
             childtype: {value: '', required: false},
             childvalue: {value: '', required: false},
             method: {value: 'set', required: true},
-            value: {value:'msg.payload', required: true},
+            value: {value:'msg.payload', required: false},
             valuetype: {value: '', required: false},
             valueval: {value: '', required: false},
             priority: {value: 'msg.priority', required: false},
@@ -198,7 +198,7 @@
           var node = this;
 
           $("#node-input-childpath").typedInput({default: node.childtype,types:['str','msg','flow','global','jsonata']});
-          $("#node-input-value").typedInput({default: node.valuetype,types:['str','msg','flow','global','jsonata']});
+          $("#node-input-value").typedInput({default: node.valuetype,types:['str','msg','flow','global','jsonata','date', {value:"serverTS",label:"serverTS",hasValue:false,}]});
 
           //Set up autocomplete for Value field
           var defaultPayloadValues = [

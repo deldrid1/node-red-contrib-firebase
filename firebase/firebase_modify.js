@@ -1,6 +1,6 @@
 module.exports = function(RED) {
   'use strict';
-
+  var Firebase = require('firebase');
   String.prototype.capitalize = function() {
       return this.charAt(0).toUpperCase() + this.slice(1);
   }
@@ -131,11 +131,11 @@ module.exports = function(RED) {
           }
 
           //Parse out msg.payload
-          console.log("Valtype : " ,this.valuetype)
-          var value //= this.value;
+          
+          var value;
           if (method != "setPriority"){
 
-            if(this.valuetype == "str"){
+          if(this.valuetype == "str"){
             value = this.value;
           }
           else if(this.valuetype == "msg"){
@@ -160,26 +160,12 @@ module.exports = function(RED) {
                 console.log("ERROR WITH JSONATA");
                     }           
           }
-
-/*
-            if (value == "msg.payload"){
-              if ("payload" in msg){
-                value = msg.payload;
-                if (!Buffer.isBuffer(value) && typeof value != "object"){
-                  try {
-                    value = JSON.parse(value)
-                  } catch(e){
-                    value = msg.payload.toString();
-                  }
-                }
-              } else {
-                this.warn("Expected \"payload\" property not in msg object (setting payload to \"null\")", msg);
-                value = null;
-              }
-            } else if(this.value == "Firebase.ServerValue.TIMESTAMP") {
-              value = this.config.fbConnection.Firebase.ServerValue.TIMESTAMP
-            }
-*/
+         else if(this.valuetype == "serverTS"){
+            value = Firebase.database.ServerValue.TIMESTAMP;
+         }
+         else if(this.valuetype == "date"){
+            value = Date.now();
+         }
 
             msg.payload = value;
           }

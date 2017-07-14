@@ -140,12 +140,12 @@
         category: 'firebase',       // the palette category
         defaults: {                 // defines the editable properties of the node
             name: {value: ''},      //  along with default values.
-            firebaseconfig:  {type:'firebase config',required:true},
+            firebaseconfig:  {type:'firebase config',required:false},
             childpath: {value: '', required: false},
             childtype: {value: '', required: false},
             childvalue: {value: '', required: false},
             method: {value: 'set', required: true},
-            value: {value:'msg.payload', required: true},
+            value: {value:'msg.payload', required: false},
             valuetype: {value: '', required: false},
             valueval: {value: '', required: false},
             priority: {value: 'msg.priority', required: false},
@@ -183,28 +183,13 @@
           var node = this;
 
           $("#node-input-childpath").typedInput({default: node.childtype,types:['str','msg','flow','global','jsonata']});
-          $("#node-input-value").typedInput({default: node.valuetype,types:['str','msg','flow','global','jsonata']});
+          $("#node-input-value").typedInput({default: node.valuetype,types:['str','msg','flow','global','jsonata','date', {value:"serverTS",label:"serverTS",hasValue:false,}]});
 
           //Set up autocomplete for Value field
           var defaultPayloadValues = [
             "msg.payload",
             "Firebase.ServerValue.TIMESTAMP"
           ];
-
-          $('#node-input-value').autocomplete({
-            source: defaultPayloadValues,
-            minLength: 0
-          });
-
-          $('#node-input-value').on('focusin', function(){
-            $(this).autocomplete("search", "");
-            //$(this).autocomplete("search", $(this).val());
-          });
-
-          $('#node-input-value').on('focusout', function(){
-            $(this).autocomplete("close");
-          });
-
           //Set up autocomplete for Priority field
           var defaultPriorityValues = [
             "msg.priority",

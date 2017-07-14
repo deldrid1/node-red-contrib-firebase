@@ -1,5 +1,6 @@
 module.exports = function(RED) {
     'use strict';
+    var Firebase = require('firebase');
     var path= require('path');
 
     String.prototype.capitalize = function() {
@@ -164,6 +165,12 @@ module.exports = function(RED) {
                     console.log("ERROR WITH JSONATA");
                         }           
               }
+              else if(this.valuetype == "serverTS"){
+                value = Firebase.database.ServerValue.TIMESTAMP;
+              }
+              else if(this.valuetype == "date"){
+                value = Date.now();
+              }
 
 
               /*if (value == "msg.payload"){
@@ -240,6 +247,7 @@ module.exports = function(RED) {
                 console.log("ERROR WITH JSONATA");
                     }           
           }
+          
          
           childpath = childpath || "/"
         
