@@ -126,6 +126,8 @@
             name: {value: ''},      //  along with default values.
             firebaseconfig:  {type:'firebase config',required:true},
             childpath: {value: '', required: false},
+            childtype: {value: '', required: false},
+            childvalue: {value: '', required: false},
             method: {value: 'set', required: true},
             value: {value:'msg.payload', required: true},
             priority: {value: 'msg.priority', required: false},
@@ -191,6 +193,10 @@
         },
 
         oneditprepare: function(){
+          var node = this;
+
+          $("#node-input-childpath").typedInput({default: node.childtype,types:['str','msg','flow','global','jsonata']});
+
           //Set up autocomplete for Value field
           var defaultPayloadValues = [
             "msg.payload",
@@ -208,24 +214,6 @@
           });
 
           $('#node-input-value').on('focusout', function(){
-            $(this).autocomplete("close");
-          });
-
-          //Set up autocomplete for Childpath field
-          var defaultChildpathValues = [
-            "msg.childpath",
-          ];
-
-          $('#node-input-childpath').autocomplete({
-            source: defaultChildpathValues,
-            minLength: 0
-          });
-
-          $('#node-input-childpath').on('focusin', function(){
-            $(this).autocomplete("search", "");
-          });
-
-          $('#node-input-childpath').on('focusout', function(){
             $(this).autocomplete("close");
           });
 
@@ -274,6 +262,9 @@
         },
 
         oneditsave: function(){
+          var node = this;
+          node.childtype = $("#node-input-childpath").typedInput('type');
+          node.childvalue = $("#node-input-childpath").typedInput('value');
           // console.log("Method -- "+$('#node-input-method').val().trim())
           if ($('#node-input-value').val().trim() === "msg.payload" || $('#node-input-method').val().trim() === "msg.method"){
             this.inputs = 1;

@@ -12,6 +12,8 @@ module.exports = function(RED) {
         this.config = RED.nodes.getNode(n.firebaseconfig);
         this.name = n.name;
         this.childpath = n.childpath;
+        this.childtype = n.childtype;
+        this.childvalue = n.childvalue;
         this.method = n.method;
         this.value = n.value;
         this.priority = n.priority;
@@ -173,14 +175,45 @@ module.exports = function(RED) {
             }
 
             //Parse out msg.childpath
-            var childpath = this.childpath
+           /* var childpath = this.childpath
             if(childpath == "msg.childpath"){
               if("childpath" in msg){
                 childpath = msg.childpath
               }
             }
             childpath = childpath || "/"
+            */
 
+            var childpath
+          //Parse out msg.childpath         
+          if(this.childtype == "str"){
+            childpath = this.childpath
+          }
+          else if(this.childtype == "msg"){
+            var childvalue = this.childvalue;
+            childpath = msg[childvalue];
+          }
+          else if(this.childtype == "flow"){
+            var childvalue = this.childvalue;
+            childpath = this.context().flow.get(childvalue)
+          }
+          else if(this.childtype == "global"){
+            var childvalue = this.childvalue;
+            childpath = this.context().global.get(childvalue)
+          }
+          else if(this.childtype == "jsonata"){
+            try{
+                var childvalue = this.childvalue;
+                childpath = jsonata(childvalue);
+                childpath = childpath.evaluate({msg:msg})
+            }catch(e){
+                console.log("ERROR WITH JSONATA");
+                    }           
+          }
+         
+          childpath = childpath || "/"
+        
+          msg.childpath = childpath || "/";
             switch (method) {
               case "set":
               case "update":
