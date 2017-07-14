@@ -20,6 +20,8 @@ module.exports = function(RED) {
         this.valuetype = n.valuetype;
         this.valueval = n.valueval;
         this.priority = n.priority;
+        this.prioritytype = n.prioritytype;
+        this.priorityval = n.priorityval;
         this.fbRequests = [];
 
         this.ready = false;
@@ -171,55 +173,48 @@ module.exports = function(RED) {
               else if(this.valuetype == "date"){
                 value = Date.now();
               }
-
-
-              /*if (value == "msg.payload"){
-                if ("payload" in msg){
-                  value = msg.payload;
-                  if (!Buffer.isBuffer(value) && typeof value != "object"){
-                    try {
-                      value = JSON.parse(value)
-                    } catch(e){
-                      value = msg.payload.toString();
-                    }
-                  }
-                } else {
-                  this.warn("Expected \"payload\" property not in msg object (setting payload to \"null\")", msg);
-                  value = null;
-                }
-              } else if(this.value == "Firebase.ServerValue.TIMESTAMP") {
-                value = this.config.fbConnection.Firebase.ServerValue.TIMESTAMP
-              }
-*/
-
               msg.payload = value;
             }
-
-            //Parse out msg.priority
-            var priority = null;
-            if (method == "setPriority" || method == "setWithPriority"){
-              priority = this.priority;
-              if (priority == null){
-                this.error("Expected \"priority\" property not included, .onDisconnect() will not be set", msg)
-                return;
-              } else if (priority == "msg.priority"){
-                if ("priority" in msg) priority = msg.priority;
-                else {
-                  this.error("Expected \"priority\" property in msg object, .onDisconnect() will not be set", msg)
-                  return;
-                }
-              }
+          var priority = null;
+          var val;
+          if (method == "setPriority" || method == "setWithPriority"){
+            priority = this.priority;
+            if (priority == null){
+              this.error("Expected \"priority\" property not included", msg)
+              return;
             }
-
-            //Parse out msg.childpath
-           /* var childpath = this.childpath
-            if(childpath == "msg.childpath"){
-              if("childpath" in msg){
-                childpath = msg.childpath
-              }
+            else if(this.prioritytype == "str"){
+             val = this.priority;
             }
-            childpath = childpath || "/"
-            */
+            else if(this.prioritytype == "msg"){
+               val = msg[this.priorityval];
+            }
+            else if(this.prioritytype == "flow"){
+              val = this.context().flow.get(this.priorityval)
+            }
+            else if(this.prioritytype == "global"){
+              var val = this.valueval;
+              val= this.context().global.get(this.priorityval)
+            }
+            else if(this.prioritytype == "jsonata"){
+              try{
+                  var valueval = this.valueval;
+                  val = jsonata(this.priorityval);
+                  val = val.evaluate({msg:msg})
+              }catch(e){
+                  console.log("ERROR WITH JSONATA");
+                      }           
+            }
+           else if(this.prioritytype== "serverTS"){
+              val = Firebase.database.ServerValue.TIMESTAMP;
+           }
+           else if(this.prioritytype == "date"){
+              val = Date.now();
+           }
+
+              msg.priority = val;
+            } 
+
 
             var childpath
           //Parse out msg.childpath         

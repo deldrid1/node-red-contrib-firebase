@@ -17,6 +17,8 @@ module.exports = function(RED) {
       this.valueval = n.valueval;
       this.method = n.method;
       this.priority = n.priority;
+      this.prioritytype = n.prioritytype;
+      this.priorityval = n.priorityval;
       this.fbRequests = [];
 
       this.ready = false;
@@ -131,7 +133,6 @@ module.exports = function(RED) {
           }
 
           //Parse out msg.payload
-          
           var value;
           if (method != "setPriority"){
 
@@ -139,7 +140,6 @@ module.exports = function(RED) {
             value = this.value;
           }
           else if(this.valuetype == "msg"){
-            console.log("valueval is ", this.valueval)
             var valueval = this.valueval
             value = msg[valueval];
           }
@@ -172,29 +172,44 @@ module.exports = function(RED) {
 
           //Parse out msg.priority
           var priority = null;
+          var val;
           if (method == "setPriority" || method == "setWithPriority"){
             priority = this.priority;
             if (priority == null){
               this.error("Expected \"priority\" property not included", msg)
               return;
-            } else if (priority == "msg.priority"){
-              if ("priority" in msg) priority = msg.priority;
-              else {
-                this.error("Expected \"priority\" property in msg object", msg)
-                return;
-              }
             }
-          }
+            else if(this.prioritytype == "str"){
+             val = this.priority;
+            }
+            else if(this.prioritytype == "msg"){
+               val = msg[this.priorityval];
+            }
+            else if(this.prioritytype == "flow"){
+              val = this.context().flow.get(this.priorityval)
+            }
+            else if(this.prioritytype == "global"){
+              var val = this.valueval;
+              val= this.context().global.get(this.priorityval)
+            }
+            else if(this.prioritytype == "jsonata"){
+              try{
+                  var valueval = this.valueval;
+                  val = jsonata(this.priorityval);
+                  val = val.evaluate({msg:msg})
+              }catch(e){
+                  console.log("ERROR WITH JSONATA");
+                      }           
+            }
+           else if(this.prioritytype== "serverTS"){
+              val = Firebase.database.ServerValue.TIMESTAMP;
+           }
+           else if(this.prioritytype == "date"){
+              val = Date.now();
+           }
 
-          //Parse out msg.childpath
-          /*var childpath = this.childpath
-          if(childpath == "msg.childpath"){
-            if("childpath" in msg){
-              childpath = msg.childpath
-            }
-          }
-          childpath = childpath || "/"
-          */
+              msg.priority = val;
+            } 
           var childpath
           //Parse out msg.childpath         
           if(this.childtype == "str"){

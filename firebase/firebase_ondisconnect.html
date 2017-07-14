@@ -16,8 +16,8 @@
             <option value="set" default>set</option>
             <option value="update">update</option>
             <option value="remove">remove</option>
+            <option value="cancel">setPriority</option>
             <option value="setWithPriority">setWithPriority</option>
-            <option value="cancel">setWithPriority</option>
             <option value="msg.method">[msg.method]</option>
         </select>()
     </div>
@@ -27,7 +27,7 @@
       <input id="node-input-value" autocomplete="off" type="text">
     </div>
 
-    <div id="node-input-priority-container" class="form-row hidden">
+    <div id="node-input-priority-container" class="form-row">
       <label for="node-input-priority"><i class="fa fa-list-ol"></i> Priority</label>
       <input id="node-input-priority" autocomplete="off" type="text">
     </div>
@@ -71,11 +71,11 @@
         </li>
         
         <li> msg.method
-        <dd>  The name of a message property that can be used to dynamically set the Firebase API method that is used.  This requires that the <code>method</code> property is set to <code>msg.method</code> in the node's edit dialog box.</dd>
+        <dd>  The name of a message property that can be used to dynamically set the Firebase API method that is used.  This requires that the <code>method</code> property is set to <code>{typedinput}.method</code> in the node's edit dialog box.</dd>
         </li>
 
          <li> msg.priority
-        <dd>  The name of a message property that can be used to dynamically set the .priority of a firebase location.  This requires that the <code>priority</code> property is set to <code>msg.priority</code> and in the node's edit dialog box and that the method is <code>setWithPriority</code>.</dd>
+        <dd>  The name of a message property that can be used to dynamically set the .priority of a firebase location.  This requires that the <code>priority</code> that the method is <code>setWithPriority</code>.</dd>
         </li>
 
   </dl>   
@@ -129,10 +129,12 @@
             childtype: {value: '', required: false},
             childvalue: {value: '', required: false},
             method: {value: 'set', required: true},
-            value: {value:'msg.payload', required: false},
+            value: {value:'', required: false},
             valuetype: {value: '', required: false},
             valueval: {value: '', required: false},
-            priority: {value: 'msg.priority', required: false},
+            priority: {value: '', required: false},
+            prioritytype:{value: '', required: false},
+            priorityval:{value: '', required: false},
         },
         color: '#ffb37a',
         icon: 'firebase.png',       // saved in  icons/myicon.png
@@ -197,46 +199,10 @@
         oneditprepare: function(){
           var node = this;
 
+
           $("#node-input-childpath").typedInput({default: node.childtype,types:['str','msg','flow','global','jsonata']});
           $("#node-input-value").typedInput({default: node.valuetype,types:['str','msg','flow','global','jsonata','date', {value:"serverTS",label:"serverTS",hasValue:false,}]});
-
-          //Set up autocomplete for Value field
-          var defaultPayloadValues = [
-            "msg.payload",
-            "Firebase.ServerValue.TIMESTAMP"
-          ];
-
-          $('#node-input-value').autocomplete({
-            source: defaultPayloadValues,
-            minLength: 0
-          });
-
-          $('#node-input-value').on('focusin', function(){
-            $(this).autocomplete("search", "");
-            //$(this).autocomplete("search", $(this).val());
-          });
-
-          $('#node-input-value').on('focusout', function(){
-            $(this).autocomplete("close");
-          });
-
-          //Set up autocomplete for Priority field
-          var defaultPriorityValues = [
-            "msg.priority",
-          ];
-
-          $('#node-input-priority').autocomplete({
-            source: defaultPriorityValues,
-            minLength: 0
-          });
-
-          $('#node-input-priority').on('focusin', function(){
-            $(this).autocomplete("search", "");
-          });
-
-          $('#node-input-priority').on('focusout', function(){
-            $(this).autocomplete("close");
-          });
+          $("#node-input-priority").typedInput({default: node.prioritytype,types:['str','msg','flow','global','jsonata','date', {value:"serverTS",label:"serverTS",hasValue:false,}]});
 
           //Set up change handler for Method field
           $('#node-input-method').on('change', function(){
@@ -270,6 +236,8 @@
           node.childvalue = $("#node-input-childpath").typedInput('value');
           node.valuetype =  $("#node-input-value").typedInput('type');
           node.valueval =  $("#node-input-value").typedInput('value');
+          node.prioritytype =  $("#node-input-priority").typedInput('type');
+          node.priorityval=  $("#node-input-priority").typedInput('value');
           // console.log("Method -- "+$('#node-input-method').val().trim())
           if ($('#node-input-value').val().trim() === "msg.payload" || $('#node-input-method').val().trim() === "msg.method" || node.childtype == "msg" || node.childtype == "flow" || node.childtype == "global" || node.childtype == "jsonata"){
             this.inputs = 1;
