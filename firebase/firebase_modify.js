@@ -13,6 +13,8 @@ module.exports = function(RED) {
       this.childtype = n.childtype;
       this.childvalue = n.childvalue;
       this.value = n.value;
+      this.valuetype = n.valuetype;
+      this.valueval = n.valueval;
       this.method = n.method;
       this.priority = n.priority;
       this.fbRequests = [];
@@ -129,8 +131,37 @@ module.exports = function(RED) {
           }
 
           //Parse out msg.payload
-          var value = this.value;
+          console.log("Valtype : " ,this.valuetype)
+          var value //= this.value;
           if (method != "setPriority"){
+
+            if(this.valuetype == "str"){
+            value = this.value;
+          }
+          else if(this.valuetype == "msg"){
+            console.log("valueval is ", this.valueval)
+            var valueval = this.valueval
+            value = msg[valueval];
+          }
+          else if(this.valuetype == "flow"){
+            var valueval = this.valueval;
+            value = this.context().flow.get(valueval)
+          }
+          else if(this.valuetype == "global"){
+            var valueval = this.valueval;
+            value = this.context().global.get(valueval)
+          }
+          else if(this.valuetype == "jsonata"){
+            try{
+                var valueval = this.valueval;
+                value = jsonata(valueval);
+                value = value.evaluate({msg:msg})
+            }catch(e){
+                console.log("ERROR WITH JSONATA");
+                    }           
+          }
+
+/*
             if (value == "msg.payload"){
               if ("payload" in msg){
                 value = msg.payload;
@@ -148,6 +179,8 @@ module.exports = function(RED) {
             } else if(this.value == "Firebase.ServerValue.TIMESTAMP") {
               value = this.config.fbConnection.Firebase.ServerValue.TIMESTAMP
             }
+*/
+
             msg.payload = value;
           }
 

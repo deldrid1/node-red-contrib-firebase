@@ -146,6 +146,8 @@
             childvalue: {value: '', required: false},
             method: {value: 'set', required: true},
             value: {value:'msg.payload', required: true},
+            valuetype: {value: '', required: false},
+            valueval: {value: '', required: false},
             priority: {value: 'msg.priority', required: false},
         },
         color: '#ffb37a',
@@ -181,6 +183,7 @@
           var node = this;
 
           $("#node-input-childpath").typedInput({default: node.childtype,types:['str','msg','flow','global','jsonata']});
+          $("#node-input-value").typedInput({default: node.valuetype,types:['str','msg','flow','global','jsonata']});
 
           //Set up autocomplete for Value field
           var defaultPayloadValues = [
@@ -250,6 +253,9 @@
           var node = this;
           node.childtype = $("#node-input-childpath").typedInput('type');
           node.childvalue = $("#node-input-childpath").typedInput('value');
+          node.valuetype =  $("#node-input-value").typedInput('type');
+          node.valueval =  $("#node-input-value").typedInput('value');
+        
         }
     });
 </script>
