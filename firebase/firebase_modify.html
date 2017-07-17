@@ -150,6 +150,8 @@
         align: 'right',
         inputs: 1,                  // set the number of inputs - only 0 or 1
         outputs: 1,                 // set the number of outputs - 0 to n
+        inputLabels: "dynamically set variables",
+        outputLabels: function() { if(this.value) {return this.method + " at /" +this.value; } },
 
         label: function () {        // sets the default label contents
           var method = "." + this.method +"()"
@@ -172,6 +174,8 @@
         labelStyle: function () {   // sets the class to apply to the label
             return this.name ? "node_label_italic" : "";
         },
+
+
 
         oneditprepare: function(){
 

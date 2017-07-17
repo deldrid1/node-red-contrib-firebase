@@ -85,6 +85,8 @@
     icon: 'firebase.png',     // saved in  icons/myicon.png
 
     paletteLabel: "firebase.createUser()",
+    inputLabels: "Email and Password",
+    outputLabels: function() { if(this.email) {return "Creating " + this.email; } },
 
     label: function() {     // sets the default label contents
       return (this.name && this.name !== '' ? this.name : "Create User(s)")

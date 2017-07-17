@@ -10,27 +10,35 @@ module.exports = function(RED) {
       this.completeInterval = null;
 
       this.createUser = function(fbAdmin, email, password, results) {
-        console.log("email inside", email)
-        fbAdmin.auth().createUserWithEmailAndPassword(email,password).then(function(error, userData) {
-          if (error) {
-            switch (error.code) {
-              case "EMAIL_TAKEN":
-                console.log("The new user account cannot be created because the email (\""+email+"\") is already in use.");
-                break;
-              case "INVALID_EMAIL":
-                console.log("The specified email (\""+email+"\") is not a valid email.");
-                break;
-              default:
-                console.log("Error creating user (\""+email+"\"): ", error);
-            }
-
-            results.push({email: email, error: error});
-            // this.send({payload: error});
-          } else {
-            results.push({email: email, uid: userData.uid});
-            // this.send({payload: "Successfully created user account (uid: \""+userData.uid+"\") with email \""+email+"\""});
+      
+        fbAdmin.auth().createUserWithEmailAndPassword(email, password)
+        .catch(function(error,userData) {
+    
+          var errorCode = error.code;
+          var errorMessage = error.message;
+          if (errorCode == 'auth/weak-password') {
+            this.error('The password is too weak.');
+            console.error('The password is too weak.');
+          } 
+          else if(errorCode == 'auth/email-already-in-use'){
+            this.error('There already exists an account with the given email address.');
+            console.error('There already exists an account with the given email address.');
           }
+          else if(errorCode == 'auth/invalid-email'){
+            this.error('The email address is not valid.');
+            console.error('The email address is not valid.');
+          }
+          else if(errorCode == 'auth/operation-not-allowed'){
+            this.error('Email/password accounts are not enabled. Enable email/password accounts in the Firebase Console, under the Auth tab');
+            console.error('Email/password accounts are not enabled. Enable email/password accounts in the Firebase Console, under the Auth tab');
+          }
+          else{this.error("error ",error.code)}
+            
+          results.push({email: email, uid: error});
         }.bind(this));
+          
+          var user = fbAdmin.auth().currentUser;
+          results.push({email: email, info: user});           
       }
 
       this.on('input', function(msg) {
@@ -52,7 +60,7 @@ module.exports = function(RED) {
           var user = users[i];
           console.log(user);
           var email = String(user.email)
-          console.log("usrrr ",email);
+          console.log("userr ",email);
           this.createUser(this.config.fbConnection.fbApp, String(user.email), String(user.password), results);
         }
 
