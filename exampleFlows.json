@@ -1,0 +1,186 @@
+[
+    {
+        "id": "27602cdf.6c9374",
+        "type": "inject",
+        "z": "ec28531f.7fa6e",
+        "name": "",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "x": 140,
+        "y": 160,
+        "wires": [
+            [
+                "67a1b45e.36ac6c"
+            ]
+        ]
+    },
+    {
+        "id": "67a1b45e.36ac6c",
+        "type": "debug",
+        "z": "ec28531f.7fa6e",
+        "name": "",
+        "active": true,
+        "console": "false",
+        "complete": "false",
+        "x": 330,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "6f5a435e.c29cdc",
+        "type": "comment",
+        "z": "ec28531f.7fa6e",
+        "name": "Creating your first flow Step 1-4",
+        "info": "",
+        "x": 190,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "56ef1fb0.c0c7d",
+        "type": "comment",
+        "z": "ec28531f.7fa6e",
+        "name": "Creating your first flow Step 5",
+        "info": "",
+        "x": 180,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "7cd558fa.ed54b8",
+        "type": "inject",
+        "z": "ec28531f.7fa6e",
+        "name": "",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "x": 140,
+        "y": 320,
+        "wires": [
+            [
+                "c0850a46.42e188"
+            ]
+        ]
+    },
+    {
+        "id": "d722fcd1.f4d5d",
+        "type": "debug",
+        "z": "ec28531f.7fa6e",
+        "name": "",
+        "active": true,
+        "console": "false",
+        "complete": "false",
+        "x": 490,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "c0850a46.42e188",
+        "type": "function",
+        "z": "ec28531f.7fa6e",
+        "name": "convert date",
+        "func": "// Create a Date object from the payload\nvar date = new Date(msg.payload);\n// Change the payload to be a formatted Date string\nmsg.payload = date.toString();\n// Return the message so it can be sent on\nreturn msg;\n",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 310,
+        "y": 320,
+        "wires": [
+            [
+                "d722fcd1.f4d5d"
+            ]
+        ]
+    },
+    {
+        "id": "a2e654e.e3257a8",
+        "type": "inject",
+        "z": "ec28531f.7fa6e",
+        "name": "Tick",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "repeat": "",
+        "crontab": "*/5 0 * * *",
+        "once": false,
+        "x": 130,
+        "y": 520,
+        "wires": [
+            [
+                "94c52cc.a7310d"
+            ]
+        ]
+    },
+    {
+        "id": "94c52cc.a7310d",
+        "type": "http request",
+        "z": "ec28531f.7fa6e",
+        "name": "UK Power",
+        "method": "GET",
+        "url": "http://realtimeweb-prod.nationalgrid.com/SystemData.aspx",
+        "tls": "",
+        "x": 260,
+        "y": 520,
+        "wires": [
+            [
+                "d6f457b0.fd8198"
+            ]
+        ]
+    },
+    {
+        "id": "d6f457b0.fd8198",
+        "type": "function",
+        "z": "ec28531f.7fa6e",
+        "name": "UK Power Demand",
+        "func": "// does a simple text extract parse of the http output to provide an\n// object containing the uk power demand, frequency and time\n\nif (~msg.payload.indexOf('<span')) {\n    var dem = msg.payload.split('Demand:')[1].split(\"MW\")[0];\n    var fre = msg.payload.split('Frequency:')[1].split(\"Hz\")[0];\n\n    msg.payload = {};\n    msg.payload.demand = parseInt(dem.split(\">\")[1].split(\"<\")[0]);\n    msg.payload.frequency = parseFloat(fre.split(\">\")[1].split(\"<\")[0]);\n    \n    msg2 = {};\n    msg2.payload = (msg.payload.frequency >= 50) ? true : false;\n\n    return [msg,msg2];\n}\n\nreturn null;",
+        "outputs": "2",
+        "noerr": 0,
+        "x": 447,
+        "y": 520,
+        "wires": [
+            [
+                "4e369b05.d828e4"
+            ],
+            [
+                "3bb76581.51381a"
+            ]
+        ]
+    },
+    {
+        "id": "4e369b05.d828e4",
+        "type": "debug",
+        "z": "ec28531f.7fa6e",
+        "name": "",
+        "active": true,
+        "complete": false,
+        "x": 647,
+        "y": 490,
+        "wires": []
+    },
+    {
+        "id": "3bb76581.51381a",
+        "type": "debug",
+        "z": "ec28531f.7fa6e",
+        "name": "",
+        "active": true,
+        "complete": false,
+        "x": 648,
+        "y": 561,
+        "wires": []
+    },
+    {
+        "id": "266b276c.e6da68",
+        "type": "comment",
+        "z": "ec28531f.7fa6e",
+        "name": "Creating your second flow",
+        "info": "",
+        "x": 170,
+        "y": 420,
+        "wires": []
+    }
+]

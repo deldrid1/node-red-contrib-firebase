@@ -178,9 +178,11 @@ module.exports = function(RED) {
                     var val = query.value.toString();
                     ref = ref.startAt(val);
                   }
-                  else if(query.valType == "json"){ 
+                  else if(query.valType == "json" ){ 
                     try {
+                      console.log(val)
                       var val = JSON.stringify(query.value);
+                      console.log(val)
                     } catch(e2) {
                         console.log("not a valid json",e2);
                     }
@@ -195,6 +197,7 @@ module.exports = function(RED) {
                   else if(query.valType == "jsonata"){ 
                     try{
                       var val = jsonata(query.value);
+                      val = val.evaluate({msg:msg})
                       ref = ref.startAt(val);
                     }
                     catch(e){
@@ -239,6 +242,7 @@ module.exports = function(RED) {
                   else if(query.valType == "jsonata"){ 
                     try{
                       var val = jsonata(query.value);
+                      val = val.evaluate({msg:msg})
                       ref = ref.endAt(val);
                     }
                     catch(e){
@@ -284,6 +288,7 @@ module.exports = function(RED) {
                   else if(query.valType == "jsonata"){ 
                     try{
                       var val = jsonata(query.value);
+                      val = val.evaluate({msg:msg})
                       ref = ref.equalTo(val);
                     }
                     catch(e){
@@ -313,6 +318,24 @@ module.exports = function(RED) {
                     val = parseInt(query.value);
                     ref = ref.limitToFirst(val);
                   }
+                   else if(query.valType == "json"){ 
+                    try {
+                      var val = JSON.stringify(query.value);
+                      val = parseInt(val);
+                    } catch(e2) {
+                        console.log("not a valid json",e2);
+                    }
+                    ref = ref.limitToFirst(val);
+                  }
+                  else if(query.valType == "jsonata"){ 
+                    try{
+                      var val = jsonata(query.value);
+                      ref = ref.limitToFirst(parseInt(val.evaluate({msg:msg})));
+                    }
+                    catch(e){
+                      console.log("ERROR WITH JSONATA");
+                    }
+                  }
                   break;
                 case "limitToLast":
                   if(query.valType == "str"){
@@ -335,6 +358,24 @@ module.exports = function(RED) {
                   else if(query.valType == "num"){
                     val = parseInt(query.value);
                     ref = ref.limitToLast(val);
+                  }
+                  else if(query.valType == "json"){ 
+                    try {
+                      var val = JSON.stringify(query.value);
+                      val = parseInt(val);
+                    } catch(e2) {
+                        console.log("not a valid json",e2);
+                    }
+                    ref = ref.limitToLast(val);
+                  }
+                  else if(query.valType == "jsonata"){ 
+                    try{
+                      var val = jsonata(query.value);
+                      ref = ref.limitToLast(parseInt(val.evaluate({msg:msg})));
+                    }
+                    catch(e){
+                      console.log("ERROR WITH JSONATA");
+                    }
                   }
                   break;
                 default:

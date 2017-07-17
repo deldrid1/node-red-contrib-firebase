@@ -218,6 +218,8 @@
           $("#eventType-select").val($("#node-input-eventType").val())
           $('#eventType-select').trigger('change');
 
+
+  
           $("#node-input-childpath").typedInput({default: node.childtype,types:['str','msg','flow','global','jsonata']});
           $("#node-input-event").typedInput({default: node.eventTypetype ,types:['str','msg','flow','global']});
 

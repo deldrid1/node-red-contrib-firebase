@@ -8,7 +8,6 @@ module.exports = function (RED) {
     var Firebase = require('firebase'); //for new version
     var auth = require('firebase/auth');
     var admin = require('firebase-admin');
-    var FirebaseTokenGenerator = require("firebase-token-generator");
     var events = require("events");
     var path = require("path");
     var https = require("follow-redirects").https;
@@ -79,9 +78,9 @@ module.exports = function (RED) {
               }
             
               var obj = {
-                Firebase: Firebase,  //Needed for Firebase.ServerValue.TIMESTAMP...
+                Firebase: Firebase, 
 
-                firebaseurl: firebaseurl,  //TODO: Some of this data is duplicated...
+                firebaseurl: firebaseurl,  
                 api: api,
                               
                 fbApp:Firebase.initializeApp({apiKey: api,databaseURL: firebaseurl},configNodeID),
@@ -284,25 +283,6 @@ module.exports = function (RED) {
                   }
                 },
 
-                //However, it looks like with our current setup auth will get re-emitted after we reconnect.
- /*               onAuth: function(authData){
-                  if(authData){
-                    _emit("authorized", authData)
-                  } else {
-                    if(this.authData){
-                      var now = new Date()
-                      var authExpiration = new Date(this.authData.expires*1000)
-                      if(authExpiration.getTime()-10000 <= now.getTime()){  //TODO: Do some research on this, we are subtracting 10 seconds - Firebase gets a little greedy with expirations (perhaps this is because of clock differences and network latencies?)
-                        //Auth has expired - need to reauthorize
-                        console.log("auth has expired - attempting single shot reauthentication")
-                        this.authorize(this.loginType, this.secret, this.passORuid) //Single Shot Reauth attempt
-                      }
-                    }
-                    _emit("unauthorized");
-                  }
-                  this.authData = authData
-                },
-*/
                 onLoginAuth: function(error, authData) {
                   if (error) {
                     _emit("error", error.code);  //TODO: evaluate being verbose vs. using the error.code...
@@ -320,12 +300,11 @@ module.exports = function (RED) {
                    if(this.fbAdmin){
                      this.fbAdmin.delete()
                     .then(function() {
-                     //console.log("App deleted successfully2");
                     })
                    }    
                    this.fbApp.delete()
                     .then(function() {
-                     //console.log("App deleted successfully2");
+
                     });                  
                   if(this.loginType){
                      this.fbApp.auth().signOut().then(function(){ 
@@ -341,9 +320,9 @@ module.exports = function (RED) {
                           }
                     });
                    }
-                 // console.log(connections + "afer");
                 }//end of close func
-              };//end of obj            
+              };//end of obj       
+
             //create db reference    
               if(loginType == "admin"){                  
                  obj.makeadmin(list,firebaseurl);
@@ -358,7 +337,7 @@ module.exports = function (RED) {
                 }.bind(obj))
                 
                 return obj;                                        
-              }//end of if
+              }
               
                 obj.fbRef = obj.fbApp.database().ref();              
                 //Set "this" in our private functions
@@ -380,7 +359,6 @@ module.exports = function (RED) {
         },
 
         close: function(configNodeID){
-          //console.log("in close 3")
           var obj = connections[configNodeID]
 
           obj.nodeCount--
@@ -432,10 +410,9 @@ module.exports = function (RED) {
         this.jwtClaims = JSON.parse(this.jwtClaims != undefined ? this.jwtClaims : "[]");
         this.id = generateUID();
         
-        if(this.loginType){ //getting empty logintypes
+        if(this.loginType){ 
           this.fbConnection = connectionPool.get(this.firebaseurl, this.id,this.api,this.loginType,this.list)
           this.fbConnection.on("initializing", function(){
-          // this.log("initializing to " + this.firebaseurl)
           this.status({fill:"grey", shape:"ring", text:"initializing..."})
           }.bind(this)) 
         this.fbConnection.on("connected", function(){
@@ -445,7 +422,7 @@ module.exports = function (RED) {
               case 'anonymous':
                 this.fbConnection.authorize(this.loginType);
                 break;
-              case 'jwt':  //TODO:
+              case 'jwt':  
                 this.fbConnection.authorize(this.loginType, this.secret);
                 break;
               case 'email':
@@ -454,7 +431,6 @@ module.exports = function (RED) {
                 break;
               case 'admin':
                 this.fbConnection.authorize(this.loginType,null,null,null,null,this.list,this.firebaseurl);
-                //this.fbConnection.authorize(null);
                 this.status({fill:"green", shape:"ring", text:"connected"})
                 break;
               case 'customGenerated':
@@ -497,10 +473,8 @@ module.exports = function (RED) {
         }.bind(this))
 
         this.on('close', function() {
-          //console.log("in close function")
             this.status({fill: "gray", shape: "dot", text:"connection closed"})
             // We need to unbind our callback, or we'll get duplicate messages when we redeploy
-            //console.log(this.id + "thats the id")
             connectionPool.close(this.id)
         });
       }

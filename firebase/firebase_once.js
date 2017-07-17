@@ -248,7 +248,8 @@ module.exports = function(RED) {
                   else if(query.valType == "jsonata"){ 
                     try{
                       var val = jsonata(query.value);
-                      ref = ref.startAt(val.evaluate({msg:msg}));
+                      val = val.evaluate({msg:msg})
+                      ref = ref.startAt(val);
                     }
                     catch(e){
                       console.log("ERROR WITH JSONATA");
