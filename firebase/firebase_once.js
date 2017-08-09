@@ -2,7 +2,6 @@ module.exports = function(RED) {
     'use strict';
     var https = require("follow-redirects").https;
     var urllib = require("url");
-    var jsonata = require("jsonata");
     var getPushIdTimestamp = (function getPushIdTimestamp() {
     var PUSH_CHARS = '-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz';
       return function getTimestampFromId(id) {
@@ -134,11 +133,11 @@ module.exports = function(RED) {
           else if(this.childtype == "jsonata"){
             try{
                 var childvalue = this.childvalue;
-                childpath = jsonata(childvalue);
-                childpath = childpath.evaluate({msg:msg})
+                childpath = RED.util.prepareJSONataExpression(childvalue,this);
+                childpath = RED.util.evaluateJSONataExpression(childpath, msg);
             }catch(e){
-                console.log("ERROR WITH JSONATA");
-                    }           
+                node.error(RED._("firebase.once.errors.invalid-expr",{error:err.message}));
+            }  
           }
          
           childpath = childpath || "/"
@@ -247,12 +246,12 @@ module.exports = function(RED) {
                   }
                   else if(query.valType == "jsonata"){ 
                     try{
-                      var val = jsonata(query.value);
-                      val = val.evaluate({msg:msg})
+                      var val = RED.util.prepareJSONataExpression(query.value);
+                      val = RED.util.evaluateJSONataExpression(val, msg);
                       ref = ref.startAt(val);
                     }
                     catch(e){
-                      console.log("ERROR WITH JSONATA");
+                      node.error(RED._("firebase.once.errors.invalid-expr",{error:err.message}));
                     }
                   }
                   break;
@@ -295,11 +294,12 @@ module.exports = function(RED) {
 
                   else if(query.valType == "jsonata"){ //test w/jsonata string
                     try{
-                      var val = jsonata(query.value);
-                      ref = ref.endAt(val.evaluate({msg:msg}));
+                      var val = RED.util.prepareJSONataExpression(query.value);
+                      val = RED.util.evaluateJSONataExpression(val, msg);
+                      ref = ref.endAt(val);
                     }
                     catch(e){
-                      console.log("ERROR WITH JSONATA");
+                      node.error(RED._("firebase.once.errors.invalid-expr",{error:err.message}));
                     }
                   }
                   break;
@@ -334,11 +334,12 @@ module.exports = function(RED) {
                   }
                   else if(query.valType == "jsonata"){ 
                     try{
-                      var val = jsonata(query.value);
-                      ref = ref.equalTo(val.evaluate({msg:msg}));
+                      var val = RED.util.prepareJSONataExpression(query.value);
+                      val = RED.util.evaluateJSONataExpression(val, msg);
+                      ref = ref.equalTo(val);
                     }
                     catch(e){
-                      console.log("ERROR WITH JSONATA");
+                      node.error(RED._("firebase.once.errors.invalid-expr",{error:err.message}));
                     }
                   }
                     break;  
@@ -375,11 +376,12 @@ module.exports = function(RED) {
                   }
                   else if(query.valType == "jsonata"){ 
                     try{
-                      var val = jsonata(query.value);
-                      ref = ref.limitToFirst(parseInt(val.evaluate({msg:msg})));
+                      var val = RED.util.prepareJSONataExpression(query.value);
+                      val = RED.util.evaluateJSONataExpression(val, msg);
+                      ref = ref.limitToFirst(parseInt(val));
                     }
                     catch(e){
-                      console.log("ERROR WITH JSONATA");
+                      node.error(RED._("firebase.once.errors.invalid-expr",{error:err.message}));
                     }
                   }
                   break;
@@ -416,11 +418,12 @@ module.exports = function(RED) {
                   }
                   else if(query.valType == "jsonata"){ 
                     try{
-                      var val = jsonata(query.value);
-                      ref = ref.limitToLast(parseInt(val.evaluate({msg:msg})));
+                      var val = RED.util.prepareJSONataExpression(query.value);
+                      val = RED.util.evaluateJSONataExpression(val, msg);
+                      ref = ref.limitToLast(parseInt(val));
                     }
                     catch(e){
-                      console.log("ERROR WITH JSONATA");
+                      node.error(RED._("firebase.once.errors.invalid-expr",{error:err.message}));
                     }
                   }
                   break;

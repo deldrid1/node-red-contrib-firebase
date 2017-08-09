@@ -154,11 +154,11 @@ module.exports = function(RED) {
           else if(this.valuetype == "jsonata"){
             try{
                 var valueval = this.valueval;
-                value = jsonata(valueval);
-                value = value.evaluate({msg:msg})
-            }catch(e){
-                console.log("ERROR WITH JSONATA");
-                    }           
+                value = RED.util.prepareJSONataExpression(valueval,this);
+                value = RED.util.evaluateJSONataExpression(value,msg);
+            } catch(e){
+                node.error(RED._("firebase.modify.errors.invalid-expr",{error:err.message}));
+            }           
           }
          else if(this.valuetype == "serverTS"){
             value = Firebase.database.ServerValue.TIMESTAMP;
@@ -195,11 +195,11 @@ module.exports = function(RED) {
             else if(this.prioritytype == "jsonata"){
               try{
                   var valueval = this.valueval;
-                  val = jsonata(this.priorityval);
-                  val = val.evaluate({msg:msg})
-              }catch(e){
-                  console.log("ERROR WITH JSONATA");
-                      }           
+                  val = RED.util.prepareJSONataExpression(this.priorityval,this);
+                  val = RED.util.evaluateJSONataExpression(val,msg);
+              } catch(e){
+                  node.error(RED._("firebase.modify.errors.invalid-expr",{error:err.message}));
+              }  
             }
            else if(this.prioritytype== "serverTS"){
               val = Firebase.database.ServerValue.TIMESTAMP;
@@ -230,11 +230,11 @@ module.exports = function(RED) {
           else if(this.childtype == "jsonata"){
             try{
                 var childvalue = this.childvalue;
-                childpath = jsonata(childvalue);
-                childpath = childpath.evaluate({msg:msg})
+                childpath = RED.util.prepareJSONataExpression(childvalue,this);
+                childpath = RED.util.evaluateJSONataExpression(childpath, msg);
             }catch(e){
-                console.log("ERROR WITH JSONATA");
-                    }           
+                node.error(RED._("firebase.modify.errors.invalid-expr",{error:err.message}));
+            }           
           }
          
           childpath = childpath || "/"

@@ -1,6 +1,5 @@
 module.exports = function(RED) {
     'use strict';
-    var jsonata = require("jsonata");
     var getPushIdTimestamp = (function getPushIdTimestamp() {
       var PUSH_CHARS = '-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz';
 
@@ -125,11 +124,11 @@ module.exports = function(RED) {
           else if(this.childtype == "jsonata"){
             try{
                 var childvalue = this.childvalue;
-                childpath = jsonata(childvalue);
-                childpath = childpath.evaluate({msg:msg})
+                childpath = RED.util.prepareJSONataExpression(childvalue,this);
+                childpath = RED.util.evaluateJSONataExpression(childpath, msg);
             }catch(e){
-                console.log("ERROR WITH JSONATA");
-             }
+                node.error(RED._("firebase.on.errors.invalid-expr",{error:err.message}));
+            }     
           }   
            
           if(this.childpath){
@@ -196,12 +195,12 @@ module.exports = function(RED) {
                   }
                   else if(query.valType == "jsonata"){ 
                     try{
-                      var val = jsonata(query.value);
-                      val = val.evaluate({msg:msg})
+                      var val = RED.util.prepareJSONataExpression(query.value);
+                      val = RED.util.evaluateJSONataExpression(val, msg);
                       ref = ref.startAt(val);
                     }
                     catch(e){
-                      console.log("ERROR WITH JSONATA");
+                      node.error(RED._("firebase.on.errors.invalid-expr",{error:err.message}));
                     }
                   }
                   break;
@@ -241,12 +240,12 @@ module.exports = function(RED) {
                   }
                   else if(query.valType == "jsonata"){ 
                     try{
-                      var val = jsonata(query.value);
-                      val = val.evaluate({msg:msg})
+                      var val = RED.util.prepareJSONataExpression(query.value);
+                      val = RED.util.evaluateJSONataExpression(val, msg);
                       ref = ref.endAt(val);
                     }
                     catch(e){
-                      console.log("ERROR WITH JSONATA");
+                      node.error(RED._("firebase.on.errors.invalid-expr",{error:err.message}));
                     }
                   }
                   break;
@@ -287,36 +286,33 @@ module.exports = function(RED) {
                   }
                   else if(query.valType == "jsonata"){ 
                     try{
-                      var val = jsonata(query.value);
-                      val = val.evaluate({msg:msg})
+                      var val = RED.util.prepareJSONataExpression(query.value);
+                      val = RED.util.evaluateJSONataExpression(val, msg);
                       ref = ref.equalTo(val);
                     }
                     catch(e){
-                      console.log("ERROR WITH JSONATA");
+                      node.error(RED._("firebase.on.errors.invalid-expr",{error:err.message}));
                     }
                   }
                   break;  
                 case "limitToFirst":
+                case "limitToLast":
                   if(query.valType == "str"){
                     query.value = parseInt(query.value);
-                    ref = ref.limitToFirst(query.value); 
+                    ref = ref[query.name](query.value); 
                   }       
                   else if (query.valType == "msg") { 
                     var val = this.msg[query.value]; 
                     val = parseInt(val);
-                    ref = ref.limitToFirst(val);  
+                    ref = ref[query.name](val);  
                   }
-                  else if(query.valType == "flow"){
-                    var val =  this.context().flow.get(query.value);
-                    ref = ref.limitToFirst(val);                   
-                  }
-                  else if(query.valType == "global"){
-                    var val =  this.context().global.get(query.value);
-                    ref = ref.limitToFirst(val);
+                  else if(query.valType == "flow" || query.valType == "global"){
+                    var val =  this.context()[query.valType].get(query.value);
+                    ref = ref[query.name](val);                   
                   }
                   else if(query.valType == "num"){
                     val = parseInt(query.value);
-                    ref = ref.limitToFirst(val);
+                    ref = ref[query.name](val);
                   }
                    else if(query.valType == "json"){ 
                     try {
@@ -325,56 +321,16 @@ module.exports = function(RED) {
                     } catch(e2) {
                         console.log("not a valid json",e2);
                     }
-                    ref = ref.limitToFirst(val);
+                    ref = ref[query.name](val);
                   }
                   else if(query.valType == "jsonata"){ 
                     try{
-                      var val = jsonata(query.value);
-                      ref = ref.limitToFirst(parseInt(val.evaluate({msg:msg})));
+                      var val = RED.util.prepareJSONataExpression(query.value);
+                      val = RED.util.evaluateJSONataExpression(val, msg);
+                      ref = ref[query.name](parseInt(val));
                     }
                     catch(e){
-                      console.log("ERROR WITH JSONATA");
-                    }
-                  }
-                  break;
-                case "limitToLast":
-                  if(query.valType == "str"){
-                    query.value = parseInt(query.value);
-                    ref = ref.limitToLast(query.value); 
-                  }       
-                  else if (query.valType == "msg") { 
-                    var val = this.msg[query.value]; 
-                    val = parseInt(val);
-                    ref = ref.limitToLast(val); 
-                  }
-                  else if(query.valType == "flow"){
-                    var val =  this.context().flow.get(query.value);
-                    ref = ref.limitToLast(val);                   
-                  }
-                  else if(query.valType == "global"){
-                    var val =  this.context().global.get(query.value);
-                    ref = ref.limitToLast(val);
-                  }
-                  else if(query.valType == "num"){
-                    val = parseInt(query.value);
-                    ref = ref.limitToLast(val);
-                  }
-                  else if(query.valType == "json"){ 
-                    try {
-                      var val = JSON.stringify(query.value);
-                      val = parseInt(val);
-                    } catch(e2) {
-                        console.log("not a valid json",e2);
-                    }
-                    ref = ref.limitToLast(val);
-                  }
-                  else if(query.valType == "jsonata"){ 
-                    try{
-                      var val = jsonata(query.value);
-                      ref = ref.limitToLast(parseInt(val.evaluate({msg:msg})));
-                    }
-                    catch(e){
-                      console.log("ERROR WITH JSONATA");
+                      node.error(RED._("firebase.on.errors.invalid-expr",{error:err.message}));
                     }
                   }
                   break;
@@ -394,7 +350,7 @@ module.exports = function(RED) {
             return;
 
           // We need to unbind our callback, or we'll get duplicate messages when we redeploy
-          if(this.msg == null){ //Not using in input mode - do what we've always done
+          if(this.childtype != "msg"){ //Not using in input mode - do what we've always done
             if(this.childpath)
               this.config.fbConnection.fbRef.child(this.childpath).off(this.eventType, this.onFBValue, this);
             else
@@ -463,10 +419,10 @@ module.exports = function(RED) {
           // this.log("authorized")
           this.authorized = true;
           this.setStatus();
-          if(this.childtype == "str"){ //only fire without input if its a string
-             this.registerListeners(); 
-            }
-            //}
+          if(this.childtype != "msg"){ //only fire without input if its a string  //TODO: BUG: need to search the jsonata string to see if it is looking for any msg. (which may be implicit as of NR v.17) things to see if this is legal
+            this.registerListeners(); 
+          }
+          //}
         }.bind(this)
 
         this.fbUnauthorized = function(){
