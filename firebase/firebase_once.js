@@ -1,8 +1,8 @@
 module.exports = function(RED) {
     'use strict';
     var https = require("follow-redirects").https;
+    var utils = require("./FirebaseUtils.js");
     var urllib = require("url");
-    var jsonata = require("jsonata");
     var getPushIdTimestamp = (function getPushIdTimestamp() {
     var PUSH_CHARS = '-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz';
       return function getTimestampFromId(id) {
@@ -24,13 +24,13 @@ module.exports = function(RED) {
         this.config = RED.nodes.getNode(n.firebaseconfig);
         this.childpath = n.childpath;
         this.eventType = n.eventType;
+        this.eventTypevalue = n.eventTypevalue;
         this.queries = n.queries;
         this.repeatifnull = n.repeatifnull;
         this.event = n.event;
         this.childtype = n.childtype;
         this.childvalue = n.childvalue;
-        this.eventTypetype = n.eventTypetype;
-        this.eventTypevalue = n.eventTypevalue;
+  
 
         this.activeRequests = [];
         this.ready = false;
@@ -43,41 +43,29 @@ module.exports = function(RED) {
           "value": true,
           "child_added": true,
           "child_changed": true,
-          "chiled_removed": true,
+          "child_removed": true,
           "child_moved": true,
           "shallow_query": true
         }
 
         this.onFBData = function(snapshot, prevChildName) {
-            //console.log("In onFBData + " + JSON.stringify(snapshot.val()))
-            //TODO: Once Node-Red supports it, we should flash the Node when we receive this data.
-
-            // if(!snapshot.exists()){
-            //   //The code below will simply send a payload of nul if there is no data
-            // }
-
             //Tstart with original message object so we retain all of those properties...
             var msg = this.activeRequests.shift();
 
             msg.href = snapshot.ref.toString();
-            msg.key = snapshot.key; //broken
-            //console.log(snapshot);
-            msg.payload = snapshot.val(); //
+            msg.key = snapshot.key; 
+            msg.payload = snapshot.val(); 
 
             if(snapshot.getPriority())
               msg.priority = snapshot.getPriority();
             if(prevChildName)
               msg.previousChildName = prevChildName;
-            //if(this.eventType.search("child") != -1 || msg.key.length == 20 && getPushIdTimestamp(msg.key))  //We probably have a pushID that we can decode
-            
-            //  msg.pushIDTimestamp = getPushIdTimestamp(msg.key)
 
             if(this.repeatifnull && msg.payload == null && msg.attemptNumber++ < 100 ){ // Repeat sending the request.  //TODO: we could use a configurable timer in seconds or a configurable number of attempts
               this.registerListeners(msg)
             } else {
               this.send(msg);
             }
-
             this.setStatus();
         }.bind(this);
 
@@ -89,56 +77,22 @@ module.exports = function(RED) {
 
         this.registerListeners = function(msg){
 
-          var eventType = this.eventType
-          if(eventType == "msg.eventType"){
-            if(this.eventTypetype == "msg"){
-              eventType = this.eventTypevalue;
-              eventType = msg[eventType];
-            }
-            else if(this.eventTypetype =="flow"){          
-              eventType =  this.context().flow.get(this.eventTypevalue);
-            }
-            else if(this.eventTypetype =="global"){
-              eventType =  this.context().global.get(this.eventTypevalue);
-            }
-            else if(this.eventTypetype =="str"){
-              eventType =  this.eventTypevalue
-            }
-            else {
-              this.error("Expected \"eventType\" property in msg object here", msg)
-              return;
-            }
-          }
-          if(!(eventType in this.validEventTypes)){
-            this.error("Invalid msg.eventType property \"" + eventType + "\".  Expected one of the following: [\"" + Object.keys(this.validEventTypes).join("\", \"") + "\"].", msg)
-            return;
-          }
+          var eventType = utils.getType(this.eventType,this.eventTypevalue,msg,this);
 
-          var childpath
-          //Parse out msg.childpath         
-          if(this.childtype == "str"){
-            childpath = this.childpath
-          }
-          else if(this.childtype == "msg"){
-            var childvalue = this.childvalue;
-            childpath = msg[childvalue];
-          }
-          else if(this.childtype == "flow"){
-            var childvalue = this.childvalue;
-            childpath = this.context().flow.get(childvalue)
-          }
-          else if(this.childtype == "global"){
-            var childvalue = this.childvalue;
-            childpath = this.context().global.get(childvalue)
-          }
-          else if(this.childtype == "jsonata"){
+          if(!(eventType in this.validEventTypes)){ //ensure eventType is one of the allowed events
+              this.error("Invalid msg.eventType property \"" + eventType + "\".  Expected one of the following: [\"" + Object.keys(this.validEventTypes).join("\", \"") + "\"].", msg)
+            }
+          
+          var childpath = utils.getType(this.childtype,this.childvalue,msg,this);
+
+          if(childpath == "jsonata"){
             try{
                 var childvalue = this.childvalue;
-                childpath = jsonata(childvalue);
-                childpath = childpath.evaluate({msg:msg})
+                childpath = RED.util.prepareJSONataExpression(childvalue,this);
+                childpath = RED.util.evaluateJSONataExpression(childpath, msg);
             }catch(e){
-                console.log("ERROR WITH JSONATA");
-                    }           
+                node.error(RED._("firebase.once.errors.invalid-expr",{error:err.message}));
+            }  
           }
          
           childpath = childpath || "/"
@@ -150,7 +104,7 @@ module.exports = function(RED) {
 
           this.activeRequests.push(msg)
 
-          if(msg.eventType == "shallow_query"){
+          if(eventType == "shallow_query"){
             this.shallowQuery(msg)  //TODO: https://www.firebase.com/docs/rest/guide/retrieving-data.html#section-rest-ordered-data and https://www.firebase.com/docs/rest/guide/retrieving-data.html#section-rest-queries
           } else {
             this.fbOnce(eventType, msg);
@@ -183,7 +137,6 @@ module.exports = function(RED) {
           //Create the firebase reference to the path
           var ref
           if(msg.childpath){
-
             ref = this.config.fbConnection.fbRef.child(msg.childpath)
           }else{
             ref = this.config.fbConnection.fbRef
@@ -210,224 +163,34 @@ module.exports = function(RED) {
                   ref= ref[query.name]();
                 case "orderByChild":
                 case "startAt":
-                  if(query.valType == "str"){
-                    ref = ref.startAt(query.value); 
-                  } 
-                  else if (query.valType == "msg") {
-                    var val = msg[query.value]; 
-                    ref = ref.startAt(val);
-                  }
-                  else if(query.valType == "flow"){
-                    var val =  this.context().flow.get(query.value);
-                    ref = ref.startAt(val);                  
-                  }
-                  else if(query.valType == "global"){
-                    var val =  this.context().global.get(query.value);
-                    ref = ref.startAt(val);
-                  }
-                  else if(query.valType == "num"){
-                    var val = query.value.toString();
-                    ref = ref.startAt(val);
-                  }
-                  else if(query.valType == "json"){ 
-                    try {
-                      var val = JSON.stringify(query.value);
-                    } catch(e2) {
-                        console.log("not a valid json",e2);
-                    }
-                    ref = ref.startAt(val);
-                  }
-                  else if(query.valType == ""){ //taken out for now..
-                    console.log("in date")
-                    var val = Date.now();
-                    val = val.toString();
-                    console.log(val)
-                    console.log(query.value);
-                    ref = ref.startAt(val);
-                  }
-                  else if(query.valType == "jsonata"){ 
-                    try{
-                      var val = jsonata(query.value);
-                      val = val.evaluate({msg:msg})
-                      ref = ref.startAt(val);
-                    }
-                    catch(e){
-                      console.log("ERROR WITH JSONATA");
-                    }
-                  }
-                  break;
                 case "endAt":
-                  if(query.valType == "str"){
-                    ref = ref.endAt(query.value);
-                  } 
-                  else if (query.valType == "msg") {
-                    var val = msg[query.value]; 
-                    ref = ref.endAt(val);
-                  }
-                  else if(query.valType == "flow"){
-                    var val =  this.context().flow.get(query.value);
-                    ref = ref.endAt(val);          
-                  }
-                  else if(query.valType == "global"){
-                    var val =  this.context().global.get(query.value);
-                    ref = ref.endAt(val);
-                  }
-                  else if(query.valType == "num"){
-                    var val = query.value.toString();
-                    ref = ref.endAt(val);
-                  }
-                  else if(query.valType == "json"){ 
-                    try {
-                      var val = JSON.stringify(query.value);
-                    } catch(e2) {
-                        console.log("not a valid json",e2);
-                    }
-                    ref = ref.endAt(val);
-                  }
-                  else if(query.valType == ""){ //taken out for now..
-                    console.log("in date")
-                    var val = Date.now();
-                    val = val.toString();
-                    console.log(val)
-                    console.log(query.value);
-                    ref = ref.endAt(val);
-                  }
-
-                  else if(query.valType == "jsonata"){ //test w/jsonata string
-                    try{
-                      var val = jsonata(query.value);
-                      ref = ref.endAt(val.evaluate({msg:msg}));
-                    }
-                    catch(e){
-                      console.log("ERROR WITH JSONATA");
-                    }
-                  }
-                  break;
                 case "equalTo":
-                  if(query.valType == "str"){
-                    ref = ref.equalTo(query.value); 
-                  }       
-                  else if (query.valType == "msg") { 
-                    var val = msg[query.value]; 
-                    ref = ref.equalTo(val);
-                  }
-                  else if(query.valType == "flow"){
-                    var val =  this.context().flow.get(query.value);
-                    ref = ref.equalTo(val);
-                  }
-                  else if(query.valType == "global")
-                    {
-                    var val =  this.context().global.get(query.value);
-                    ref = ref.equalTo(val);
-                  }
-                  else if(query.valType == "num"){
-                    var val = query.value.toString();
-                    ref = ref.equalTo(val);
-                  }
-                  else if(query.valType == "json"){ 
-                    try {
-                      var val = JSON.stringify(query.value);
-                    } catch(e2) {
-                        console.log("not a valid json",e2);
-                    }
-                    ref = ref.equalTo(val);
-                  }
-                  else if(query.valType == "jsonata"){ 
-                    try{
-                      var val = jsonata(query.value);
-                      ref = ref.equalTo(val.evaluate({msg:msg}));
-                    }
-                    catch(e){
-                      console.log("ERROR WITH JSONATA");
-                    }
-                  }
-                    break;  
                 case "limitToFirst":
-                  if(query.valType == "str"){
-                    query.value = parseInt(query.value);
-                    ref = ref.limitToFirst(query.value); 
-                  }       
-                  else if (query.valType == "msg") { 
-                    var val = msg[query.value]; 
-                    val = parseInt(val);
-                    ref = ref.limitToFirst(val); //val 
-                  }
-                  else if(query.valType == "flow"){
-                    var val =  this.context().flow.get(query.value);
-                    ref = ref.limitToFirst(val);                    
-                  }
-                  else if(query.valType == "global"){
-                    var val =  this.context().global.get(query.value);
-                    ref = ref.limitToFirst(val);
-                  }
-                  else if(query.valType == "num"){
-                    val = parseInt(query.value);
-                    ref = ref.limitToFirst(val);
-                  }
-                   else if(query.valType == "json"){ 
+                case "limitToLat":
+                  ref = utils.getRef(ref,query.valType,query.name,query.value,msg,this);
+                  if(ref == "json"){ 
                     try {
                       var val = JSON.stringify(query.value);
-                      val = parseInt(val);
                     } catch(e2) {
                         console.log("not a valid json",e2);
                     }
-                    ref = ref.limitToFirst(val);
+                    ref = ref[queryname](val);
                   }
-                  else if(query.valType == "jsonata"){ 
+                  else if(ref == "jsonata"){ 
                     try{
-                      var val = jsonata(query.value);
-                      ref = ref.limitToFirst(parseInt(val.evaluate({msg:msg})));
+                      var val = RED.util.prepareJSONataExpression(query.value);
+                      val = RED.util.evaluateJSONataExpression(val, msg);
+                      ref = ref[queryname](val);
                     }
                     catch(e){
-                      console.log("ERROR WITH JSONATA");
+                      node.error(RED._("firebase.once.errors.invalid-expr",{error:err.message}));
                     }
                   }
-                  break;
-                case "limitToLast":
-                  if(query.valType == "str"){
-                    query.value = parseInt(query.value);
-                    ref = ref.limitToLast(query.value); 
-                  }       
-                  else if (query.valType == "msg") { 
-                    var val = msg[query.value]; 
-                    val = parseInt(val);
-                    ref = ref.limitToLast(val); 
-                  }
-                  else if(query.valType == "flow"){
-                    var val =  this.context().flow.get(query.value);
-                    ref = ref.limitToLast(val);                   
-                  }
-                  else if(query.valType == "global"){
-                    var val =  this.context().global.get(query.value);
-                    ref = ref.limitToLast(val);
-                  }
-                  else if(query.valType == "num"){
-                    val = parseInt(query.value);
-                    ref = ref.limitToLast(val);
-                  }
-                  else if(query.valType == "json"){ 
-                    try {
-                      var val = JSON.stringify(query.value);
-                      val = parseInt(val);
-                    } catch(e2) {
-                        console.log("not a valid json",e2);
-                    }
-                    ref = ref.limitToLast(val);
-                  }
-                  else if(query.valType == "jsonata"){ 
-                    try{
-                      var val = jsonata(query.value);
-                      ref = ref.limitToLast(parseInt(val.evaluate({msg:msg})));
-                    }
-                    catch(e){
-                      console.log("ERROR WITH JSONATA");
-                    }
-                  }
-                  break;
+                   break;
                 default:
                   //TODO:
                   break;
-              }
+              }    
           }     
           ref.once(eventType, this.onFBData, this.onFBError, this);
         }.bind(this)

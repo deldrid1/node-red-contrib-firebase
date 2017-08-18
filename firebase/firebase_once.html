@@ -17,23 +17,9 @@
     <div id="container" >
       <label for="eventType-select"><i class="fa fa-terminal"></i> Event Type</label>
       .once("
-      <select id="eventType-select" style="width: 31%">
-          <option value="value">value</option>
-          <option value="child_added">child_added</option>
-          <option value="child_changed">child_changed</option>
-          <option value="child_removed">child_removed</option>
-          <option value="child_moved">child_moved</option>
-          <option value="shallow_query">shallow_query</option>
-          <option value="msg.eventType">[msg.eventType]</option>
-      </select>
-
-    <div id = "eventType-typedInput-container" class="form-row"> 
-        <label for="node-input-event" ><i class = "hidden"></i> </label>
-        <input class="input-append-left" type="text" id="node-input-event" style="width: 41%">
-        <a  class="btn btn-mini" id="node-input-back" style="margin-top: 4px;"><i class="fa fa-arrow-left"></i>Back</a>
-   </div> 
+      <input class="input-append-left" type="text" id="node-input-event" style="width: 41%"> 
       ")
-      <input type="hidden" id="node-input-eventType">
+
   </div>
     </div>
 
@@ -177,11 +163,10 @@
             childpath: {value: '', required: false},
             repeatifnull: {value: false, required: true},
             event : {value: '',required: false},
-            eventType: {value: "value", required: true},
             queries: {value:[], required: false},
             childtype: {value: '', required: false},
             childvalue: {value: '', required: false},
-            eventTypetype:{value: '', required: false},
+            eventType: {value: '', required: true},
             eventTypevalue : {value: '', required: false},
             querytype: {value:'',required: false}
         },
@@ -210,18 +195,11 @@
 
         oneditprepare: function() { //TODO: there is all kinds of validation that needs to be done to ensure only proper combinations of things are allowed...
           var node = this;
-          $('#eventType-select').change(function () {
-              $("#node-input-eventType").val($(this).find('option:selected').val())
-          });
-          //Set the select's to the node-red hidden properties
-          $("#eventType-select").val($("#node-input-eventType").val())
-          $('#eventType-select').trigger('change');
 
           $("#node-input-childpath").typedInput({default: node.childtype,types:['str','msg','flow','global','jsonata']});
-          $("#node-input-event").typedInput({default: node.eventTypetype ,types:['str','msg','flow','global']});
 
-          addInputToUI($("#node-input-event"));
-          //Most of this code is adapted from the switch node - https://raw.githubusercontent.com/node-red/node-red/master/nodes/core/logic/10-switch.html
+          $("#node-input-event").typedInput({default: node.eventType,types:[{value:"value",label:"value",hasValue:false},{value:"child_added",label:"child_added",hasValue:false},{value:"child_changed",label:"child_changed",hasValue:false},{value:"child_removed",label:"child_removed",hasValue:false},{value:"child_moved",label:"child_moved",hasValue:false},{value:"shallow_query",label:"shallow_query",hasValue:false},'str','msg','flow','global' ]});
+
           var operatorOptions = {
             "orderByChild":{
               inputAllowed: false,
@@ -310,9 +288,10 @@
                 "limitToFirst",
                 "limitToLast",
             ];
-            var illegalCombinationShown = false;
-            $('#eventType-select').on('change', function(){
-              if ($(this).val() == "shallow_query"){ //disable/hide query paramters window and button
+            var illegalCombinationShown = false; //can take the bottom all out
+
+            $('#node-input-event').on('change', function(){
+              if ($("#node-input-event").typedInput('type') == "shallow_query"){ //disable/hide query paramters window and button
                 $('#node-input-query-illegal-combination-container').fadeOut(300);
                 $('#node-input-query-container-overall').fadeOut(300);
                 $('#query-parameters-name-container').fadeOut(300, function(){
@@ -320,11 +299,6 @@
                 });
                 $('#node-dialog-ok').prop('disabled', false);
               } 
-             else if($(this).val() == "msg.eventType"){
-              $('#eventType-select').fadeOut(300);
-              $('#eventType-typedInput-container').show();
-              addInputToUI($("#node-input-event"));
-             }
               else { //enable/show query paramters window and button
                  $('#eventType-typedInput-container').fadeOut(300),function(){
                    $('#eventType-select').fadeIn(300);
@@ -583,13 +557,6 @@
               $("#node-input-query-container-div").scrollTop($("#node-input-query-container-div").get(0).scrollHeight);
             });
 
-            //back button clicked
-            $("#node-input-back").click(function(){
-               $('#eventType-select').show();
-               $('#node-input-event').fadeOut(300);
-               $('#eventType-typedInput-container').fadeOut(300);
-               
-            });
             if(this.queries){
               for (i in this.queries){
               //for (i = 0; i < this.queries.length; i++){ //TODO: For some reason this doesn't work
@@ -647,15 +614,16 @@
           node.childtype = $("#node-input-childpath").typedInput('type');
           node.childvalue = $("#node-input-childpath").typedInput('value');
         
-          node.eventTypetype = $("#node-input-event").typedInput('type');
+          node.eventType= $("#node-input-event").typedInput('type');
           node.eventTypevalue = $("#node-input-event").typedInput('value');
+          console.log("getting saved ", node.eventTypevalue)
 
           //Save Path [this is automagically taken care of by NR]
           //Save Event type [this is automagically taken care of by NR]
 
           //Save queries
           node.queries= [];
-          if ($('#eventType-select').val() != "shallow_query"){
+            if(node.eventType != "shallow_query"){
             var queries = $("#node-input-query-container").children();
             queries.each(function(idx){
               var r = {

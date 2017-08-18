@@ -13,15 +13,7 @@
 
     <div class="form-row">
         <label for="node-input-method"><i class="fa fa-terminal"></i> Method</label>
-        .<select id="node-input-method" type="text" style="width:30%" text-center>
-            <option value="set" default>set</option>
-            <option value="push">push</option>
-            <option value="update">update</option>
-            <option value="remove">remove</option>
-            <option value="setPriority">setPriority</option>
-            <option value="setWithPriority">setWithPriority</option>
-            <option value="msg.method">[msg.method]</option>
-        </select>()
+        <input class="input-append-left" type="text" id="node-input-method" placeholder="path-to/the/data"">
     </div>
 
     <div id="node-input-value-container" class="form-row">
@@ -137,13 +129,14 @@
             childpath: {value: '', required: false},
             childtype: {value: '', required: false},
             childvalue: {value: '', required: false},
-            method: {value: 'set', required: true},
             value: {value:'', required: false},
             valuetype: {value: '', required: false},
             valueval: {value: '', required: false},
             priority: {value: '', required: false},
             prioritytype:{value: '', required: false},
             priorityval:{value: '', required: false},
+            methodtype:{value: '', required: false},
+            methodval:{value: '', required: false}
         },
         color: '#ffb37a',
         icon: 'firebase.png',       // saved in  icons/myicon.png
@@ -151,14 +144,12 @@
         inputs: 1,                  // set the number of inputs - only 0 or 1
         outputs: 1,                 // set the number of outputs - 0 to n
         inputLabels: "dynamically set variables",
-        outputLabels: function() { if(this.value) {return this.method + " at /" +this.value; } },
+        outputLabels: function() { if(this.value) {return this.methodtype + " at /" +this.value; } },
 
         label: function () {        // sets the default label contents
-          var method = "." + this.method +"()"
-          if(method == ".msg.method()")
-            method = "[msg.method]()"
-
-           var config = RED.nodes.node(this.firebaseconfig); //server side uses RED.nodes.getNode... go figure...
+          if(this.methodtype == "" || this.methodtype == undefined){this.methodtype = "set"}
+          var method = "." + this.methodtype + "()"
+          var config = RED.nodes.node(this.firebaseconfig); //server side uses RED.nodes.getNode... go figure...
 
            // make sure the path starts with /
            var childpath = (this.childpath.indexOf("/") == 0) ? this.childpath : "/" + this.childpath;
@@ -180,22 +171,32 @@
         oneditprepare: function(){
 
           var node = this;
-          //if(node.prioritytype == ""){
-          //  node.prioritytype = 'str'
-          //}
+
+          //initially hide or show
+          if(node.methodtype == "setWithPriority" || node.methodtype == "str" || node.methodtype == "msg" || node.methodtype == "flow" || node.methodtype == "global"){
+            $('#node-input-priority-container').show();
+          }
+          else{
+            $('#node-input-priority-container').hide();
+          }
+
           $("#node-input-childpath").typedInput({default: node.childtype,types:['str','msg','flow','global','jsonata']});
           $("#node-input-value").typedInput({default: node.valuetype,types:['str','msg','flow','global','jsonata','date', {value:"serverTS",label:"serverTS",hasValue:false,}]});
           $("#node-input-priority").typedInput({default: node.prioritytype,types:['str','msg','flow','global','jsonata','date', {value:"serverTS",label:"serverTS",hasValue:false,}]});
-      
+          $("#node-input-method").typedInput({default: node.methodtype,types:[{value:"set",label:"set",hasValue:false},{value:"push",label:"push",hasValue:false},{value:"update",label:"update",hasValue:false},{value:"remove",label:"remove",hasValue:false},{value:"setPriority",label:"setPriority",hasValue:false},{value:"setWithPriority",label:"setWithPriority",hasValue:false},'str','msg','flow','global' ]});
 
           //Set up change handler for Method field
           $('#node-input-method').on('change', function(){
-            switch($(this).val()){
+            var type = $("#node-input-method").typedInput('type');
+            switch(type){
               case "set":
               case "push":
               case "update":
               case "remove":
-              case "msg.method":
+              case "msg":
+              case "str":
+              case "flow":
+              case "global":
                 $('#node-input-value-container').show();
                 $('#node-input-priority').hide();
                 $('#node-input-priority-container').hide();
@@ -226,6 +227,8 @@
           node.valueval =  $("#node-input-value").typedInput('value');
           node.prioritytype =  $("#node-input-priority").typedInput('type');
           node.priorityval=  $("#node-input-priority").typedInput('value');
+          node.methodtype =  $("#node-input-method").typedInput('type');
+          node.methodval=  $("#node-input-method").typedInput('value');
         
         }
     });

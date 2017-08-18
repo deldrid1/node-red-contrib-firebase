@@ -1,6 +1,7 @@
 module.exports = function(RED) {
   'use strict';
   var Firebase = require('firebase');
+  var utils = require("./FirebaseUtils.js");
   String.prototype.capitalize = function() {
       return this.charAt(0).toUpperCase() + this.slice(1);
   }
@@ -15,11 +16,13 @@ module.exports = function(RED) {
       this.value = n.value;
       this.valuetype = n.valuetype;
       this.valueval = n.valueval;
-      this.method = n.method;
       this.priority = n.priority;
       this.prioritytype = n.prioritytype;
       this.priorityval = n.priorityval;
       this.fbRequests = [];
+      //this.method = n.method;
+      this.method = n.methodtype;
+      this.methodval -= n.methodval;
 
       this.ready = false;
 
@@ -118,58 +121,27 @@ module.exports = function(RED) {
 
       this.on('input', function(msg) {
         if(this.ready){
-
-          //TODO: this seems to be mostly working, but we really ought to do some more due diligence here...
-          //Try to convert to JSON object...
-          //Parse out msg.method
           var method = this.method
-          if(method == "msg.method"){
-            if("method" in msg){
-              method = msg.method
-            } else {
-              this.error("Expected \"method\" property in msg object", msg)
-              return;
-            }
-          }
-
-          //Parse out msg.payload
           var value;
           if (method != "setPriority"){
 
-          if(this.valuetype == "str"){
-            value = this.value;
-          }
-          else if(this.valuetype == "msg"){
-            var valueval = this.valueval
-            value = msg[valueval];
-          }
-          else if(this.valuetype == "flow"){
-            var valueval = this.valueval;
-            value = this.context().flow.get(valueval)
-          }
-          else if(this.valuetype == "global"){
-            var valueval = this.valueval;
-            value = this.context().global.get(valueval)
-          }
-          else if(this.valuetype == "jsonata"){
-            try{
-                var valueval = this.valueval;
-                value = jsonata(valueval);
-                value = value.evaluate({msg:msg})
-            }catch(e){
-                console.log("ERROR WITH JSONATA");
-                    }           
-          }
-         else if(this.valuetype == "serverTS"){
-            value = Firebase.database.ServerValue.TIMESTAMP;
-         }
-         else if(this.valuetype == "date"){
-            value = Date.now();
-         }
+            value = utils.getType(this.valuetype,this.valueval,msg,this);
 
+            if(value == "jsonata"){
+              try{
+                var valueval = this.valueval;
+                value = RED.util.prepareJSONataExpression(valueval,this);
+                value = RED.util.evaluateJSONataExpression(value,msg);
+              } catch(e){
+                node.error(RED._("firebase.modify.errors.invalid-expr",{error:err.message}));
+                }           
+            }
+            else if(value == "serverTS"){
+              value = Firebase.database.ServerValue.TIMESTAMP;
+            }
             msg.payload = value;
           }
-
+ 
           //Parse out msg.priority
           var priority = null;
           var val;
@@ -178,63 +150,35 @@ module.exports = function(RED) {
             if (priority == null){
               this.error("Expected \"priority\" property not included", msg)
               return;
-            }
-            else if(this.prioritytype == "str"){
-             val = this.priority;
-            }
-            else if(this.prioritytype == "msg"){
-               val = msg[this.priorityval];
-            }
-            else if(this.prioritytype == "flow"){
-              val = this.context().flow.get(this.priorityval)
-            }
-            else if(this.prioritytype == "global"){
-              var val = this.valueval;
-              val= this.context().global.get(this.priorityval)
-            }
-            else if(this.prioritytype == "jsonata"){
+            }  
+
+            val = utils.getType(this.prioritytype,this.priorityval,msg,this);
+
+            if(val == "jsonata"){
               try{
                   var valueval = this.valueval;
-                  val = jsonata(this.priorityval);
-                  val = val.evaluate({msg:msg})
-              }catch(e){
-                  console.log("ERROR WITH JSONATA");
-                      }           
+                  val = RED.util.prepareJSONataExpression(this.priorityval,this);
+                  val = RED.util.evaluateJSONataExpression(val,msg);
+              } catch(e){
+                  node.error(RED._("firebase.modify.errors.invalid-expr",{error:err.message}));
+              }  
             }
-           else if(this.prioritytype== "serverTS"){
+           else if(val== "serverTS"){
               val = Firebase.database.ServerValue.TIMESTAMP;
            }
-           else if(this.prioritytype == "date"){
-              val = Date.now();
-           }
-
               msg.priority = val;
-            } 
-          var childpath
+         } 
+         
+          var childpath = utils.getType(this.childtype,this.childvalue,msg,this);
           //Parse out msg.childpath         
-          if(this.childtype == "str"){
-            childpath = this.childpath
-          }
-          else if(this.childtype == "msg"){
-            var childvalue = this.childvalue;
-            childpath = msg[childvalue];
-          }
-          else if(this.childtype == "flow"){
-            var childvalue = this.childvalue;
-            childpath = this.context().flow.get(childvalue)
-          }
-          else if(this.childtype == "global"){
-            var childvalue = this.childvalue;
-            childpath = this.context().global.get(childvalue)
-          }
-          else if(this.childtype == "jsonata"){
+          if(childpath == "jsonata"){
             try{
                 var childvalue = this.childvalue;
-                childpath = jsonata(childvalue);
-                childpath = childpath.evaluate({msg:msg})
+                childpath = RED.util.prepareJSONataExpression(childvalue,this);
+                childpath = RED.util.evaluateJSONataExpression(childpath, msg);
             }catch(e){
-                console.log("ERROR WITH JSONATA");
-                    }           
+                node.error(RED._("firebase.modify.errors.invalid-expr",{error:err.message}));
+            }           
           }
          
           childpath = childpath || "/"

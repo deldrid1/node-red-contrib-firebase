@@ -12,23 +12,8 @@
     <div id="container" >
       <label for="eventType-select"><i class="fa fa-terminal"></i> Event Type</label>
       .on("
-      <select id="eventType-select" style="width: 31%">
-          <option value="value">value</option>
-          <option value="child_added">child_added</option>
-          <option value="child_changed">child_changed</option>
-          <option value="child_removed">child_removed</option>
-          <option value="child_moved">child_moved</option>
-          <option value="shallow_query">shallow_query</option>
-          <option value="msg.eventType">[msg.eventType]</option>
-      </select>
-
-     <div id = "eventType-typedInput-container" class="form-row">
-        <label for="node-input-event" ><i class=form-row></i> </label>
-        <input class="input-append-left" type="text" id="node-input-event" style="width: 41%">
-        <a  class="btn btn-mini" id="node-input-back" style="margin-top: 4px;"><i class="fa fa-arrow-left"></i>Back</a>
-    </div>
+      <input class="input-append-left" type="text" id="node-input-event" style="width: 41%">
       ")
-      <input type="hidden" id="node-input-eventType">
   </div>
     </div>
   
@@ -174,12 +159,12 @@
             childpath: {value: '', required: false},
             event : {value: '',required: false},
             atStart: {value: true, required: true},
-            eventType: {value: "value", required: true},
+            eventType: {value: '', required: true},
+            eventTypevalue : {value: '', required: false},
             queries: {value:[], required: false},
             childtype: {value: '', required: false},
             childvalue: {value: '', required: false},
-            eventTypetype:{value: '', required: false},
-            eventTypevalue : {value: '', required: false},
+
             querytype: {value:'',required: false}
         },
         color: '#ffb37a',
@@ -212,18 +197,11 @@
         oneditprepare: function() { //TODO: there is all kinds of validation that needs to be done to ensure only proper combinations of things are allowed...
           //Update the eventType node-red property when the value is changed...
           var node = this;
-          $('#eventType-select').change(function () {
-              $("#node-input-eventType").val($(this).find('option:selected').val())
-          });
-          $("#eventType-select").val($("#node-input-eventType").val())
-          $('#eventType-select').trigger('change');
 
-
-  
           $("#node-input-childpath").typedInput({default: node.childtype,types:['str','msg','flow','global','jsonata']});
-          $("#node-input-event").typedInput({default: node.eventTypetype ,types:['str','msg','flow','global']});
+          $("#node-input-event").typedInput({default: node.eventType,types:[{value:"value",label:"value",hasValue:false},{value:"child_added",label:"child_added",hasValue:false},{value:"child_changed",label:"child_changed",hasValue:false},{value:"child_removed",label:"child_removed",hasValue:false},{value:"child_moved",label:"child_moved",hasValue:false},{value:"shallow_query",label:"shallow_query",hasValue:false},'str','msg','flow','global' ]});
 
-          addInputToUI($("#node-input-event"));
+          
           //Most of this code is adapted from the switch node - https://raw.githubusercontent.com/node-red/node-red/master/nodes/core/logic/10-switch.html
           var operatorOptions = {
             "orderByChild":{
@@ -316,8 +294,8 @@
             ];
 
             var illegalCombinationShown = false;
-            $('#eventType-select').on('change', function(){
-              if ($(this).val() == "shallow_query"){ //disable/hide query paramters window and button
+            $('#node-input-event').on('change', function(){
+              if ($("#node-input-event").typedInput('type') == "shallow_query"){ //disable/hide query paramters window and button
                 $('#node-input-query-illegal-combination-container').fadeOut(300);
                 $('#node-input-query-container-overall').fadeOut(300);
                 $('#query-parameters-name-container').fadeOut(300, function(){
@@ -325,13 +303,6 @@
                 });
                 $('#node-dialog-ok').prop('disabled', false);
               } 
-             else if($(this).val() == "msg.eventType"){
-              $('#eventType-select').fadeOut(300);
-              $('#eventType-typedInput-container').show();
-              $('#node-input-event').show();
-              
-              addInputToUI($("#node-input-event"));
-             }
               else { 
                  $('#eventType-typedInput-container').fadeOut(300),function(){
                    $('#eventType-select').fadeIn(300);
@@ -658,14 +629,14 @@
 
           node.childtype = $("#node-input-childpath").typedInput('type');
           node.childvalue = $("#node-input-childpath").typedInput('value');
-          node.eventTypetype = $("#node-input-event").typedInput('type');
+          node.eventType= $("#node-input-event").typedInput('type');
           node.eventTypevalue = $("#node-input-event").typedInput('value');                
           //Save Path [this is automagically taken care of by NR]
           //Save Event type [this is automagically taken care of by NR]
 
           //Save queries
           node.queries= [];
-          if ($('#eventType-select').val() != "shallow_query"){
+          if (node.eventType  != "shallow_query"){
             var queries = $("#node-input-query-container").children();
             queries.each(function(idx){
               var r = {
@@ -678,7 +649,7 @@
           });
           }
           //TODO: BUG: Figure out how to set the initial value on page load... onpaletteadd doesn't give us our actual node, just the template for it so we have to figure out something else clever (perhaps a node-input-inputs would work - it looks like this is how the function node does dynamic outputs?)
-          if($('#eventType-select').val() == "shallow_query" || $('#eventType-select').val() == "msg.eventType" || node.childtype == "msg" || node.childtype == "flow" || node.childtype == "global" || node.childtype == "jsonata" ){
+          if($('#eventType-select').val() == "shallow_query" || $('#eventType-select').val() == "msg.eventType" || node.childtype == "msg" || node.childtype == "flow" || node.childtype == "global" || node.childtype == "jsonata" || node.querytype == "msg" || node.querytype == "flow" || node.querytype == "global" || node.eventType == "msg" || node.eventType == "flow" || node.eventType == "global"){
             this.inputs = 1;
           } else {
             this.inputs = 0;
