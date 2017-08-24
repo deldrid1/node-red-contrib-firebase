@@ -106,7 +106,7 @@ module.exports = function(RED) {
                 childpath = RED.util.prepareJSONataExpression(childvalue,this);
                 childpath = RED.util.evaluateJSONataExpression(childpath, msg);
             }catch(e){
-                node.error(RED._("firebase.on.errors.invalid-expr",{error:err.message}));
+                this.error(RED._("on.errors.invalid-expr",{error:e.message}));
             }     
           }   
           
@@ -157,7 +157,7 @@ module.exports = function(RED) {
                       ref = ref[queryname](val);
                     }
                     catch(e){
-                      node.error(RED._("firebase.once.errors.invalid-expr",{error:err.message}));
+                      this.error(RED._("on.errors.invalid-expr",{error:e.message}));
                     }
                   }
                    break;
@@ -308,7 +308,8 @@ module.exports = function(RED) {
                 childpath = RED.util.prepareJSONataExpression(childvalue,this);
                 childpath = RED.util.evaluateJSONataExpression(childpath, msg);
             }catch(e){
-                node.error(RED._("firebase.once.errors.invalid-expr",{error:err.message}));
+                this.error(RED._(".on.errors.invalid-expr",{error:e.message}));
+
             }  
           }
 

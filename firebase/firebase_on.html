@@ -410,6 +410,10 @@
               } else {
                 //console.log("input visible")
               }
+              $input.typedInput({
+                  default: node.querytype,
+                  types:['str','global','msg', 'flow','jsonata','json','num']
+              });
             }
 
             function removeInputFromUI($input){
@@ -440,6 +444,7 @@
               var $tdSelect = $('<td/>').appendTo($tbody);
               var $select = $('<select/>', {style:"width:150px;"}).addClass('input-block-level').appendTo($tdSelect);
               var firstUnusedOperator = null;
+              var show = false;
               for (var d in operators){
                 var operator = operators[d];             
                 var $option = $('<option/>').val(operators[d]).text(operators[d]);
@@ -457,17 +462,25 @@
                 if (used) $option.hide();
                 else if (!firstUnusedOperator){
                   var illegalCombinations = checkForIllegalComnbinationOfQueries($select, operator);
-                  if (illegalCombinations.length == 0) firstUnusedOperator = operator;
+                  if(operator == "orderByKey" || operator == "orderByValue" ||operator == "orderByChild" || operator == "orderByPriority"){
+                    show = false;
+                  }
+                  else{
+                    show = true;
+                  }
+                  if (illegalCombinations.length == 0) {
+                    firstUnusedOperator = operator;
+                  }
                 }
               }
+
+              if(show == true){ 
+               var $tdInput = $('<td/ id ="inputVar">', {style:"width:150px; "}).appendTo($tbody); //added display none         
+              }
              
-              var $tdInput = $('<td/>', {style:"width:150px;"}).appendTo($tbody);
-              var $input = $('<input/>', {style:"width:100%;"}).addClass('node-input-query-value input-block-level').appendTo($tdInput);
-              
-               $input.typedInput({
-                  default: node.querytype,
-                  types:['str','global','msg', 'flow','jsonata','json','num']
-              });            
+              //var $input = $('<input/>', {style:"width:100%;"}).addClass('node-input-query-value input-block-level').appendTo($tdInput);
+              var $input = $('<input/>', {style:"width:200px;", display: "input-append-left" }).addClass('form-row').appendTo($tdInput);
+                          
               var $tdDeleteBtn = $('<td/>').appendTo($tbody);
               var $deleteBtn = $('<a/>').addClass('btn btn-mini').append($('<i/>').addClass('fa fa-remove')).appendTo($tdDeleteBtn);
 
@@ -476,6 +489,11 @@
                 $select.prop('selectedIndex', -1); //I still have this here, but it doesn't actually work -- the element must be added to the UI first before this works (stupid...), so it is done below after it is appended to the table
                 $('#node-dialog-ok').prop('disabled', true); //problem for when the query typedinput is timestamp
               }
+
+               $input.typedInput({
+                  default: node.querytype,
+                  types:['str','global','msg', 'flow','jsonata','json','num']
+              });
               var currentOperator = $select.val();
 
               //Check if input is allowed
@@ -495,7 +513,18 @@
               //Select change handler
               $select.on('change', function(){
                 var newSelectVal = $(this).val();
-
+                var operator = newSelectVal;
+                var tdinput =document.getElementById("inputVar");
+                if(tdinput != null){
+                  if(operator == "orderByKey" || operator == "orderByValue" ||operator == "orderByChild" || operator == "orderByPriority"){
+                    
+                    tdinput.style.display = "none";
+                  }
+                  else{
+                    tdinput.style.display = ""; 
+                    tdinput.style.width = "150px";
+                  }
+                }
                 //Check for new illegal combinations
                 var illegalCombinations = checkForIllegalComnbinationOfQueries($select, newSelectVal);
                 if (illegalCombinations.length > 0) for (i in illegalCombinations) addIllegalCombinationToUI(newSelectVal, illegalCombinations[i]);

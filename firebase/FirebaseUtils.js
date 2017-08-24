@@ -23,23 +23,41 @@ this.getType = function(Type,Typevalue,msg,obj){
 
 this.getRef = function(ref,queryvalType,queryname,queryvalue,msg,obj){
 	if(queryvalType == "str"){
+		if(queryname == "limitToFirst" || queryname == "limitToLast"){
+			queryvalue = parseInt(queryvalue);
+		}
     	ref = ref[queryname](queryvalue); 
 	}       
 	else if (queryvalType == "msg") { 
-		var val = msg[queryvalue]; 
+		var val = msg[queryvalue];
+		if(queryname == "limitToFirst" || queryname == "limitToLast"){
+			val = parseInt(val);
+		} 
 		ref = ref[queryname](val);
 	}
 	else if(queryvalType == "flow"){
 		var val =  obj.context().flow.get(queryvalue);
+		if(queryname == "limitToFirst" || queryname == "limitToLast"){
+			val = parseInt(val);
+		} 
 		ref = ref[queryname](val);
 	}
 	else if(queryvalType == "global")
 	{
 		var val =  obj.context().global.get(queryvalue);
+		if(queryname == "limitToFirst" || queryname == "limitToLast"){
+			val = parseInt(val);
+		} 
 		ref = ref[queryname](val);
 	}
 	else if(queryvalType == "num"){
-		var val = queryvalue.toString();
+		
+		if(queryname == "limitToFirst" || queryname == "limitToLast"){
+			val = parseInt(queryvalue);
+		}
+		else{console.log("hopefully not here")
+			var val = queryvalue.toString();
+			}
 		ref = ref[queryname](val);
 	}
 	else if(queryvalType == "json"){ 

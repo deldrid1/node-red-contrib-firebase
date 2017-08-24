@@ -424,8 +424,9 @@
               var $tdIcon = $('<td/>').appendTo($tbody);
               var $icon = $('<i/>', {style: "color: #eee; cursor: move;", class: "node-input-query-handle fa fa-bars"}).appendTo($tdIcon);
               var $tdSelect = $('<td/>').appendTo($tbody);
-              var $select = $('<select/>', {style:"width:150px;"}).addClass('input-block-level').appendTo($tdSelect);
+              var $select = $('<select id="sel"/>', {style:"width:150px;"}).addClass('input-block-level').appendTo($tdSelect);
               var firstUnusedOperator = null;
+              var show = false;
               for (var d in operators){
                 var operator = operators[d];
                 
@@ -443,15 +444,28 @@
                 if (used) $option.hide();
                 else if (!firstUnusedOperator){
                   var illegalCombinations = checkForIllegalComnbinationOfQueries($select, operator);
-                  if (illegalCombinations.length == 0) firstUnusedOperator = operator;
+                  if(operator == "orderByKey" || operator == "orderByValue" ||operator == "orderByChild" || operator == "orderByPriority"){
+                    show = false;
+                  }
+                  else{
+                    show = true;
+                  }
+                  if (illegalCombinations.length == 0) {
+                    firstUnusedOperator = operator;
+                  }
                 }
-              }             
-              var $tdInput = $('<td/>', {style:"width:150px;"}).appendTo($tbody);
+
+              }
+              if(show == true){ 
+               var $tdInput = $('<td/ id ="inputVar">', {style:"width:150px; "}).appendTo($tbody); //added display none         
+              }
+             // var $tdInput = $('<td/>', {style:"width:150px; display: none;"}).appendTo($tbody); //added display none
               var $input = $('<input/>', {style:"width:200px;", display: "input-append-left" }).addClass('form-row').appendTo($tdInput);           
               var $tdDeleteBtn = $('<td/>').appendTo($tbody);
               var $deleteBtn = $('<a/>').addClass('btn btn-mini').append($('<i/>').addClass('fa fa-remove')).appendTo($tdDeleteBtn);
- 
-              //Set current operator for this query
+              
+              
+                            //Set current operator for this query
               if (firstUnusedOperator) $select.val(firstUnusedOperator);
               else {
 
@@ -480,7 +494,17 @@
               //Select change handler
               $select.on('change', function(){
                 var newSelectVal = $(this).val();
-
+                var operator = newSelectVal;
+                var tdinput =document.getElementById("inputVar");
+                if(tdinput != null){
+                  if(operator == "orderByKey" || operator == "orderByValue" ||operator == "orderByChild" || operator == "orderByPriority"){
+                    tdinput.style.display = "none";
+                  }
+                  else{
+                    tdinput.style.display = ""; 
+                    tdinput.style.width = "150px";
+                  }
+                }
                 //Check for new illegal combinations
                 var illegalCombinations = checkForIllegalComnbinationOfQueries($select, newSelectVal);
                 if (illegalCombinations.length > 0) for (i in illegalCombinations) addIllegalCombinationToUI(newSelectVal, illegalCombinations[i]);
