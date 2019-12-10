@@ -1,6 +1,10 @@
 node-red-contrib-firebase
 =========================
 
+# DANGER WILL ROBINSON!!!
+
+> See https://github.com/deldrid1/node-red-contrib-firebase/issues/28 - unfortunately, this repo is no longer maintained and is known to not work with the latest versions of node-red / Firebase.  Perhaps you can take up the cause - if you are up to the challenge and want to submit a complete PR or a new repo that wants to take this npm package name, please submit a PR or File a Pull Request and I will be happy to review.
+
 <span class="badge-npmversion">[![NPM version](https://img.shields.io/npm/v/node-red-contrib-firebase.svg)](https://npmjs.org/package/node-red-contrib-firebase "View this project on NPM")</span> <span class="badge-npmdownloads">[![NPM downloads](https://img.shields.io/npm/dm/node-red-contrib-firebase.svg)](https://npmjs.org/package/node-red-contrib-firebase "View this project on NPM")</span>
 
 [node-red](http://nodered.org) [nodes](http://nodered.org/docs/creating-nodes/) for interacting with [Firebase](https://www.firebase.com/).
