@@ -1,6 +1,6 @@
 module.exports = function(RED) {
     'use strict';
-
+    var utils = require("./FirebaseUtils.js");
     var getPushIdTimestamp = (function getPushIdTimestamp() {
       var PUSH_CHARS = '-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz';
 
@@ -17,16 +17,17 @@ module.exports = function(RED) {
         } catch(ex){}
       }
     })();
-
     function FirebaseOn(n) {
         RED.nodes.createNode(this,n);
 
         this.config = RED.nodes.getNode(n.firebaseconfig);
         this.childpath = n.childpath;
         this.atStart = n.atStart;
+        this.queries = n.queries
+        this.childtype = n.childtype;
+        this.childvalue = n.childvalue;
         this.eventType = n.eventType;
-		    this.queries = n.queries
-
+        this.eventTypevalue = n.eventTypevalue;
         this.ready = false;
         this.ignoreFirst = this.atStart;
         this.authorized = false;
@@ -43,7 +44,7 @@ module.exports = function(RED) {
           "value": true,
           "child_added": true,
           "child_changed": true,
-          "chiled_removed": true,
+          "child_removed": true,
           "child_moved": true,
           "shallow_query": true
         }
@@ -61,11 +62,11 @@ module.exports = function(RED) {
             // if(!snapshot.exists()){
             //   //The code below will simply send a payload of nul if there is no data
             // }
-
             var msg = {};
-            msg.href = snapshot.ref().toString();
-            msg.key = snapshot.key();
+            msg.href = snapshot.ref.toString();
+            msg.key = snapshot.key;
             msg.payload = snapshot.val();
+   
             if(snapshot.getPriority())
               msg.priority = snapshot.getPriority();
             if(prevChildName)
@@ -73,8 +74,8 @@ module.exports = function(RED) {
             if(this.eventType.search("child") != -1 && getPushIdTimestamp(msg.key))  //We probably have a pushID that we can decode
               msg.pushIDTimestamp = getPushIdTimestamp(msg.key)
 
-
             this.send(msg);
+
             setTimeout(this.setStatus, 500)  //Reset back to the Firebase status after 0.5 seconds
         }.bind(this);
 
@@ -85,6 +86,7 @@ module.exports = function(RED) {
         }.bind(this);
 
         this.registerListeners = function(msg){
+            
           //this.log("Registering Listener for " + this.config.firebaseurl + (this.childpath || ""))
 
           if(this.ready == true)
@@ -95,46 +97,86 @@ module.exports = function(RED) {
 
           //Create the firebase reference to the path
           var ref
+          var msg = this.msg;
+          var childpath = utils.getType(this.childtype,this.childvalue,msg,this);
+          
+          if(childpath == "jsonata"){
+            try{
+                var childvalue = this.childvalue;
+                childpath = RED.util.prepareJSONataExpression(childvalue,this);
+                childpath = RED.util.evaluateJSONataExpression(childpath, msg);
+            }catch(e){
+                this.error(RED._("on.errors.invalid-expr",{error:e.message}));
+            }     
+          }   
+          
           if(this.childpath){
-            ref = this.config.fbConnection.fbRef.child(this.childpath  == "msg.childpath" ? this.msg.childpath : this.childpath)  //Decide if we are using our input msg object or the string we were configured with
+            ref = this.config.fbConnection.fbRef.child(childpath)  
           } else {
             ref = this.config.fbConnection.fbRef
           }
+          var bool = false;
+          //set a default for what the query should be ordered by if none is chosen
+          for (var i=0; i<this.queries.length; i+=1) {
+            var q = this.queries[i].name;
+            if( q == "orderByKey" || q == "orderByValue" || q =="orderByPriority" || q == "orderByChild"){ 
+              bool = true;
+              }
+          }
+          if(bool == false){
+            q = "orderByKey"
+            ref= ref[q]();
+          }
 
-          //apply the queries
           for (var i=0; i<this.queries.length; i+=1) {
               var query = this.queries[i];
-              var val
-
               switch(query.name){
-                case "orderByKey":
+                case "orderByKey":    
                 case "orderByValue":
                 case "orderByPriority":
-                  ref = ref[query.name]()  //No args //TODO: BUG: Update HTML to hide box for these 3...
-                  break;
-
+                  ref= ref[query.name]();
                 case "orderByChild":
                 case "startAt":
                 case "endAt":
                 case "equalTo":
                 case "limitToFirst":
                 case "limitToLast":
-                  //try to convert to native type for bools, ints, etc.
-                  try{ val = JSON.parse(query.value.toLowerCase() || query.value) }
-                  catch(e){ val = query.value}
-
-                  ref = ref[query.name](val) //TODO: no error checking...
-                  break;
-
+                  ref = utils.getRef(ref,query.valType,query.name,query.value,msg,this);
+                  if(ref == "json"){ 
+                    try {
+                      var val = JSON.stringify(query.value);
+                    } catch(e2) {
+                        console.log("not a valid json",e2);
+                    }
+                    ref = ref[queryname](val);
+                  }
+                  else if(ref == "jsonata"){ 
+                    try{
+                      var val = RED.util.prepareJSONataExpression(query.value);
+                      val = RED.util.evaluateJSONataExpression(val, msg);
+                      ref = ref[queryname](val);
+                    }
+                    catch(e){
+                      this.error(RED._("on.errors.invalid-expr",{error:e.message}));
+                    }
+                  }
+                   break;
                 default:
                   //TODO:
                   break;
-              }
-          }
-
-          ref.on(this.eventType == "msg.eventType" ? this.msg.eventType : this.eventType, this.onFBValue, this.onFBError, this);
-
-
+              }    
+          }     
+          
+    
+          var eventType = utils.getType(this.eventType,this.eventTypevalue,msg,this);
+          this.eventType = eventType;
+          //was this.eventType
+          if(!(eventType in this.validEventTypes)){ //ensure eventType is one of the allowed events
+              this.error("Invalid msg.eventType property \"" + eventType + "\".  Expected one of the following: [\"" + Object.keys(this.validEventTypes).join("\", \"") + "\"].", msg)
+            }
+          ref.on(eventType, this.onFBValue, this.onFBError, this);
+          //ref.on(eventType, this.onFBData, this.onFBError, this);
+        
         }.bind(this);
 
         this.destroyListeners = function(){
@@ -142,7 +184,7 @@ module.exports = function(RED) {
             return;
 
           // We need to unbind our callback, or we'll get duplicate messages when we redeploy
-          if(this.msg == null){ //Not using in input mode - do what we've always done
+          if(this.childtype != "msg"){ //Not using in input mode - do what we've always done
             if(this.childpath)
               this.config.fbConnection.fbRef.child(this.childpath).off(this.eventType, this.onFBValue, this);
             else
@@ -153,7 +195,6 @@ module.exports = function(RED) {
             else
               this.config.fbConnection.fbRef.off(this.eventType == "msg.eventType" ? this.msg.eventType : this.eventType, this.onFBValue, this);
           }
-
           this.ready = false;
           this.msg == null;
 
@@ -212,14 +253,13 @@ module.exports = function(RED) {
           // this.log("authorized")
           this.authorized = true;
           this.setStatus();
-
-          if((this.eventType != "msg.eventType" && this.childpath != "msg.childpath") || this.msg != null)
-            this.registerListeners();
-
+          if(this.childtype != "msg"){ //only fire without input if its a string  //TODO: BUG: need to search the jsonata string to see if it is looking for any msg. (which may be implicit as of NR v.17) things to see if this is legal
+            this.registerListeners(); 
+          }
+          //}
         }.bind(this)
 
         this.fbUnauthorized = function(){
-          // this.log("unauthorized")
           this.authorized = false;
           this.setStatus();
           this.destroyListeners();
@@ -253,38 +293,33 @@ module.exports = function(RED) {
         this["fb" + this.config.fbConnection.lastEvent.capitalize()](this.config.fbConnection.lastEventData)  //Javascript is really friendly about sending arguments to functions...
 
         this.on('input', function(msg) {
-          var eventType
-          if(this.eventType == "msg.eventType"){
-            if("eventType" in msg){
-              eventType = msg.eventType
-            } else {
-              this.error("Expected \"eventType\" property in msg object", msg)
-              return;
+  
+          var eventType = utils.getType(this.eventType,this.eventTypevalue,msg,this);
+
+          if(!(eventType in this.validEventTypes)){ //ensure eventType is one of the allowed events
+              this.error("Invalid msg.eventType property \"" + eventType + "\".  Expected one of the following: [\"" + Object.keys(this.validEventTypes).join("\", \"") + "\"].", msg)
             }
-          } else {
-            eventType = this.eventType
+         
+          var childpath = utils.getType(this.childtype,this.childvalue,msg,this);
+
+          if(childpath == "jsonata"){
+            try{
+                var childvalue = this.childvalue;
+                childpath = RED.util.prepareJSONataExpression(childvalue,this);
+                childpath = RED.util.evaluateJSONataExpression(childpath, msg);
+            }catch(e){
+                this.error(RED._(".on.errors.invalid-expr",{error:e.message}));
+
+            }  
           }
 
-          if(!(eventType in this.validEventTypes)){
-            this.error("Invalid msg.eventType property \"" + eventType + "\".  Expected one of the following: [\"" + Object.keys(this.validEventTypes).join("\", \"") + "\"].", msg)
-            return;
-          }
-
-          //Parse out msg.childpath
-          var childpath
-          if(this.childpath == "msg.childpath"){
-            if("childpath" in msg){
-              childpath = msg.childpath
-            }
-          }
           childpath = childpath || "/"
 
           msg.eventType = eventType;
           msg.childpath = childpath || "/";
 
           this.msg = msg;
-          console.log(msg.childpath)
-
+        
           //if we are authorized
           //if we have listerners
           if(this.authorized == true){

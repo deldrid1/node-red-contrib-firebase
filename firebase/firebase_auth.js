@@ -27,7 +27,6 @@ module.exports = function(RED) {
           this.send({payload: null})
         }.bind(this)
 
-
         //Register Handlers
 
         this.config.fbConnection.on("authorized", this.fbAuthorized)
@@ -48,7 +47,7 @@ module.exports = function(RED) {
     RED.httpAdmin.post("/firebase/:id/auth", RED.auth.needsPermission("firebase.write"), function(req,res) {
             var node = RED.nodes.getNode(req.params.id);
             if (node !== null && typeof node !== "undefined" ) {
-                node.send({payload: node.config.fbConnection.authData});
+                node.send({payload: node.config.fbConnection.lastEventData}); //lastEventData contains authData from first deploy
                 res.sendStatus(200)
             } else {
                 res.send(404);

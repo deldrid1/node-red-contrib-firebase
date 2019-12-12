@@ -10,16 +10,9 @@
         <input class="input-append-left" type="text" id="node-input-childpath" placeholder="path-to/the/data">
     </div>
 
-    <div class="form-row">
+  <div class="form-row">
         <label for="node-input-method"><i class="fa fa-terminal"></i> Method</label>
-        .onDisconnect().<select id="node-input-method" type="text" style="width:30%" text-center>
-            <option value="set" default>set</option>
-            <option value="update">update</option>
-            <option value="remove">remove</option>
-            <option value="setWithPriority">setWithPriority</option>
-            <option value="cancel">setWithPriority</option>
-            <option value="msg.method">[msg.method]</option>
-        </select>()
+        <input class="input-append-left" type="text" id="node-input-method" placeholder="path-to/the/data"">
     </div>
 
     <div id="node-input-value-container" class="form-row">
@@ -27,9 +20,9 @@
       <input id="node-input-value" autocomplete="off" type="text">
     </div>
 
-    <div id="node-input-priority-container" class="form-row hidden">
+    <div id="node-input-priority-container" class="form-row">
       <label for="node-input-priority"><i class="fa fa-list-ol"></i> Priority</label>
-      <input id="node-input-priority" autocomplete="off" type="text">
+      <input id="node-input-priority" autocomplete="off" type="text" style="width: 41%">
     </div>
 
     <div class="form-row">
@@ -40,53 +33,87 @@
 
 <script type="text/x-red" data-help-name="firebase ondisconnect">
    <p>Allows you to write or clear data when Node-Red disconnects from the Firebase servers.</p>
+
+   <h3> Inputs </h3>
+  <dl class="message-properties">
+        <dt>Firebase Configuration
+            <span class="property-type">config node</span>
+        </dt>
+        <dd> Supply a Firebase configuration and this node will watch for any changes at that location and generate messages </dd>
+      <dt class="optional">Child Path <span class="property-type">string |msg | flow | global| jsonata </span></dt>
+        <dd> the childpath of the database that can be used to dynamically set the .child() on the Firebase URL.</dd>
+
+  <dt class="optional">Method<span class="property-type"></span></dt>
+        
+        <li> .set()
+        <dd>  The contents of <code>msg.payload</code> are written to the Firebase Child Path,
+        replacing whatever may already be there.  If the path was previously empty, a new record is made.
+        The value of <code>msg.payload</code> can be an object, array, string, number, boolean, or null.</dd>
+        </li>
+
+        <li> .update()
+        <dd>  Writes the enumerated children at this Firebase location when Node-Red is disconnected. The value of <code>msg.payload</code> must be an object.</dd>
+        </li>
+
+        <li> .remove()
+        <dd> Ensures the data at this location is deleted when Node-Red is disconnected.</dd>
+        </li>
+
+        <li> .setWithPriority()
+        <dd>  Ensures the data at this location is set to the specified value and priority when Node-Red is disconnected.he value of <code>msg.payload</code>  can be an object, array, string, number, boolean, or null.</dd>
+        </li>
+        
+        <li> msg.method
+        <dd>  The name of a message property that can be used to dynamically set the Firebase API method that is used.  This requires that the <code>method</code> property is set to <code>{typedinput}.method</code> in the node's edit dialog box.</dd>
+        </li>
+
+         <li> msg.priority
+        <dd>  The name of a message property that can be used to dynamically set the .priority of a firebase location.  This requires that the <code>priority</code> that the method is <code>setWithPriority</code>.</dd>
+        </li>
+
+  </dl>   
+   
+
+   <h3>Details</h3>
    <p>These updates occur whether Node-Red disconnects cleanly or not, so you can rely on them to clean up data even if a connection is dropped or Node-Red crashes.</p>
-   <p>If static values are used, .onDisconnect() will register with Firebase as soon as authentication has been performed.  Otherwise it waits for input from an upstream node - if no msg.payload is received, then no onDisconnect event will be sent to Firebase</p>
+   <p>If static values are used, .onDisconnect() will register with Firebase as soon as authentication has been performed.  Otherwise it waits for input from an upstream node - if no <code> msg.payload </code> is received, then no onDisconnect event will be sent to Firebase</p>
    <p>Clicking the button on the right side of the node will cancel <em>ALL</em> onDisconnect() events that have previously been set.</p>
-   <p>Note that onDisconnect operations are only triggered once. If you want an operation to occur each time a disconnect occurs, you'll need to re-establish the onDisconnect operations each time. (You may want to setup a .on() node to listen to <a href="https://www.firebase.com/docs/web/guide/offline-capabilities.html#section-connection-state">/.info/connected</a>)</p> <!-- ' //TODO: BUG: for static values this could lead to buggy behavior with misbehaving connections... Likely one more reason to move to a state machine structure... -->
+   <p>Note that onDisconnect operations are only triggered once. If you want an operation to occur each time a disconnect occurs, you'll need to re-establish the onDisconnect operations each time. (You may want to setup a .on() node to listen to) </p> <!-- ' //TODO: BUG: for static values this could lead to buggy behavior with misbehaving connections... Likely one more reason to move to a state machine structure... -->
 
-   <p>This node can be backed by several different Firebase API methods:</p>
-    <ul>
-      <li>
-        <strong>.set()</strong><br />
-        The contents of <strong>msg.payload</strong> are written to the Firebase Child Path whenerver Node-Red disconnects from Firebase,
-        replacing whatever may already be there.  If the path was previously empty, a new record is made. A value of null has the same effect as using the .remove() method.<br />
-        See: <a href="https://www.firebase.com/docs/web/api/ondisconnect/set.html">https://www.firebase.com/docs/web/api/ondisconnect/set.html</a><br /><br />
+   <h3>References</h3>
+   <ul>
 
-        <em>The value of <strong>msg.payload</strong> can be an object, array, string, number, boolean, or null.</em>
-      </li><br />
-      <li>
-        <strong>.setWithPriority()</strong><br />
-        Ensures the data at this location is set to the specified value and priority when Node-Red is disconnected.<br />
-        See: <a href="https://www.firebase.com/docs/web/api/ondisconnect/setwithpriority.html">https://www.firebase.com/docs/web/api/ondisconnect/setwithpriority.html</a><br /><br />
+         <li>
+       <a href="https://firebase.google.com/docs/reference/js/firebase.database.OnDisconnect">OnDisconnect</a>
+       </li>
 
-        <em>The value of <strong>msg.payload</strong> can be an object, array, string, number, boolean, or null.</em>
-      </li><br />
-      <li>
-        <strong>.update():</strong>
-        Writes the enumerated children at this Firebase location when Node-Red is disconnected.<br />
-        See: <a href="https://www.firebase.com/docs/web/api/ondisconnect/update.html">https://www.firebase.com/docs/web/api/ondisconnect/update.html</a><br /><br />
+        
+        <li>
+       <a href="https://www.firebase.com/docs/web/guide/offline-capabilities.html#section-connection-state">Detecting Connection state</a>
+       </li>
 
-        <em>The value of <strong>msg.payload</strong> must be an object.</em>
-      </li><br />
-      <li>
-        <strong>.remove():</strong>
-        Ensures the data at this location is deleted when Node-Red is disconnected. <br />
-        See: <a href="https://www.firebase.com/docs/web/api/ondisconnect/remove.html">https://www.firebase.com/docs/web/api/ondisconnect/remove.html</a>
-      </li>
-      <br />
-      <li>
-        <strong>.cancel():</strong>
-        Cancels all previously queued onDisconnect() set or update events for the childpath location and all children. <br />
-        See: <a href="https://www.firebase.com/docs/web/api/ondisconnect/cancel.html">https://www.firebase.com/docs/web/api/ondisconnect/cancel.html</a>
-      </li>
-    </ul>
+       <li>
+       <a href="rebase.com/docs/web/api/ondisconnect/set.html">Set for OnDisconnect</a>
+       </li>
 
-   <p>Optional: <strong>msg.childpath</strong> is the name of a message property that can be used to dynamically set the .child() on the Firebase URL.  This requires that the <em>childpath</em> property is set to <em>msg.childpath</em> in the node's edit dialog box.</p> <!-- ' -->
+       <li>
+       <a href="https://www.firebase.com/docs/web/api/ondisconnect/setwithpriority.html">Set with priority for OnDisconnect</a>
+       </li>
 
-   <p>Optional: <strong>msg.method</strong> is the name of a message property that can be used to dynamically set the Firebase API method that is used.  This requires that the <em>method</em> property is set to <em>msg.method</em> in the node's edit dialog box.</p> <!-- ' -->
+       <li>
+       <a href="https://www.firebase.com/docs/web/api/ondisconnect/update.html">Update for OnDisconnect</a>
+       </li>
 
-   <p>Optional: <strong>msg.priority</strong> is the name of a message property that can be used to dynamically set the .priority of a firebase location.  This requires that the <em>priority</em> property is set to <em>msg.priority</em> and in the node's edit dialog box and that the method is <em>setWithPriority</em>.</p> <!-- ' -->
+        <li>
+       <a href="https://www.firebase.com/docs/web/api/ondisconnect/remove.html">Remove for OnDisconnect</a>
+       </li>
+
+        <li>
+       <a href="https://www.firebase.com/docs/web/api/ondisconnect/cancel.html">Cancel for OnDisconnect</a>
+       </li>
+  </ul>
+
+
 </script>
 
 <script type="text/javascript">
@@ -98,19 +125,29 @@
             name: {value: ''},      //  along with default values.
             firebaseconfig:  {type:'firebase config',required:true},
             childpath: {value: '', required: false},
-            method: {value: 'set', required: true},
-            value: {value:'msg.payload', required: true},
-            priority: {value: 'msg.priority', required: false},
+            childtype: {value: '', required: false},
+            childvalue: {value: '', required: false},
+            value: {value:'', required: false},
+            valuetype: {value: '', required: false},
+            valueval: {value: '', required: false},
+            priority: {value: '', required: false},
+            prioritytype:{value: '', required: false},
+            priorityval:{value: '', required: false},
+            methodtype:{value: '', required: false},
+            methodval:{value: '', required: false}
         },
         color: '#ffb37a',
         icon: 'firebase.png',       // saved in  icons/myicon.png
-        inputs: 1,                  // set the number of inputs - only 0 or 1
+        inputs: 0,                  // set the number of inputs - only 0 or 1
         outputs: 0,                 // set the number of outputs - 0 to n
         align: "right",
         paletteLabel: "firebase.onDisconnect()",
+        inputLabels: "dynamically set variables",
+        
 
         label: function() {        // sets the default label contents
-          var method = "." + this.method
+          if(this.methodtype == undefined || this.methodtype == ""){this.methodtype = "set"}
+          var method = "." + this.methodtype
           if(method == ".msg.method")
             method = "[msg.method]"
 
@@ -134,6 +171,7 @@
         labelStyle: function () {   // sets the class to apply to the label
             return this.name ? "node_label_italic" : "";
         },
+
 
         button: {
             // toggle: "active",
@@ -163,65 +201,25 @@
         },
 
         oneditprepare: function(){
-          //Set up autocomplete for Value field
-          var defaultPayloadValues = [
-            "msg.payload",
-            "Firebase.ServerValue.TIMESTAMP"
-          ];
+          var node = this;
 
-          $('#node-input-value').autocomplete({
-            source: defaultPayloadValues,
-            minLength: 0
-          });
+          //initially hide or show
+          if(node.methodtype == "setWithPriority" || node.methodtype == "str" || node.methodtype == "msg" || node.methodtype == "flow" || node.methodtype == "global"){
+            $('#node-input-priority-container').show();
+          }
+          else{
+            $('#node-input-priority-container').hide();
+          }
 
-          $('#node-input-value').on('focusin', function(){
-            $(this).autocomplete("search", "");
-            //$(this).autocomplete("search", $(this).val());
-          });
-
-          $('#node-input-value').on('focusout', function(){
-            $(this).autocomplete("close");
-          });
-
-          //Set up autocomplete for Childpath field
-          var defaultChildpathValues = [
-            "msg.childpath",
-          ];
-
-          $('#node-input-childpath').autocomplete({
-            source: defaultChildpathValues,
-            minLength: 0
-          });
-
-          $('#node-input-childpath').on('focusin', function(){
-            $(this).autocomplete("search", "");
-          });
-
-          $('#node-input-childpath').on('focusout', function(){
-            $(this).autocomplete("close");
-          });
-
-          //Set up autocomplete for Priority field
-          var defaultPriorityValues = [
-            "msg.priority",
-          ];
-
-          $('#node-input-priority').autocomplete({
-            source: defaultPriorityValues,
-            minLength: 0
-          });
-
-          $('#node-input-priority').on('focusin', function(){
-            $(this).autocomplete("search", "");
-          });
-
-          $('#node-input-priority').on('focusout', function(){
-            $(this).autocomplete("close");
-          });
+          $("#node-input-childpath").typedInput({default: node.childtype,types:['str','msg','flow','global','jsonata']});
+          $("#node-input-value").typedInput({default: node.valuetype,types:['str','msg','flow','global','jsonata','date', {value:"serverTS",label:"serverTS",hasValue:false,}]});
+          $("#node-input-priority").typedInput({default: node.prioritytype,types:['str','msg','flow','global','jsonata','date', {value:"serverTS",label:"serverTS",hasValue:false,}]});
+          $("#node-input-method").typedInput({default: node.methodtype,types:[{value:"set",label:"set",hasValue:false},{value:"update",label:"update",hasValue:false},{value:"remove",label:"remove",hasValue:false},{value:"setWithPriority",label:"setWithPriority",hasValue:false},'str','msg','flow','global' ]});
 
           //Set up change handler for Method field
-          $('#node-input-method').on('change', function(){
-            switch($(this).val()){
+            $('#node-input-method').on('change', function(){
+            var type = $("#node-input-method").typedInput('type');
+            switch(type){
               case "set":
               case "push":
               case "update":
@@ -232,8 +230,16 @@
                 $('#node-input-value-container').hide();
                 $('#node-input-priority-container').hide();
                 break;
+              case "setPriority":
+                $('#node-input-value-container').hide();
+                $('#node-input-priority').show();
+                $('#node-input-priority-container').show();
+                break;
               case "setWithPriority":
-              case "msg.method":
+              case "str":
+              case "msg":
+              case "flow":
+              case "global":
                 $('#node-input-value-container').show();
                 $('#node-input-priority-container').show();
                 break;
@@ -246,10 +252,23 @@
         },
 
         oneditsave: function(){
+          var node = this;
+          node.childtype = $("#node-input-childpath").typedInput('type');
+          node.childvalue = $("#node-input-childpath").typedInput('value');
+          node.valuetype =  $("#node-input-value").typedInput('type');
+          node.valueval =  $("#node-input-value").typedInput('value');
+          node.prioritytype =  $("#node-input-priority").typedInput('type');
+          node.priorityval=  $("#node-input-priority").typedInput('value');
+          node.methodtype =  $("#node-input-method").typedInput('type');
+          node.methodval=  $("#node-input-method").typedInput('value');
           // console.log("Method -- "+$('#node-input-method').val().trim())
-          if ($('#node-input-value').val().trim() === "msg.payload" || $('#node-input-method').val().trim() === "msg.method"){
+          if ($('#node-input-value').val().trim() === "msg.payload" || $('#node-input-method').val().trim() === "msg.method" || node.childtype == "msg" || node.childtype == "flow" || node.childtype == "global" || node.childtype == "jsonata" 
+            || node.valuetype == "msg" ||node.valuetype == "global" || node.valuetype == "flow" 
+            || node.prioritytype == "msg" ||node.prioritytype == "global" ||  node.prioritytype == "flow"
+            || node.methodtype == "msg" ||node.methodtype == "global" ||  node.methodtype == "flow"){
             this.inputs = 1;
-          } else {
+          } 
+          else {
             this.inputs = 0;
           }
         }

@@ -1,6 +1,7 @@
 module.exports = function(RED) {
   'use strict';
-
+  var Firebase = require('firebase');
+  var utils = require("./FirebaseUtils.js");
   String.prototype.capitalize = function() {
       return this.charAt(0).toUpperCase() + this.slice(1);
   }
@@ -10,10 +11,18 @@ module.exports = function(RED) {
 
       this.config = RED.nodes.getNode(n.firebaseconfig);
       this.childpath = n.childpath;
+      this.childtype = n.childtype;
+      this.childvalue = n.childvalue;
       this.value = n.value;
-      this.method = n.method;
+      this.valuetype = n.valuetype;
+      this.valueval = n.valueval;
       this.priority = n.priority;
+      this.prioritytype = n.prioritytype;
+      this.priorityval = n.priorityval;
       this.fbRequests = [];
+      //this.method = n.method;
+      this.method = n.methodtype;
+      this.methodval -= n.methodval;
 
       this.ready = false;
 
@@ -112,67 +121,70 @@ module.exports = function(RED) {
 
       this.on('input', function(msg) {
         if(this.ready){
-
-          //TODO: this seems to be mostly working, but we really ought to do some more due diligence here...
-          //Try to convert to JSON object...
-          //Parse out msg.method
           var method = this.method
-          if(method == "msg.method"){
-            if("method" in msg){
-              method = msg.method
-            } else {
-              this.error("Expected \"method\" property in msg object", msg)
-              return;
-            }
-          }
-
-          //Parse out msg.payload
-          var value = this.value;
+          var value;
           if (method != "setPriority"){
-            if (value == "msg.payload"){
-              if ("payload" in msg){
-                value = msg.payload;
-                if (!Buffer.isBuffer(value) && typeof value != "object"){
-                  try {
-                    value = JSON.parse(value)
-                  } catch(e){
-                    value = msg.payload.toString();
-                  }
-                }
-              } else {
-                this.warn("Expected \"payload\" property not in msg object (setting payload to \"null\")", msg);
-                value = null;
-              }
-            } else if(this.value == "Firebase.ServerValue.TIMESTAMP") {
-              value = this.config.fbConnection.Firebase.ServerValue.TIMESTAMP
+
+            value = utils.getType(this.valuetype,this.valueval,msg,this);
+
+            if(value == "jsonata"){
+              try{
+                var valueval = this.valueval;
+                value = RED.util.prepareJSONataExpression(valueval,this);
+                value = RED.util.evaluateJSONataExpression(value,msg);
+              } catch(e){
+                node.error(RED._("firebase.modify.errors.invalid-expr",{error:err.message}));
+                }           
+            }
+            else if(value == "serverTS"){
+              value = Firebase.database.ServerValue.TIMESTAMP;
             }
             msg.payload = value;
           }
-
+ 
           //Parse out msg.priority
           var priority = null;
+          var val;
           if (method == "setPriority" || method == "setWithPriority"){
             priority = this.priority;
             if (priority == null){
               this.error("Expected \"priority\" property not included", msg)
               return;
-            } else if (priority == "msg.priority"){
-              if ("priority" in msg) priority = msg.priority;
-              else {
-                this.error("Expected \"priority\" property in msg object", msg)
-                return;
-              }
-            }
-          }
+            }  
 
-          //Parse out msg.childpath
-          var childpath = this.childpath
-          if(childpath == "msg.childpath"){
-            if("childpath" in msg){
-              childpath = msg.childpath
+            val = utils.getType(this.prioritytype,this.priorityval,msg,this);
+
+            if(val == "jsonata"){
+              try{
+                  var valueval = this.valueval;
+                  val = RED.util.prepareJSONataExpression(this.priorityval,this);
+                  val = RED.util.evaluateJSONataExpression(val,msg);
+              } catch(e){
+                  node.error(RED._("firebase.modify.errors.invalid-expr",{error:err.message}));
+              }  
             }
+           else if(val== "serverTS"){
+              val = Firebase.database.ServerValue.TIMESTAMP;
+           }
+              msg.priority = val;
+         } 
+         
+          var childpath = utils.getType(this.childtype,this.childvalue,msg,this);
+          //Parse out msg.childpath         
+          if(childpath == "jsonata"){
+            try{
+                var childvalue = this.childvalue;
+                childpath = RED.util.prepareJSONataExpression(childvalue,this);
+                childpath = RED.util.evaluateJSONataExpression(childpath, msg);
+            }catch(e){
+                node.error(RED._("firebase.modify.errors.invalid-expr",{error:err.message}));
+            }           
           }
+         
           childpath = childpath || "/"
+         
+          msg.childpath = childpath || "/";
+
 
           switch (method){
             case "set":
@@ -182,7 +194,7 @@ module.exports = function(RED) {
               break;
             case "push":
               var pushRef = this.config.fbConnection.fbRef.child(childpath)[method]();
-              msg.pushID = pushRef.key();
+              msg.pushID = pushRef.key;
               this.fbRequests.push(msg)
               pushRef.set(msg.payload, this.fbOnComplete.bind(this)); //TODO: Why doesn't the Firebase API support passing a context to these calls?
               break;

@@ -1,11 +1,10 @@
 module.exports = function(RED) {
     'use strict';
     var https = require("follow-redirects").https;
+    var utils = require("./FirebaseUtils.js");
     var urllib = require("url");
-
     var getPushIdTimestamp = (function getPushIdTimestamp() {
-      var PUSH_CHARS = '-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz';
-
+    var PUSH_CHARS = '-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz';
       return function getTimestampFromId(id) {
         try {
           var time = 0;
@@ -14,7 +13,6 @@ module.exports = function(RED) {
           for (var i = 0; i < 8; i++) {
             time = time * 64 + PUSH_CHARS.indexOf(data[i]);
           }
-
           return time;
         } catch(ex){}
       }
@@ -26,63 +24,48 @@ module.exports = function(RED) {
         this.config = RED.nodes.getNode(n.firebaseconfig);
         this.childpath = n.childpath;
         this.eventType = n.eventType;
+        this.eventTypevalue = n.eventTypevalue;
         this.queries = n.queries;
         this.repeatifnull = n.repeatifnull;
+        this.event = n.event;
+        this.childtype = n.childtype;
+        this.childvalue = n.childvalue;
+  
 
         this.activeRequests = [];
         this.ready = false;
-
-        // Check credentials
         if (!this.config) {
             this.status({fill:"red", shape:"ring", text:"invalid credentials"})
             this.error('You need to setup Firebase credentials!');
             return
         }
-
-        // for (var i=0; i<this.queries.length; i+=1) {
-        //     var query = this.queries[i];
-        //     if (!isNaN(Number(query.value))) {
-        //       query.value = Number(query.value);
-        //       query.value2 = Number(query.value2);
-        //     }
-        // }
-
         this.validEventTypes = {
           "value": true,
           "child_added": true,
           "child_changed": true,
-          "chiled_removed": true,
+          "child_removed": true,
           "child_moved": true,
           "shallow_query": true
         }
 
         this.onFBData = function(snapshot, prevChildName) {
-            //console.log("In onFBData + " + JSON.stringify(snapshot.val()))
-            //TODO: Once Node-Red supports it, we should flash the Node when we receive this data.
-
-            // if(!snapshot.exists()){
-            //   //The code below will simply send a payload of nul if there is no data
-            // }
-
             //Tstart with original message object so we retain all of those properties...
             var msg = this.activeRequests.shift();
 
-            msg.href = snapshot.ref().toString();
-            msg.key = snapshot.key();
-            msg.payload = snapshot.val();
+            msg.href = snapshot.ref.toString();
+            msg.key = snapshot.key; 
+            msg.payload = snapshot.val(); 
+
             if(snapshot.getPriority())
               msg.priority = snapshot.getPriority();
             if(prevChildName)
               msg.previousChildName = prevChildName;
-            if(this.eventType.search("child") != -1 || msg.key.length == 20 && getPushIdTimestamp(msg.key))  //We probably have a pushID that we can decode
-              msg.pushIDTimestamp = getPushIdTimestamp(msg.key)
 
             if(this.repeatifnull && msg.payload == null && msg.attemptNumber++ < 100 ){ // Repeat sending the request.  //TODO: we could use a configurable timer in seconds or a configurable number of attempts
               this.registerListeners(msg)
             } else {
               this.send(msg);
             }
-
             this.setStatus();
         }.bind(this);
 
@@ -94,30 +77,25 @@ module.exports = function(RED) {
 
         this.registerListeners = function(msg){
 
-          var eventType = this.eventType
-          if(eventType == "msg.eventType"){
-            if("eventType" in msg){
-              eventType = msg.eventType
-            } else {
-              this.error("Expected \"eventType\" property in msg object", msg)
-              return;
-            }
-          }
+          var eventType = utils.getType(this.eventType,this.eventTypevalue,msg,this);
 
-          if(!(eventType in this.validEventTypes)){
-            this.error("Invalid msg.eventType property \"" + eventType + "\".  Expected one of the following: [\"" + Object.keys(this.validEventTypes).join("\", \"") + "\"].", msg)
-            return;
-          }
-
-          //Parse out msg.childpath
-          var childpath = this.childpath
-          if(childpath == "msg.childpath"){
-            if("childpath" in msg){
-              childpath = msg.childpath
+          if(!(eventType in this.validEventTypes)){ //ensure eventType is one of the allowed events
+              this.error("Invalid msg.eventType property \"" + eventType + "\".  Expected one of the following: [\"" + Object.keys(this.validEventTypes).join("\", \"") + "\"].", msg)
             }
+          
+          var childpath = utils.getType(this.childtype,this.childvalue,msg,this);
+
+          if(childpath == "jsonata"){
+            try{
+                var childvalue = this.childvalue;
+                childpath = RED.util.prepareJSONataExpression(childvalue,this);
+                childpath = RED.util.evaluateJSONataExpression(childpath, msg);
+            }catch(e){
+                this.error(RED._(".once.errors.invalid-expr",{error:e.message}));
+            }  
           }
+         
           childpath = childpath || "/"
-
           msg.eventType = eventType;
           msg.childpath = childpath || "/";
 
@@ -126,22 +104,17 @@ module.exports = function(RED) {
 
           this.activeRequests.push(msg)
 
-          if(msg.eventType == "shallow_query"){
+          if(eventType == "shallow_query"){
             this.shallowQuery(msg)  //TODO: https://www.firebase.com/docs/rest/guide/retrieving-data.html#section-rest-ordered-data and https://www.firebase.com/docs/rest/guide/retrieving-data.html#section-rest-queries
           } else {
             this.fbOnce(eventType, msg);
           }
-
         }.bind(this);
 
         this.destroyListeners = function(reason){
           if(this.activeRequests.length > 0 && reason){  //ensure the close function doesn't trigger this
-            // var msg = {};
-            // msg.href = this.config.firebaseurl;
-            // msg.payload = "ERROR: " + reason;
             var msg = this.activeRequests.shift()
             this.error(reason, msg)
-
             var eventType = this.eventType
             if(eventType == "msg.eventType")
               eventType = msg.eventType
@@ -150,7 +123,6 @@ module.exports = function(RED) {
               //this.error("Invalid eventType - \"" + eventType + "\"", msg)  //We have already errored on the registerListener call
               return;
             }
-
             // We need to unbind our callback, or we'll get duplicate messages when we redeploy
             if(msg.childpath)
               this.config.fbConnection.fbRef.child(msg.childpath).off(eventType, this.onFBData, this);
@@ -169,41 +141,57 @@ module.exports = function(RED) {
           }else{
             ref = this.config.fbConnection.fbRef
           }
+          var bool = false;
+          //set a default for what the query should be ordered by if none is chosen
+          for (var i=0; i<this.queries.length; i+=1) {
+            var q = this.queries[i].name;
+            if( q == "orderByKey" || q == "orderByValue" || q =="orderByPriority" || q == "orderByChild"){ 
+              bool = true;
+              }
+          }
+          if(bool == false){
+            q = "orderByKey"
+            ref= ref[q]();
+          }
 
-
-          //apply the queries
           for (var i=0; i<this.queries.length; i+=1) {
               var query = this.queries[i];
-              var val
-
               switch(query.name){
-                case "orderByKey":
+                case "orderByKey":    
                 case "orderByValue":
                 case "orderByPriority":
-                  ref = ref[query.name]()  //No args //TODO: BUG: Update HTML to hide box for these 3...
-                  break;
-
+                  ref= ref[query.name]();
                 case "orderByChild":
                 case "startAt":
                 case "endAt":
                 case "equalTo":
                 case "limitToFirst":
                 case "limitToLast":
-                  //try to convert to native type for bools, ints, etc.
-                  try{ val = JSON.parse(query.value.toLowerCase() || query.value) }
-                  catch(e){ val = query.value}
-
-                  ref = ref[query.name](val) //TODO: no error checking...
-                  break;
-
+                  ref = utils.getRef(ref,query.valType,query.name,query.value,msg,this);
+                  if(ref == "json"){ 
+                    try {
+                      var val = JSON.stringify(query.value);
+                    } catch(e2) {
+                        console.log("not a valid json",e2);
+                    }
+                    ref = ref[queryname](val);
+                  }
+                  else if(ref == "jsonata"){ 
+                    try{
+                      var val = RED.util.prepareJSONataExpression(query.value);
+                      val = RED.util.evaluateJSONataExpression(val, msg);
+                      ref = ref[queryname](val);
+                    }
+                    catch(e){
+                      this.error(RED._(".once.errors.invalid-expr",{error:e.message}));
+                    }
+                  }
+                   break;
                 default:
                   //TODO:
                   break;
-              }
-
-
-          }
-
+              }    
+          }     
           ref.once(eventType, this.onFBData, this.onFBError, this);
         }.bind(this)
 
@@ -243,7 +231,6 @@ module.exports = function(RED) {
                 case "orderByPriority":
                   url += '&orderBy="$priority"'
                   break;
-
                 case "startAt":
                 case "endAt":
                 case "equalTo":
@@ -326,6 +313,7 @@ module.exports = function(RED) {
 
         }.bind(this)
 
+
         //this.config.fbConnection EventEmitter Handlers
         this.fbInitializing = function(){  //This isn't being called because its emitted too early...
           // this.log("initializing...")
@@ -373,6 +361,7 @@ module.exports = function(RED) {
         }.bind(this)
 
         //Register Handlers
+  
         this.config.fbConnection.on("initializing", this.fbInitializing)
         this.config.fbConnection.on("connected", this.fbConnected)
         this.config.fbConnection.on("disconnected", this.fbDisconnected)
@@ -384,6 +373,7 @@ module.exports = function(RED) {
         this.setStatus()
 
         this.on('input', function(msg) {
+
             if(this.ready){
               this.registerListeners(msg);
             } else {

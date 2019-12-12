@@ -1,12 +1,14 @@
-<script type="text/x-red" data-template-name="firebase config" >
-
+<script type="text/x-red" data-template-name="firebase config" >     
     <div class="form-row">
         <label for="node-config-input-firebaseurl"><i class="fa fa-cloud"></i> Firebase</label>
         https://
         <input class="input-append-left" type="text" id="node-config-input-firebaseurl" placeholder="your-firebase" style="width: 28%">
         .firebaseio.com/
     </div>
-
+    <div class="form-row">
+        <label for="node-config-input-api"><i class="fa fa-cloud"></i> API Key</label>
+        <input class="input-append-left" type="password" id="node-config-input-api" placeholder="Web API key">
+    </div>
     <!-- Select type -->
     <div class="form-row">
         <label for="loginType-select"><i class="fa fa-shield"></i> Auth Type</label>
@@ -15,70 +17,116 @@
             <option value="anonymous">Anonymous</option>
             <option value="email">Email</option>
             <option value="jwt">JSON Web Token</option>
-            <option value="customGenerated">Custom Token Generated with Secret</option>
+            <option value="customGenerated">Custom Token Generated with Private Key</option>
+            <option value="admin">Administrator</option>
         </select>
         <input type="hidden" id="node-config-input-loginType">
     </div>
-
     <!-- Custom login with new token generated from master-->
-    <div class="form-row login-row login-row-customGenerated login-row-jwt hidden">
-        <label for="node-config-input-secret"><i class="fa fa-key"></i> Secret</label>
-        <input class="input-append-left" type="password" id="node-config-input-secret" placeholder="firebase secret"> <!-- //TODO: Add a show button like on the forge? -->
+    <div class="form-row login-row login-row-jwt hidden">
+        <label for="node-config-input-secret"><i class="fa fa-key"></i> JWT</label>
+        <input class="input-append-left" type="password" id="node-config-input-secret" placeholder="Jason Web Token"> <!-- //TODO: Add a show button like on the forge? -->
     </div>
-
-    <!-- Custom login -->
+    <div class="form-row login-row login-row-admin login-row-customGenerated hidden">
+        <label for="node-config-input-privatekey"><i class="fa fa-user"></i> Private Key File </label>
+        <input class="input-append-left"  type="file" id="node-config-input-privatekey" data-storage="false"; >
+       <output hidden="" class="input-append-left" type = "text "  id= "node-config-input-list"></output>
+    </div>
+     <!-- Custom login -->
     <div class="form-row login-row login-row-customGenerated hidden">
         <label for="node-config-input-uid"><i class="fa fa-user"></i> Unique ID</label> <!-- //TODO: Change these labels depending on the strategy used to make them make more sense -->
         <input class="input-append-left" type="text" id="node-config-input-uid" placeholder="token">
     </div>
-
-
+   
     <div id="jwt-claims-container" class="form-row login-row login-row-customGenerated hidden">
       <label for="node-input-add-jwt-claim"><i class="fa fa-asterisk"></i> JWT Claims</label>
       <a href="#" class="btn btn-mini" id="node-input-add-jwt-claim" style="margin-top: 4px;"><i class="fa fa-plus"></i> add additional claims</a>
     </div>
-
-    <!-- //TODO: this node would be formatted nicer if #node-inpu-query-container-div was hidden until a query was added (or already present)... -->
-    <!-- Query Dialog Box -->
+    <div id="node-input-illegal-additional" class="form-tips hidden" style="margin-top: 10px;">
+        <p id="node-input-illegal-additional" class="text-center" style="margin: 0;"><strong>Illegal combination of queries.</strong></p>
+      </div>
+     <div class="form-row login-row login-row-customGenerated hidden" id="node-atStart">
+        <label for="node-config-input-addclaims"><i class="fa fa-user"></i> Additional Claims </label>
+        <!-- <input class="input-append-left"  type="checkbox" id="node-config-input-addclaim" value="admin"  > -->
+       
+          <label> Admin <input name="admin" id= "node-config-input-admin" type="checkbox" style="display: inline-block; width: auto; vertical-align: top;" > </label>
+          <label> Debug <input name="debug" id= "node-config-input-debug" type="checkbox" value="true" style="display: inline-block; width: auto; vertical-align: top;" >  </label>     
+      </div>
     <div id="node-input-jwt-claims-overall" class="form-row node-input-jwt-claims-overall-row hidden">
-      <!-- <ol id="node-input-jwt-claims" style=" list-style-type:none; margin: 0;"></ol> -->
-
         <div id="node-input-jwt-claims-container-div" style="box-sizing: border-box; border-radius: 5px; max-height: 200px; padding: 5px; border: 1px solid #ccc; overflow-y:scroll;">
           <ol id="node-input-jwt-claims-container" style=" list-style-type:none; margin: 0;"></ol>
         </div>
     </div>
-
-
     <!-- Email login -->
     <div class="form-row login-row login-row-email hidden" id="login-row-email">
         <label for="node-config-input-email"><i class="fa fa-envelope"></i> Email</label>
         <input class="input-append-left" type="email" id="node-config-input-email" placeholder="your@email.com">
     </div>
+
     <div class="form-row login-row login-row-email hidden" id="login-row-email-password">
         <label for="node-config-input-password"><i class="fa fa-lock"></i> Password</label>
         <input class="input-append-left" type="password" id="node-config-input-password" placeholder="password">
     </div>
 
-    <!--   <div id="alertRow" />  -->
-
-    <!-- Tips -->
-    <!-- <div class="form-tips">
-      <p>Enter your Firebase credentials above</p>
-    </div> -->
-
+    <div class="form-row">
+        <label for="node-config-input-name"><i class="fa fa-tag"></i> Name</label>
+        
+        <input class="input-append-left" type="text" id="node-config-input-name" placeholder="Firebase Config Name" style="width: 40%">
+       
+    </div>
+  <script type="text/javascript">
+    function addtext(){
+     document.getElementById('selectedfile').style.display = 'inline';
+  }
+    function handleFileSelect(evt) {    
+          var files = evt.target.files; // FileList object
+          // Loop through the FileList
+          for (var i = 0, f; f = files[i]; i++) {
+             var reader = new FileReader();
+             reader.onload = (function(theFile) {
+             return function(e) {
+                var results = e.target.result;
+                var obj = JSON.parse(results);
+                project_id = obj.project_id;
+                client_email = obj.client_email;
+                var span = document.createElement('span');                    
+                span.innerHTML = ['<p id= "data">',e.target.result,'</p>'].join('');
+                document.getElementById('node-config-input-list').insertBefore(span, null);
+              };
+            })(f);
+            reader.readAsText(f);
+          }   
+        }
+        var element = document.getElementById('node-config-input-privatekey')
+        if(element != null){      
+           document.getElementById('node-config-input-privatekey').addEventListener('change', handleFileSelect, false);
+        } 
+  </script>
 </script>
 
-<script type="text/javascript">
-    (function () {
 
+<script type="text/javascript">
+      
+    (function () {
+      var project_id;
+      var client_email; 
+      var private_key;
         RED.nodes.registerType('firebase config', {
             category: 'config',
 
             color: "#ffb37a",
 
             defaults: {
+              name:{value: "", required: false},
               firebaseurl: {value: "", required: true},
-              loginType: {value: "", required: true}
+              loginType: {value: "", required: true},
+              api: {value:"", required:true},
+              jwt: {value:"",required:false},
+             
+              admin: {value: false, required: false},
+              debug: {value: false, required: false},
+              emailaddress: {value:"",required:false}
+
             },
 
             credentials: {
@@ -86,27 +134,26 @@
                 secret: {type: 'password'},
                 email: {type: 'text'},
                 password: {type: 'password'},
-                jwtClaims: {type: 'text'}
-            },
-
-
+                jwtClaims: {type: 'text'},
+                list: { type: 'text'},
+                },
             label: function () {
+
                 //return typeof this.appid ? 'Firebase ' + this.appid : 'Firebase ' + this.email;
                 var str = 'firebase config Node Error'
-
                 if(this.firebaseurl)
                   str = "https://"+this.firebaseurl+".firebaseio.com/"
-
                 //TODO: File node red bug on credentials not being set on this in the client before the label function is called
                 //TODO: BUG: Node-Red doesn't provide credentials as early as it provides defaults... Need to file a bug request so that we don't need to store data twice
-                if(this.credentials && this.loginType){
+                //if(this.credentials && this.loginType){
+                  if(this.loginType){
                   switch (this.loginType) {
                       case 'jwt':
                         str += " - JSON Web Token"
                         break;
                       case 'email':
-                        if(this.credentials.email)
-                          str += " - " + this.credentials.email
+                        if(this.emailaddress)
+                          str += " - " + this.emailaddress;
                         break;
                       case 'anonymous':
                         str += " - Anonymous"
@@ -124,11 +171,11 @@
                       case 'default': //TODO:
                         break;
                   }
-                }
+  
+                }  
 
-
-
-                return str
+                return this.name || str
+                          
             },
 
             labelStyle: function () {
@@ -136,17 +183,15 @@
             },
 
             oneditprepare: function () {
-                // console.log("oneditprepare: firebase config") //Used for setting break points on the UI...
-                // console.log("oneditprepare: firebase config: this.firebaseurl == "+this.firebaseurl) //Used for setting break points on the UI...
-                // console.log("oneditprepare: firebase config: #node-input-firebaseconfig == ") //Used for setting break points on the UI...
-                // console.log($('#node-input-firebaseconfig'))
+              
+              $("#node-config-input-list").val(this.list);   
+              $("#node-config-input-email").val(this.credentials.email);           
                 var $nodeConfigInputType = $('#node-config-input-loginType'),
                     $loginTypeSelect = $('#loginType-select');
                     firebaseConnections = null;
 
                 // Disable the Add button until we are ready
                 //$("#node-config-dialog-ok").button("disable");
-
                 //Update the form if the login type changes
                 $loginTypeSelect.change(function () {
                     var id = $(this).find('option:selected').val();
@@ -154,10 +199,11 @@
                     $('.login-row-' + id).show();
                     $nodeConfigInputType.val(id);
                 });
-
+                    
                 //TODO: Possible node-red bug? It looks like defaults don't get set automatically in config nodes?
-                $("#node-config-input-firebaseurl").val(this.firebaseurl)
-
+                $("#node-config-input-name").val(this.name);
+                $("#node-config-input-firebaseurl").val(this.firebaseurl);
+                $("#node-config-input-api").val(this.api);
                 $('.login-row').hide();
                 if (this.loginType && this.loginType != "") {
                     $loginTypeSelect.val(this.loginType); //sets the drop down
@@ -169,7 +215,6 @@
                     $loginTypeSelect.val('email');
                     $nodeConfigInputType.val('email');
                 }
-
 
                 function checkSelectsNotEmpty(){
                   var valid = true;
@@ -195,9 +240,7 @@
 
                 function addInputToUI($input){
                   if ($input.not(':visible')){
-                    //console.log("input not visible");
-
-                    //Check if input already has text
+                     //Check if input already has text
                     if ($input.val() == null || $input.val().length == 0){
                       $input.addClass('input-error');
                       $('node-config-dialog-ok').prop('disabled', true);
@@ -206,6 +249,7 @@
                     //Set up handler
                     $input.off('input');
                     $input.on('input', function(){
+
                       if ($(this).val().length == 0){
                         $(this).addClass('input-error');
                         $('node-config-dialog-ok').prop('disabled', true);
@@ -231,6 +275,7 @@
                 }
 
                 function generatejwtClaim(jwtClaims){
+
                   var $jwtClaimContainer = $('<li/>',{style:"background: #fff; margin:0; padding:8px 0px; border-bottom: 1px solid #ccc;"});;
                   var $table = $('<table/>').appendTo($jwtClaimContainer);
                   var $tbody = $('<tbody/>').appendTo($table);
@@ -243,8 +288,6 @@
                   var $tdDeleteBtn = $('<td/>').appendTo($tbody);
                   var $deleteBtn = $('<a/>').addClass('btn btn-mini').append($('<i/>').addClass('fa fa-remove')).appendTo($tdDeleteBtn);
 
-                  addInputToUI($inputKey);
-                  addInputToUI($inputVal);
 
                   //Delete click handler
                   $deleteBtn.on('click', function(){
@@ -254,6 +297,8 @@
 
                       //Get list of remaining jwtClaims
                       var jwtClaims = $('#node-input-jwt-claims-container').children();
+      
+
                       if (jwtClaims.length == 0){ //If there are no jwtClaims left, hide container
                         $('#node-input-jwt-claims-overall').hide();
                         $('node-config-dialog-ok').prop('disabled', false);
@@ -274,11 +319,13 @@
                 }
 
                 $("#node-input-add-jwt-claim").click(function() {
+
                   generatejwtClaim();
                   $("#node-input-jwt-claims-container-div").scrollTop($("#node-input-jwt-claims-container-div").get(0).scrollHeight);
                 });
 
                 if(this.credentials.jwtClaims){
+
                   this.credentials.jwtClaims = JSON.parse(this.credentials.jwtClaims)
                   for (i in this.credentials.jwtClaims){
                     generatejwtClaim(this.credentials.jwtClaims[i]);
@@ -317,8 +364,7 @@
                 });
 
             //TODO: BUG: oneditsave: should really look at the return value and if it is a string, provide an alert to a user as to what went wrong and take you back to the edit dialogue box - I don't think Node-Red allows for this...
-
-
+              
             }, //end oneditprepare
 
             oneditsave: function() {
@@ -327,22 +373,88 @@
               //Save Path [this is automagically taken care of by NR]
               //Save Event type [this is automagically taken care of by NR]
 
+              node.credentials.list = "";
+              var output = $("#node-config-input-list").val();
+              output = JSON.stringify(output);
+              node.credentials.list = output;
+
+              if(node.loginType == "email"){
+                  node.credentials.email = $("#node-config-input-email").val();
+                  node.emailaddress = node.credentials.email;
+              }
+              
+                     
               //Save jwtClaims
-              node.credentials.jwtClaims = [];
+              node.jwt =[]
               var jwtClaims = $("#node-input-jwt-claims-container").children();
               jwtClaims.each(function(idx){
                 var k = $($(this).find('input')[0])
                 var v = $($(this).find('input')[1])
+                                    
                 var claim = {
                   "key": k.is(':visible') ? k.val() : "",
                   "value": v.is(':visible') ? v.val() : ""
                 }
-                node.credentials.jwtClaims.push(claim);
+                node.jwt.push(claim);
               });
-              node.credentials.jwtClaims = JSON.stringify(node.credentials.jwtClaims)
+             
+              node.jwt = JSON.stringify(node.jwt)
             },
 
             exportable: false
         });
     })();
+</script>
+
+<script type="text/x-red" data-help-name="firebase config">
+
+<p>Allows to connect to a Firebase database using various authentication options.</p>
+
+<h3>Inputs</h3>
+<dl class="message-properties">
+
+<dt>Youre-Firebase <span class="property-type">string</span></dt>
+<dd>The name of your Firebase.This is a unique identifier for your Firebase project which can be found in this project's URL: https://console.firebase.google.com/project/{projectId} </dd>
+
+<dt>API Key  <span class="property-type">string</span></dt>
+<dd>The API Key associated with your Firebase </dd>
+<dd>To locate your API Key, go to the desired firebase project in the firebase console. Locate the settings icon wheel on the left, next to "Overview". The API Key will be labeled as "Web API Key". </dd>
+
+<p><strong> Auth Type: Email </strong></p>
+
+<dt>Email and Password  <span class="property-type">string</span></dt>
+<dd>The Email and Password associated to your Firebase </dd>
+
+<p><strong> Auth Type: Json Web Token </strong></p>
+
+<dt>JWT<span class="property-type">string</span></dt>
+<dd>The JWT token associated to your Firebase </dd>
+
+<p><strong> Auth Type: Private Key File </strong></p>
+
+<dt>Private Key File<span class="property-type">file</span></dt>
+<dd>A private key needs to be generated in order to use the Access Token verification. </dd>
+<dd> To retreive the Private Key file, go the the desired project in the firebase console. Locate the settings icon wheel on the left, next to "Overview". Next click the Service Accounts Tab. Finally, click on "Generate New Private Key". This will download a file onto your computer</dd>
+<dd>Click on choose file and locate the downloaded file. <dd>
+
+<dt>Unique ID<span class="property-type">file</span></dt>
+<dd>The Unique ID chosen for the token generated</dd>
+
+<dt>Additional JWT Claims:<span class="property-type">string</span></dt>
+<dd>Further JWT claims that want to be associated with the JWT generated</dd>
+
+<p><strong> Administrator </strong></p>
+
+<dt>Private Key File<span class="property-type">file</span></dt>
+<dd>A private key needs to be generated in order to use the Access Token verification. </dd>
+<dd> To retreive the Private Key file, go the the desired project in the firebase console. Locate the settings icon wheel on the left, next to "Overview". Next click the Service Accounts Tab. Finally, click on "Generate New Private Key". This will download a file onto your computer</dd>
+<dd>Click on choose file and locate the downloaded file. <dd>
+
+</dl>
+<h3> Details </h3>
+ 
+<p> The following list of additional claim keys are reserved by firebase and cannot be used : alg,acr,amr,at_hash,aud,auth_time,azp,cnf,c_hash,exp,firebase,iat,iss,jti,nbf,nonce,sub"
+</p>
+
+
 </script>

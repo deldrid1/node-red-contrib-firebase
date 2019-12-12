@@ -1,6 +1,8 @@
 module.exports = function(RED) {
     'use strict';
+    var Firebase = require('firebase');
     var path= require('path');
+    var utils = require("./FirebaseUtils.js");
 
     String.prototype.capitalize = function() {
         return this.charAt(0).toUpperCase() + this.slice(1);
@@ -12,10 +14,18 @@ module.exports = function(RED) {
         this.config = RED.nodes.getNode(n.firebaseconfig);
         this.name = n.name;
         this.childpath = n.childpath;
+        this.childtype = n.childtype;
+        this.childvalue = n.childvalue;
         this.method = n.method;
         this.value = n.value;
+        this.valuetype = n.valuetype;
+        this.valueval = n.valueval;
         this.priority = n.priority;
+        this.prioritytype = n.prioritytype;
+        this.priorityval = n.priorityval;
         this.fbRequests = [];
+        this.method = n.methodtype;
+        this.methodval -= n.methodval;
 
         this.ready = false;
 
@@ -124,67 +134,69 @@ module.exports = function(RED) {
 
             //Parse out msg.method
             var method = this.method
-            if(method == "msg.method"){
-              if("method" in msg){
-                method = msg.method
-              } else {
-                this.error("Expected \"method\" property not in msg object, .onDisconnect() will not be set", msg)
-                return;
-              }
-            }
-
             //Parse out msg.payload
-            var value = this.value;
+            var value;
             if (method != "setPriority" && method != "cancel"){
-              if (value == "msg.payload"){
-                if ("payload" in msg){
-                  value = msg.payload;
-                  if (!Buffer.isBuffer(value) && typeof value != "object"){
-                    try {
-                      value = JSON.parse(value)
-                    } catch(e){
-                      value = msg.payload.toString();
-                    }
-                  }
-                } else {
-                  this.warn("Expected \"payload\" property not in msg object (setting payload to \"null\")", msg);
-                  value = null;
-                }
-              } else if(this.value == "Firebase.ServerValue.TIMESTAMP") {
-                value = this.config.fbConnection.Firebase.ServerValue.TIMESTAMP
-              }
+                value = utils.getType(this.valuetype,this.valueval,msg,this);
+                if(value == "jsonata"){
+                  try{
+                    var valueval = this.valueval;
+                    value = RED.util.prepareJSONataExpression(valueval,this);
+                    value = RED.util.evaluateJSONataExpression(value,msg);
+                  } catch(e){
+                    node.error(RED._("firebase.ondisconnect.errors.invalid-expr",{error:err.message}));
+                  }            
+               }
+                else if(value == "serverTS"){
+                  value = Firebase.database.ServerValue.TIMESTAMP;
+                } 
               msg.payload = value;
             }
+            
+          var priority = null;
+          var val;
+          if (method == "setPriority" || method == "setWithPriority"){
+            priority = this.priority;
+            if (priority == null){
+              this.error("Expected \"priority\" property not included", msg)
+              return;
+            }        
+            val = utils.getType(this.prioritytype,this.priorityval,msg,this);
 
-            //Parse out msg.priority
-            var priority = null;
-            if (method == "setPriority" || method == "setWithPriority"){
-              priority = this.priority;
-              if (priority == null){
-                this.error("Expected \"priority\" property not included, .onDisconnect() will not be set", msg)
-                return;
-              } else if (priority == "msg.priority"){
-                if ("priority" in msg) priority = msg.priority;
-                else {
-                  this.error("Expected \"priority\" property in msg object, .onDisconnect() will not be set", msg)
-                  return;
-                }
-              }
+            if(val == "jsonata"){
+              try{
+                  var valueval = this.valueval;
+                  val = RED.util.prepareJSONataExpression(this.priorityval,this);
+                  val = RED.util.evaluateJSONataExpression(val,msg);
+              } catch(e){
+                  node.error(RED._("firebase.modify.errors.invalid-expr",{error:err.message}));
+              }  
             }
-
-            //Parse out msg.childpath
-            var childpath = this.childpath
-            if(childpath == "msg.childpath"){
-              if("childpath" in msg){
-                childpath = msg.childpath
-              }
-            }
-            childpath = childpath || "/"
-
+           else if(val== "serverTS"){
+              val = Firebase.database.ServerValue.TIMESTAMP;
+           }
+              msg.priority = val;
+         } 
+          var childpath = utils.getType(this.childtype,this.childvalue,msg,this);
+          //Parse out msg.childpath         
+          if(childpath == "jsonata"){
+            try{
+                var childvalue = this.childvalue;
+                childpath = RED.util.prepareJSONataExpression(childvalue,this);
+                childpath = RED.util.evaluateJSONataExpression(childpath, msg);
+            }catch(e){
+                node.error(RED._("firebase.modify.errors.invalid-expr",{error:err.message}));
+            }           
+          }
+         
+          childpath = childpath || "/"
+         
+          msg.childpath = childpath || "/";
             switch (method) {
+
               case "set":
               case "update":
-              case "push":
+              //case "push":
                 this.fbRequests.push(msg)
                 this.config.fbConnection.fbRef.child(childpath).onDisconnect()[method](msg.payload, this.fbOnComplete.bind(this)); //TODO: Why doesn't the Firebase API support passing a context to these calls?
                 break;javas
@@ -192,10 +204,10 @@ module.exports = function(RED) {
                 this.fbRequests.push(msg)
                 this.config.fbConnection.fbRef.child(childpath).onDisconnect()[method](this.fbOnComplete.bind(this));
                 break;
-              // case "setPriority":
-              //   this.fbRequests.push(msg)
-              //   this.config.fbConnection.fbRef.child(childpath).onDisconnect()[method](priority, this.fbOnComplete.bind(this));
-              //   break;
+               //case "setPriority":
+               //  this.fbRequests.push(msg)
+               //  this.config.fbConnection.fbRef.child(childpath).onDisconnect()[method](priority, this.fbOnComplete.bind(this));
+               //  break;
               case "cancel":
                 this.fbRequests.push(msg)
                 this.config.fbConnection.fbRef.child(childpath).onDisconnect()[method](this.fbOnComplete.bind(this));

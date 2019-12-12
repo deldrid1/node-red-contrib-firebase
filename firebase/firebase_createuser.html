@@ -1,0 +1,114 @@
+<script type="text/x-red" data-template-name="firebase.createUser">
+
+  <div class="form-row">
+      <label for="node-input-firebaseconfig"><i class="fa fa-database"></i> Firebase</label>
+      <input type="text" id="node-input-firebaseconfig">
+  </div>
+
+  <div class="form-row">
+      <label for="node-input-email"><i class="fa fa-sitemap"></i> Email</label>
+      <input class="input-append-left" type="text" id="node-input-email" placeholder="Email Address">
+  </div>
+
+  <div class="form-row">
+      <label for="node-input-password"><i class="fa fa-sitemap"></i> Password</label>
+      <input class="input-append-left" type="text" id="node-input-password" placeholder="Password">
+  </div>
+
+  <!-- By convention, most nodes have a 'name' property. The following div -->
+  <!-- provides the necessary field. Should always be the last option      -->
+  <div class="form-row">
+      <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+      <input type="text" id="node-input-name" placeholder="Name">
+  </div>
+</script>
+
+<script type="text/x-red" data-help-name="firebase.createUser">
+  <!-- data-help-name identifies the node type this help is for             -->
+  <!-- This content appears in the Info sidebar when a node is selected     -->
+  <!-- The first <p> is used as the pop-up tool tip when hovering over a    -->
+  <!-- node in the palette.                                                 -->
+  <p>Create Email & Password User(s).</p>
+
+   <h3> Inputs </h3>
+  <dl class="message-properties">
+        <dt>Firebase Configuration<span class="property-type">config node</span></dt>
+        <dd> Supply a Firebase configuration and this node will create Email & Password user(s) for that particular Firebase.</dd>
+
+        <dt>Email<span class="property-type">string</span></dt>
+        <dd> Supply the email wanting to be associated with the firebase.</dd>
+
+        <dt>Password<span class="property-type">string</span></dt>
+        <dd> Supply the password associated with the email.</dd>
+
+        <dt> msg.users<span class="property-type">string</span></dt>
+        <dd> If there is no email and password supplied in the node form, the node will check for the existence of an input <code> msg.users </code> which should be an array of objects with two parameters: email and password </dd>
+
+
+  </dl>
+  
+   <h3> Output </h3>
+
+    <dl class="message-properties">
+      <dt>msg.payload<span class="property-type">object</span></dt>
+        <dd> An array of objects. Each object contains two objects, `email` and either `uid` or `error`. </dd>
+      
+      <dt>msg.payload[i].email<span class="property-type">object</span></dt>
+        <dd> An array of objects. Each object contains two objects, `email` and either `uid` or `error`. </dd>
+      
+      <dt>msg.payload[i].uid<span class="property-type">object</span></dt>
+        <dd> The Firebase-generated unique identifier for that user (included if creating the user was successful) </dd>
+
+      <dt>msg.payload[i].error<span class="property-type">object</span></dt>
+        <dd>An object from Firebase describing why the Email & Password user could not becreated.(included if creating the user was unsuccessful)</dd>
+
+    </dl>
+
+
+ </script>
+
+<script type="text/javascript">
+  RED.nodes.registerType('firebase.createUser',{
+
+    category: 'firebase',      // the palette category
+    defaults: {             // defines the editable properties of the node
+      name: {value:''},   //  along with default values.
+      firebaseconfig:  {type:'firebase config',required:true},
+      users: {value: [], required: true},
+      email: {'value': '', required: false},
+      password: {'value': '', required:false }
+    },
+    color: '#ffb37a',
+    inputs:1,               // set the number of inputs - only 0 or 1
+    outputs:1,              // set the number of outputs - 0 to n
+    // set the icon (held in icons dir below where you save the node)
+    icon: 'firebase.png',     // saved in  icons/myicon.png
+
+    paletteLabel: "firebase.createUser()",
+    inputLabels: "Email and Password",
+    outputLabels: function() { if(this.email) {return "Creating " + this.email; } },
+
+    label: function() {     // sets the default label contents
+      return (this.name && this.name !== '' ? this.name : "Create User(s)")
+    },
+
+    labelStyle: function() { // sets the class to apply to the label
+        return this.name?'node_label_italic':'';
+    },
+
+    //TODO: there is all kinds of validation that needs to be done to ensure only proper combinations of things are allowed...
+    oneditprepare: function() {
+      $('#node-input-email').val(this.email);
+      $('#node-input-password').val('');
+    },
+
+    oneditsave: function() {
+      //NOTE: Need to set these here because this.email and this.password are automagically set *after* oneditsave is called, which makes setting this.users take an extra step
+      this.email = $('#node-input-email').val();
+      this.password = $('#node-input-password').val();
+
+      this.users = [];
+      this.users.push({email: this.email, password: this.password});
+    }
+  });
+</script>
